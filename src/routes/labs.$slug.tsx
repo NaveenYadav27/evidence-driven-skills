@@ -1,6 +1,7 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { useEffect, useRef } from "react";
 import { getLab } from "@/data/labs";
+import { MODULES } from "@/data/modules";
 import { Terminal } from "@/components/Terminal";
 import { LabObjectives } from "@/components/LabObjectives";
 import { useTelemetry } from "@/lib/telemetry";
