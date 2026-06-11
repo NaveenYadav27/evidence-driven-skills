@@ -10,7 +10,9 @@ export const Route = createFileRoute("/labs/$slug")({
   loader: ({ params }) => {
     const lab = getLab(params.slug);
     if (!lab) throw notFound();
-    return { lab };
+    const { MODULES } = require("@/data/modules") as typeof import("@/data/modules");
+    const mod = MODULES.find((m) => m.id === lab.moduleId);
+    return { lab, moduleSlug: mod?.slug ?? "footprinting-and-reconnaissance" };
   },
   head: ({ loaderData }) => ({
     meta: [
