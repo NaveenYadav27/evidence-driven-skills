@@ -55,7 +55,7 @@ function ModuleDetail() {
             <h1 className="text-3xl sm:text-4xl font-bold tracking-tight">{m.title}</h1>
             <p className="mt-2 text-muted-foreground max-w-2xl">{m.short}</p>
             <div className="mt-4 flex flex-wrap gap-1.5">
-              {m.tools.map((t) => (
+              {m.tools.map((t: string) => (
                 <span key={t} className="text-[11px] font-mono px-2 py-0.5 rounded border border-border bg-secondary/50">{t}</span>
               ))}
             </div>
