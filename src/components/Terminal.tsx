@@ -1,6 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { whoisLookup, dnsLookup } from "@/lib/recon.functions";
+import {
+  whoisLookup, dnsLookup, subdomainEnum,
+  httpHeaders, robotsScan, waybackHistory,
+} from "@/lib/recon.functions";
 import { useTelemetry } from "@/lib/telemetry";
 import type { Lab } from "@/data/labs";
 
@@ -9,15 +12,19 @@ interface Line {
   text: string;
 }
 
-const banner = `ShadowXLab :: Cyber Range Terminal v1.3
+const banner = `ShadowXLab :: Cyber Range Terminal v1.4
 type 'help' for available commands · commands & outputs are tracked
 `;
 
 const HELP = `Available tools (sandbox-safe, real public APIs)
   whois <domain>                — RDAP-based WHOIS lookup
-  dig   <domain> [type]         — DNS-over-HTTPS query (A,MX,NS,TXT,AAAA,SOA,CNAME,CAA,SRV)
+  dig <domain> [type]           — DNS-over-HTTPS query (A,MX,NS,TXT,AAAA,SOA,CNAME,CAA,SRV)
   nslookup <domain> [type]      — alias of dig
-  host  <domain>                — short A/AAAA lookup
+  host <domain>                 — short A/AAAA lookup
+  subs <domain>                 — subdomain enumeration via certificate transparency (crt.sh)
+  headers <host>                — HTTP response + security-header audit
+  robots <host>                 — fetch & parse /robots.txt and discover sitemaps
+  wayback <host>                — Internet Archive snapshot history
   clear                         — clear screen
   help                          — this help`;
 
@@ -38,6 +45,10 @@ export function Terminal({ lab, onCommand }: {
   const recordCommand = useTelemetry((s) => s.recordCommand);
   const whois = useServerFn(whoisLookup);
   const dns = useServerFn(dnsLookup);
+  const subs = useServerFn(subdomainEnum);
+  const headers = useServerFn(httpHeaders);
+  const robots = useServerFn(robotsScan);
+  const wayback = useServerFn(waybackHistory);
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight });
@@ -65,35 +76,55 @@ export function Terminal({ lab, onCommand }: {
     const t0 = performance.now();
     let success = false;
     try {
+      const target = rest[0];
+      const needTarget = (usage: string) => { if (!target) { append({ kind: "err", text: usage }); return false; } return true; };
+
       if (lower === "whois") {
-        const domain = rest[0];
-        if (!domain) { append({ kind: "err", text: "usage: whois <domain>" }); }
-        else {
-          const r = await whois({ data: { domain } });
+        if (needTarget("usage: whois <domain>")) {
+          const r = await whois({ data: { domain: target } });
           if (r.ok) { append({ kind: "out", text: r.raw }); success = true; }
           else append({ kind: "err", text: `whois failed: ${r.error}` });
         }
       } else if (lower === "dig" || lower === "nslookup") {
-        const domain = rest[0];
-        const type = rest[1] ?? "A";
-        if (!domain) { append({ kind: "err", text: `usage: ${lower} <domain> [type]` }); }
-        else {
-          const r = await dns({ data: { domain, type } });
+        if (needTarget(`usage: ${lower} <domain> [type]`)) {
+          const r = await dns({ data: { domain: target, type: rest[1] ?? "A" } });
           if (r.ok) { append({ kind: "out", text: r.raw }); success = true; }
           else append({ kind: "err", text: `${lower} failed: ${r.error}` });
         }
       } else if (lower === "host") {
-        const domain = rest[0];
-        if (!domain) { append({ kind: "err", text: "usage: host <domain>" }); }
-        else {
-          const r = await dns({ data: { domain, type: "A" } });
+        if (needTarget("usage: host <domain>")) {
+          const r = await dns({ data: { domain: target, type: "A" } });
           if (r.ok) {
             const out = r.answers.length
               ? r.answers.map((a) => `${a.name} has address ${a.data}`).join("\n")
-              : `host ${domain} not found`;
+              : `host ${target} not found`;
             append({ kind: "out", text: out });
             success = r.answers.length > 0;
           } else append({ kind: "err", text: `host failed: ${r.error}` });
+        }
+      } else if (lower === "subs" || lower === "subdomains") {
+        if (needTarget("usage: subs <domain>")) {
+          const r = await subs({ data: { domain: target } });
+          if (r.ok) { append({ kind: "out", text: r.raw }); success = r.count > 0; }
+          else append({ kind: "err", text: `subs failed: ${r.error}` });
+        }
+      } else if (lower === "headers") {
+        if (needTarget("usage: headers <host>")) {
+          const r = await headers({ data: { target } });
+          if (r.ok) { append({ kind: "out", text: r.raw }); success = true; }
+          else append({ kind: "err", text: `headers failed: ${r.error}` });
+        }
+      } else if (lower === "robots") {
+        if (needTarget("usage: robots <host>")) {
+          const r = await robots({ data: { target } });
+          if (r.ok) { append({ kind: "out", text: r.raw }); success = true; }
+          else append({ kind: "err", text: `robots failed: ${r.error}` });
+        }
+      } else if (lower === "wayback") {
+        if (needTarget("usage: wayback <host>")) {
+          const r = await wayback({ data: { target } });
+          if (r.ok) { append({ kind: "out", text: r.raw }); success = r.totalSnapshots > 0; }
+          else append({ kind: "err", text: `wayback failed: ${r.error}` });
         }
       } else {
         append({ kind: "err", text: `command not found: ${tool}. Type 'help' for available tools.` });
@@ -153,7 +184,7 @@ export function Terminal({ lab, onCommand }: {
               setHistIdx(ni); setInput(ni === -1 ? "" : history[ni]);
             }
           }}
-          placeholder="whois example.com   ·   dig iana.org mx"
+          placeholder="subs owasp.org   ·   headers github.com   ·   robots wikipedia.org"
           className="flex-1 bg-transparent outline-none font-mono text-sm placeholder:text-muted-foreground/60"
           autoComplete="off"
           spellCheck={false}

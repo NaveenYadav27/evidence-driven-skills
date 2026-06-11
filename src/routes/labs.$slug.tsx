@@ -1,6 +1,7 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { useEffect, useRef } from "react";
 import { getLab } from "@/data/labs";
+import { MODULES } from "@/data/modules";
 import { Terminal } from "@/components/Terminal";
 import { LabObjectives } from "@/components/LabObjectives";
 import { useTelemetry } from "@/lib/telemetry";
@@ -10,7 +11,8 @@ export const Route = createFileRoute("/labs/$slug")({
   loader: ({ params }) => {
     const lab = getLab(params.slug);
     if (!lab) throw notFound();
-    return { lab };
+    const mod = MODULES.find((m) => m.id === lab.moduleId);
+    return { lab, moduleSlug: mod?.slug ?? "footprinting-and-reconnaissance" };
   },
   head: ({ loaderData }) => ({
     meta: [
@@ -28,7 +30,7 @@ export const Route = createFileRoute("/labs/$slug")({
 });
 
 function LabPage() {
-  const { lab } = Route.useLoaderData();
+  const { lab, moduleSlug } = Route.useLoaderData();
   const ensureLab = useTelemetry((s) => s.ensureLab);
   const satisfy = useTelemetry((s) => s.satisfyObjective);
   const attempt = useTelemetry((s) => s.attemptObjective);
@@ -62,7 +64,7 @@ function LabPage() {
 
   return (
     <div className="mx-auto max-w-7xl px-4 sm:px-6 py-8">
-      <Link to="/modules/$slug" params={{ slug: "footprinting-and-reconnaissance" }}
+      <Link to="/modules/$slug" params={{ slug: moduleSlug }}
             className="text-xs text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5 mb-4">
         <ArrowLeft className="h-3 w-3" /> Back to module
       </Link>

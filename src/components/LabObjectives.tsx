@@ -4,17 +4,21 @@ import { useTelemetry } from "@/lib/telemetry";
 import { CheckCircle2, Circle, Loader2, Trophy } from "lucide-react";
 import { toast } from "sonner";
 
-/** Validators for finding-type objectives. */
+/** Validators for finding-type objectives. Cross-check against live data when possible. */
 async function validateFinding(target: string | undefined, key: string, value: string): Promise<boolean> {
   const v = value.trim().toLowerCase();
-  if (!v) return false;
-  if (!target) return false;
-  // For year fields we accept the value as-is if it parses.
-  if (key === "createdYear") {
+  if (!v || !target) return false;
+
+  // Numeric / year fields — accept range checks without remote validation.
+  if (key === "createdYear" || key === "firstSeenYear") {
     const y = parseInt(v, 10);
-    return Number.isFinite(y) && y >= 1980 && y <= new Date().getFullYear();
+    return Number.isFinite(y) && y >= 1990 && y <= new Date().getFullYear();
   }
-  // For MX / NS / registrar we cross-check live data.
+  if (key === "subdomainCount" || key === "snapshotCount") {
+    const n = parseInt(v, 10);
+    return Number.isFinite(n) && n >= 1;
+  }
+
   try {
     if (key === "mx") {
       const r = await fetch(`https://cloudflare-dns.com/dns-query?name=${target}&type=MX`, { headers: { Accept: "application/dns-json" } });
@@ -33,7 +37,46 @@ async function validateFinding(target: string | undefined, key: string, value: s
       const j: any = await r.json();
       const entity = (j.entities ?? []).find((e: any) => (e.roles ?? []).includes("registrar"));
       const fn = entity?.vcardArray?.[1]?.find((x: any) => x[0] === "fn")?.[3] ?? entity?.handle ?? "";
-      return String(fn).trim().toLowerCase().includes(v) || v.includes(String(fn).trim().toLowerCase());
+      const f = String(fn).trim().toLowerCase();
+      return !!f && (f.includes(v) || v.includes(f));
+    }
+    if (key === "subdomain") {
+      if (!v.endsWith(target.toLowerCase())) return false;
+      const r = await fetch(`https://crt.sh/?output=json&q=${encodeURIComponent("%." + target)}`);
+      const j: any[] = await r.json().catch(() => []);
+      const set = new Set<string>();
+      for (const row of j) for (const n of String(row.name_value || "").split("\n")) {
+        set.add(n.trim().toLowerCase().replace(/^\*\./, ""));
+      }
+      return set.has(v);
+    }
+    if (key === "serverHeader") {
+      const r = await fetch(`https://${target}/`, { method: "GET", redirect: "follow" });
+      const s = (r.headers.get("server") || "").trim().toLowerCase();
+      return !!s && (s.includes(v) || v.includes(s));
+    }
+    if (key === "hstsPresent" || key === "cspPresent" || key === "xfoPresent") {
+      const r = await fetch(`https://${target}/`, { method: "GET", redirect: "follow" });
+      const map: Record<string, string> = {
+        hstsPresent: "strict-transport-security",
+        cspPresent: "content-security-policy",
+        xfoPresent: "x-frame-options",
+      };
+      const present = !!r.headers.get(map[key]);
+      if (v === "yes" || v === "true" || v === "present") return present;
+      if (v === "no" || v === "false" || v === "missing") return !present;
+      return false;
+    }
+    if (key === "disallowPath") {
+      const r = await fetch(`https://${target}/robots.txt`);
+      if (!r.ok) return false;
+      const txt = (await r.text()).toLowerCase();
+      const paths = new Set<string>();
+      for (const line of txt.split(/\r?\n/)) {
+        const m = line.match(/^\s*disallow\s*:\s*(\S+)/i);
+        if (m) paths.add(m[1].trim().toLowerCase());
+      }
+      return paths.has(v) || paths.has(v.replace(/\/$/, "")) || paths.has(v + "/");
     }
   } catch {
     return false;
