@@ -4,21 +4,84 @@ import { useTelemetry } from "@/lib/telemetry";
 import { CheckCircle2, Circle, Loader2, Trophy } from "lucide-react";
 import { toast } from "sonner";
 
-/** Validators for finding-type objectives. Cross-check against live data when possible. */
+/** Validators for finding-type objectives. Cross-check live data when possible;
+ *  otherwise apply strict format/value rules so guessing is hard. */
+const IPV4 = /^(?:(?:25[0-5]|2[0-4]\d|[01]?\d?\d)\.){3}(?:25[0-5]|2[0-4]\d|[01]?\d?\d)$/;
+const HEX_64 = /^[0-9a-f]{64}$/;
+const CVE_RX = /^cve-\d{4}-\d{4,7}$/;
+
+const KILL_CHAIN = new Set(["recon","reconnaissance","weaponization","delivery","exploitation","installation","c2","command-and-control","actions","actions-on-objectives"]);
+const ATTACK_TACTICS = new Set(["reconnaissance","resource-development","initial-access","execution","persistence","privilege-escalation","defense-evasion","credential-access","discovery","lateral-movement","collection","command-and-control","exfiltration","impact"]);
+const AMP_PROTOS = new Set(["dns","ntp","memcached","ssdp","chargen","snmp","ldap"]);
+const RISKY_METHODS = new Set(["put","delete","trace","connect","patch"]);
+const SUID_BINS = new Set(["find","vim","nmap","bash","less","more","awk","perl","python","tar","zip","cp","mv","tee","nano","env","wget","curl","gdb","ftp","sed","man","sudo","systemctl"]);
+
 async function validateFinding(target: string | undefined, key: string, value: string): Promise<boolean> {
   const v = value.trim().toLowerCase();
-  if (!v || !target) return false;
+  if (!v) return false;
 
-  // Numeric / year fields — accept range checks without remote validation.
-  if (key === "createdYear" || key === "firstSeenYear") {
-    const y = parseInt(v, 10);
-    return Number.isFinite(y) && y >= 1990 && y <= new Date().getFullYear();
-  }
-  if (key === "subdomainCount" || key === "snapshotCount") {
-    const n = parseInt(v, 10);
-    return Number.isFinite(n) && n >= 1;
+  // ── format-only checks (no network) ─────────────────────────────────
+  switch (key) {
+    case "createdYear":
+    case "firstSeenYear": {
+      const y = parseInt(v, 10); return Number.isFinite(y) && y >= 1990 && y <= new Date().getFullYear();
+    }
+    case "subdomainCount":
+    case "snapshotCount":
+    case "handshakeMessages":
+    case "mqttPort":
+    case "mqttTlsPort":
+    case "arpOpcode":
+    case "ampFactor": {
+      const n = parseInt(v, 10);
+      if (!Number.isFinite(n)) return false;
+      if (key === "handshakeMessages") return n === 4;
+      if (key === "mqttPort") return n === 1883;
+      if (key === "mqttTlsPort") return n === 8883;
+      if (key === "arpOpcode") return n === 1 || n === 2;
+      if (key === "ampFactor") return n >= 20 && n <= 80;
+      return n >= 1;
+    }
+    case "cveId": return CVE_RX.test(v);
+    case "cvssScore": { const f = parseFloat(v); return Number.isFinite(f) && f >= 0 && f <= 10; }
+    case "cvssVector": return /^cvss:3\.[01]\/av:[nalp]\/ac:[lh]\/pr:[nlh]\/ui:[nr]\/s:[uc]\/c:[nlh]\/i:[nlh]\/a:[nlh]$/.test(v);
+    case "killChainPhase": return KILL_CHAIN.has(v);
+    case "attackTechniqueId": return /^t\d{4}(\.\d{3})?$/.test(v);
+    case "attackTactic": return ATTACK_TACTICS.has(v);
+    case "ipAddress": return IPV4.test(v);
+    case "ipCountry": return /^[a-z]{2}$/.test(v);
+    case "asn": return /^as\d{1,7}$/.test(v);
+    case "riskyMethod": return RISKY_METHODS.has(v);
+    case "spfInclude": return /^[a-z0-9.-]+\.[a-z]{2,}$/.test(v);
+    case "caaIssuer": return /^[a-z0-9.-]+\.[a-z]{2,}$/.test(v);
+    case "crackedPassword": return ["password","123456","qwerty","letmein","admin","welcome","hunter2","shadow","dragon","monkey","iloveyou","abc123","ceh","shadowxlab","hacker","root"].includes(v);
+    case "suidBinary": return SUID_BINS.has(v);
+    case "sha256Hex": return HEX_64.test(v);
+    case "helloSha256": return v === "2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824";
+    case "username": return v === "admin";
+    case "password": return v === "hunter2";
+    case "dmarcPolicy": return ["none","quarantine","reject"].includes(v);
+    case "ampProtocol": return AMP_PROTOS.has(v);
+    case "jwtAlg": return ["none","hs256","hs384","hs512","rs256","rs384","rs512","es256","es384","ps256"].includes(v);
+    case "jwtUser": return v === "admin";
+    case "cookieHttpOnly":
+    case "cookieSecure": return v === "present" || v === "missing";
+    case "nmapFrag": return v === "-f";
+    case "nmapDecoy": return v === "-d";
+    case "xssPayload": return /<\s*script|onerror\s*=|onload\s*=|javascript:|<\s*img[^>]+src/i.test(value);
+    case "sqliPayload": return /('|")?\s*or\s+1\s*=\s*1/i.test(value) || /--\s*$/.test(value) || /union\s+select/i.test(value);
+    case "sqlKeyword": return v === "union";
+    case "ethertype": return v === "0x0806" || v === "0806";
+    case "pmkAlgo": return /pbkdf2/.test(v);
+    case "androidPermission": return /^android\.permission\.[a-z_]+$/i.test(value);
+    case "s3Suffix": return /^s3([.-][a-z0-9-]+)?\.amazonaws\.com$/.test(v);
+    case "imdsIp": return v === "169.254.169.254";
+    case "xorPlaintext": return v === "xlab is fun";
+    case "certIssuer": return v.length >= 3;
   }
 
+  // ── live cross-checks (need target) ─────────────────────────────────
+  if (!target) return false;
   try {
     if (key === "mx") {
       const r = await fetch(`https://cloudflare-dns.com/dns-query?name=${target}&type=MX`, { headers: { Accept: "application/dns-json" } });
@@ -57,14 +120,10 @@ async function validateFinding(target: string | undefined, key: string, value: s
     }
     if (key === "hstsPresent" || key === "cspPresent" || key === "xfoPresent") {
       const r = await fetch(`https://${target}/`, { method: "GET", redirect: "follow" });
-      const map: Record<string, string> = {
-        hstsPresent: "strict-transport-security",
-        cspPresent: "content-security-policy",
-        xfoPresent: "x-frame-options",
-      };
+      const map: Record<string, string> = { hstsPresent: "strict-transport-security", cspPresent: "content-security-policy", xfoPresent: "x-frame-options" };
       const present = !!r.headers.get(map[key]);
-      if (v === "yes" || v === "true" || v === "present") return present;
-      if (v === "no" || v === "false" || v === "missing") return !present;
+      if (["yes","true","present"].includes(v)) return present;
+      if (["no","false","missing"].includes(v)) return !present;
       return false;
     }
     if (key === "disallowPath") {
@@ -72,10 +131,7 @@ async function validateFinding(target: string | undefined, key: string, value: s
       if (!r.ok) return false;
       const txt = (await r.text()).toLowerCase();
       const paths = new Set<string>();
-      for (const line of txt.split(/\r?\n/)) {
-        const m = line.match(/^\s*disallow\s*:\s*(\S+)/i);
-        if (m) paths.add(m[1].trim().toLowerCase());
-      }
+      for (const line of txt.split(/\r?\n/)) { const m = line.match(/^\s*disallow\s*:\s*(\S+)/i); if (m) paths.add(m[1].trim().toLowerCase()); }
       return paths.has(v) || paths.has(v.replace(/\/$/, "")) || paths.has(v + "/");
     }
   } catch {
