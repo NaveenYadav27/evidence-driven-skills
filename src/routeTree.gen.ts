@@ -9,38 +9,97 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as ModulesRouteImport } from './routes/modules'
+import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ModulesSlugRouteImport } from './routes/modules.$slug'
+import { Route as LabsSlugRouteImport } from './routes/labs.$slug'
 
+const ModulesRoute = ModulesRouteImport.update({
+  id: '/modules',
+  path: '/modules',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DashboardRoute = DashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ModulesSlugRoute = ModulesSlugRouteImport.update({
+  id: '/$slug',
+  path: '/$slug',
+  getParentRoute: () => ModulesRoute,
+} as any)
+const LabsSlugRoute = LabsSlugRouteImport.update({
+  id: '/labs/$slug',
+  path: '/labs/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/dashboard': typeof DashboardRoute
+  '/modules': typeof ModulesRouteWithChildren
+  '/labs/$slug': typeof LabsSlugRoute
+  '/modules/$slug': typeof ModulesSlugRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/dashboard': typeof DashboardRoute
+  '/modules': typeof ModulesRouteWithChildren
+  '/labs/$slug': typeof LabsSlugRoute
+  '/modules/$slug': typeof ModulesSlugRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/dashboard': typeof DashboardRoute
+  '/modules': typeof ModulesRouteWithChildren
+  '/labs/$slug': typeof LabsSlugRoute
+  '/modules/$slug': typeof ModulesSlugRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths: '/' | '/dashboard' | '/modules' | '/labs/$slug' | '/modules/$slug'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to: '/' | '/dashboard' | '/modules' | '/labs/$slug' | '/modules/$slug'
+  id:
+    | '__root__'
+    | '/'
+    | '/dashboard'
+    | '/modules'
+    | '/labs/$slug'
+    | '/modules/$slug'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  DashboardRoute: typeof DashboardRoute
+  ModulesRoute: typeof ModulesRouteWithChildren
+  LabsSlugRoute: typeof LabsSlugRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/modules': {
+      id: '/modules'
+      path: '/modules'
+      fullPath: '/modules'
+      preLoaderRoute: typeof ModulesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/dashboard': {
+      id: '/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof DashboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -48,11 +107,39 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/modules/$slug': {
+      id: '/modules/$slug'
+      path: '/$slug'
+      fullPath: '/modules/$slug'
+      preLoaderRoute: typeof ModulesSlugRouteImport
+      parentRoute: typeof ModulesRoute
+    }
+    '/labs/$slug': {
+      id: '/labs/$slug'
+      path: '/labs/$slug'
+      fullPath: '/labs/$slug'
+      preLoaderRoute: typeof LabsSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
+interface ModulesRouteChildren {
+  ModulesSlugRoute: typeof ModulesSlugRoute
+}
+
+const ModulesRouteChildren: ModulesRouteChildren = {
+  ModulesSlugRoute: ModulesSlugRoute,
+}
+
+const ModulesRouteWithChildren =
+  ModulesRoute._addFileChildren(ModulesRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  DashboardRoute: DashboardRoute,
+  ModulesRoute: ModulesRouteWithChildren,
+  LabsSlugRoute: LabsSlugRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
