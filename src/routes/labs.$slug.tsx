@@ -30,7 +30,7 @@ export const Route = createFileRoute("/labs/$slug")({
 });
 
 function LabPage() {
-  const { lab } = Route.useLoaderData();
+  const { lab, moduleSlug } = Route.useLoaderData();
   const ensureLab = useTelemetry((s) => s.ensureLab);
   const satisfy = useTelemetry((s) => s.satisfyObjective);
   const attempt = useTelemetry((s) => s.attemptObjective);
