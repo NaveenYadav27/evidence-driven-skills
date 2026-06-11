@@ -118,7 +118,7 @@ export function CloudSyncProvider() {
       const row = await getCloud();
       const local = snapshot();
       if (row?.state && typeof row.state === "object") {
-        const cloud = row.state as TelemetrySnapshot;
+        const cloud = row.state as unknown as TelemetrySnapshot;
         const cloudTs = cloud.lastUpdated ?? 0;
         if (cloudTs > local.lastUpdated) {
           useTelemetry.getState().replaceFromCloud(cloud);
