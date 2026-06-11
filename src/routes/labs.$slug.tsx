@@ -64,7 +64,7 @@ function LabPage() {
 
   return (
     <div className="mx-auto max-w-7xl px-4 sm:px-6 py-8">
-      <Link to="/modules/$slug" params={{ slug: "footprinting-and-reconnaissance" }}
+      <Link to="/modules/$slug" params={{ slug: moduleSlug }}
             className="text-xs text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5 mb-4">
         <ArrowLeft className="h-3 w-3" /> Back to module
       </Link>
