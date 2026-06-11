@@ -110,9 +110,18 @@ const LEARN_CONTENT: Record<string, { sections: { icon: any; title: string; body
     sections: [
       { icon: Eye, title: "What is Footprinting?", body: "Footprinting is the methodical collection of information about a target — its domains, IPs, technologies, people, and exposed services — *before* sending any disruptive traffic. It is the first phase of the ethical-hacking lifecycle." },
       { icon: BookMarked, title: "Why it matters", body: "Strong footprinting shrinks the attack surface to the parts that actually exist. Lazy recon = noisy scans, missed assets, and false positives in later phases." },
-      { icon: Terminal, title: "How it works", body: "Passive recon uses public sources only (WHOIS/RDAP, DNS, search engines, certificate transparency). Active recon issues queries to the target directly. CEH expects you to know both, and the legal boundary between them." },
-      { icon: Lightbulb, title: "CEH v13 exam focus", body: "Expect MCQs on: WHOIS fields (registrar, registrant, dates), DNS record types (A/AAAA/MX/NS/TXT/SOA), Google dorks, tools (theHarvester, Sublist3r, Maltego), and OSINT methodology." },
+      { icon: Terminal, title: "How it works", body: "Passive recon uses public sources only (WHOIS/RDAP, DNS, Certificate Transparency, search engines, Wayback Machine). Active recon issues queries to the target directly. CEH expects you to know both, and the legal boundary between them." },
+      { icon: Lightbulb, title: "CEH v13 exam focus", body: "Expect MCQs on: WHOIS fields (registrar, registrant, dates), DNS record types (A/AAAA/MX/NS/TXT/SOA), Google dorks, tools (theHarvester, Sublist3r, Maltego), Certificate Transparency, and OSINT methodology." },
       { icon: AlertTriangle, title: "Common mistakes", body: "Confusing passive vs. active. Forgetting that DNS zone transfers are an *active* technique. Ignoring SOA & TXT records (SPF/DKIM leak mail infrastructure)." },
+    ],
+  },
+  m13: {
+    sections: [
+      { icon: Eye, title: "What is web server hacking?", body: "Attacking the HTTP server itself — Apache, Nginx, IIS, or the load balancer in front of them — rather than the web application running on top. Targets misconfiguration, default credentials, exposed admin panels, missing security headers, and known CVEs in the server software." },
+      { icon: BookMarked, title: "Why it matters", body: "A single weak header (no HSTS), a leaked Server banner, or a Disallow path pointing to /admin can give an attacker the foothold they need long before any app-level vulnerability is exploited. CEH treats the server tier as a first-class attack surface." },
+      { icon: Terminal, title: "How it works", body: "Probe HTTP response headers to fingerprint server software and audit defence-in-depth headers (HSTS, CSP, X-Frame-Options, X-Content-Type-Options). Parse robots.txt and sitemap.xml to discover paths the operator wanted hidden. Cross-reference banner versions with CVE databases." },
+      { icon: Lightbulb, title: "CEH v13 exam focus", body: "Web server architecture, common misconfigurations (directory listing, default pages, verbose errors), banner grabbing, security headers, robots.txt as recon, and server-specific vulnerabilities (IIS short-name, Apache module flaws, Nginx alias traversal)." },
+      { icon: AlertTriangle, title: "Common mistakes", body: "Treating robots.txt as a security control (it's a recon goldmine). Trusting the Server header as ground truth (it can be spoofed). Skipping HEAD vs GET differential analysis. Ignoring the CDN/WAF layer when fingerprinting." },
     ],
   },
 };
