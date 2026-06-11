@@ -1,4 +1,5 @@
-import { useTelemetry, selectStats, selectToolMastery } from "@/lib/telemetry";
+import { useMemo } from "react";
+import { useTelemetry } from "@/lib/telemetry";
 import { StatTile } from "./StatTile";
 import {
   Activity, Bug, CheckCircle2, Clock, Cpu, Flame, Target, Trophy,
@@ -14,35 +15,53 @@ function fmtTime(ms: number) {
 }
 
 export function LiveDashboard() {
-  const stats = useTelemetry(selectStats);
-  const mastery = useTelemetry(selectToolMastery);
-  const recent = useTelemetry((s) => s.commands.slice(0, 8));
+  const commands = useTelemetry((s) => s.commands);
   const labs = useTelemetry((s) => s.labs);
+  const streak = useTelemetry((s) => s.streak);
+  const totalTimeMs = useTelemetry((s) => s.totalTimeMs);
 
-  const modulesStarted = new Set(
-    Object.keys(labs).map((id) => labs[id]).map(() => {}).keys(),
-  );
-  // Better: derive started modules from satisfied objectives' lab moduleIds. Use labs key naming.
-  const startedModuleIds = new Set(
-    Object.keys(labs).map((id) => id.split("-")[1]).filter(Boolean),
-  );
+  const stats = useMemo(() => {
+    const labIds = Object.keys(labs);
+    const completed = labIds.filter((id) => labs[id].completedAt).length;
+    const started = labIds.length;
+    const cmd = commands.length;
+    const errors = commands.filter((c) => !c.success).length;
+    const successRate = cmd ? Math.round(((cmd - errors) / cmd) * 100) : 0;
+    const challengesSolved = labIds.filter((id) => id.includes("challenge") && labs[id].completedAt).length;
+    const startedModuleIds = new Set(labIds.map((id) => id.split("-")[1]).filter(Boolean));
+    const readiness = Math.min(100, Math.round(completed * 8 + challengesSolved * 12 + successRate * 0.2));
+    return { completed, started, commands: cmd, errors, successRate, challengesSolved, startedModuleIds, readiness };
+  }, [commands, labs]);
 
-  const readiness = Math.min(
-    100,
-    Math.round(stats.completed * 8 + stats.challengesSolved * 12 + stats.successRate * 0.2),
-  );
+  const mastery = useMemo(() => {
+    const byTool: Record<string, { runs: number; ok: number }> = {};
+    for (const c of commands) {
+      byTool[c.tool] ??= { runs: 0, ok: 0 };
+      byTool[c.tool].runs++;
+      if (c.success) byTool[c.tool].ok++;
+    }
+    return Object.entries(byTool)
+      .map(([tool, v]) => ({
+        tool, runs: v.runs,
+        successRate: v.runs ? Math.round((v.ok / v.runs) * 100) : 0,
+        mastery: Math.min(100, Math.round((v.ok / 8) * 70 + (v.runs >= 12 ? 30 : (v.runs / 12) * 30))),
+      }))
+      .sort((a, b) => b.mastery - a.mastery);
+  }, [commands]);
+
+  const recent = useMemo(() => commands.slice(0, 8), [commands]);
 
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <StatTile icon={Target} label="Modules Started" value={startedModuleIds.size} sub={`of ${MODULES.length}`} />
+        <StatTile icon={Target} label="Modules Started" value={stats.startedModuleIds.size} sub={`of ${MODULES.length}`} />
         <StatTile icon={CheckCircle2} label="Labs Completed" value={stats.completed} sub={`${stats.started} started`} tone="success" />
         <StatTile icon={Trophy} label="Challenges Solved" value={stats.challengesSolved} tone="red" />
         <StatTile icon={Cpu} label="Commands Executed" value={stats.commands} sub={`${stats.successRate}% success`} tone="cyan" />
         <StatTile icon={Bug} label="Errors Encountered" value={stats.errors} sub="Learning signal" />
-        <StatTile icon={Flame} label="Current Streak" value={`${stats.streak}d`} />
-        <StatTile icon={Clock} label="Range Time" value={fmtTime(stats.totalTimeMs)} />
-        <StatTile icon={Activity} label="Exam Readiness" value={`${readiness}%`} sub="Earned via evidence" tone="red" />
+        <StatTile icon={Flame} label="Current Streak" value={`${streak}d`} />
+        <StatTile icon={Clock} label="Range Time" value={fmtTime(totalTimeMs)} />
+        <StatTile icon={Activity} label="Exam Readiness" value={`${stats.readiness}%`} sub="Earned via evidence" tone="red" />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -53,7 +72,7 @@ export function LiveDashboard() {
           </div>
           {recent.length === 0 ? (
             <div className="rounded-md border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
-              No telemetry yet. <Link to="/labs/whois-recon" className="text-[var(--cyan)] hover:underline">Launch a lab</Link> and your commands will stream here.
+              No telemetry yet. <Link to="/labs/$slug" params={{ slug: "whois-recon" }} className="text-[var(--cyan)] hover:underline">Launch a lab</Link> and your commands will stream here.
             </div>
           ) : (
             <ul className="font-mono text-xs space-y-1.5 max-h-[280px] overflow-auto">
