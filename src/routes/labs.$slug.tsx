@@ -1,7 +1,6 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { useEffect, useRef } from "react";
 import { getLab } from "@/data/labs";
-import { getModule } from "@/data/modules";
 import { Terminal } from "@/components/Terminal";
 import { LabObjectives } from "@/components/LabObjectives";
 import { useTelemetry } from "@/lib/telemetry";
@@ -11,8 +10,7 @@ export const Route = createFileRoute("/labs/$slug")({
   loader: ({ params }) => {
     const lab = getLab(params.slug);
     if (!lab) throw notFound();
-    const mod = getModule(""); // placeholder
-    return { lab, module: { id: lab.moduleId, title: lab.moduleId, slug: lab.moduleId } };
+    return { lab };
   },
   head: ({ loaderData }) => ({
     meta: [
