@@ -30,13 +30,16 @@ export interface LabProgress {
   timeMs: number;
 }
 
-interface TelemetryState {
+export interface TelemetrySnapshot {
   commands: CommandEvent[];
   labs: Record<string, LabProgress>;
   totalTimeMs: number;
   lastActiveDay?: string;
   streak: number;
+  lastUpdated: number;
+}
 
+interface TelemetryState extends TelemetrySnapshot {
   // actions
   recordCommand: (e: Omit<CommandEvent, "id" | "ts">) => void;
   satisfyObjective: (labId: string, objId: string) => void;
@@ -46,6 +49,8 @@ interface TelemetryState {
   completeLab: (labId: string) => void;
   tick: (ms: number) => void;
   reset: () => void;
+  replaceFromCloud: (snap: TelemetrySnapshot) => void;
+  markUpdated: () => void;
 }
 
 const today = () => new Date().toISOString().slice(0, 10);
@@ -57,6 +62,8 @@ export const useTelemetry = create<TelemetryState>()(
       labs: {},
       totalTimeMs: 0,
       streak: 0,
+      lastUpdated: 0,
+
 
       ensureLab: (labId) => {
         if (get().labs[labId]) return;
@@ -167,7 +174,18 @@ export const useTelemetry = create<TelemetryState>()(
 
       tick: (ms) => set((s) => ({ totalTimeMs: s.totalTimeMs + ms })),
 
-      reset: () => set({ commands: [], labs: {}, totalTimeMs: 0, streak: 0, lastActiveDay: undefined }),
+      reset: () => set({ commands: [], labs: {}, totalTimeMs: 0, streak: 0, lastActiveDay: undefined, lastUpdated: Date.now() }),
+
+      replaceFromCloud: (snap) => set({
+        commands: snap.commands ?? [],
+        labs: snap.labs ?? {},
+        totalTimeMs: snap.totalTimeMs ?? 0,
+        streak: snap.streak ?? 0,
+        lastActiveDay: snap.lastActiveDay,
+        lastUpdated: snap.lastUpdated ?? Date.now(),
+      }),
+
+      markUpdated: () => set({ lastUpdated: Date.now() }),
     }),
     { name: "shadowx-ceh-telemetry-v1" },
   ),
