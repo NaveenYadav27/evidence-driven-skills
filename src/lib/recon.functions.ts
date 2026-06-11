@@ -1,13 +1,17 @@
 import { createServerFn } from "@tanstack/react-start";
 
 /**
- * Recon server functions — real public APIs (no mocks).
+ * Recon & web-server server functions — all real public APIs, no mocks.
  *   WHOIS  → RDAP via rdap.org
  *   DNS    → DoH (Cloudflare, RFC 8484 JSON)
- *   SUBS   → crt.sh certificate transparency
+ *   SUBS   → crt.sh Certificate Transparency
  *   HTTP   → fetch with header introspection
  *   ROBOTS → /robots.txt + /sitemap.xml
  *   WAYBACK→ Internet Archive CDX API
+ *   CVE    → NIST NVD 2.0 API
+ *   IP     → ipapi.co geolocation/ASN
+ *   TLS    → crt.sh latest cert metadata
+ *   METHODS→ HTTP OPTIONS Allow probe
  */
 
 const ALLOWED_DOMAIN = /^[a-z0-9.-]+\.[a-z]{2,}$/i;
@@ -17,24 +21,23 @@ const RDAP_BASE = "https://rdap.org/domain/";
 const DOH_BASE = "https://cloudflare-dns.com/dns-query";
 const CRTSH_BASE = "https://crt.sh/?output=json&q=";
 const WAYBACK_CDX = "https://web.archive.org/cdx/search/cdx";
+const NVD_BASE = "https://services.nvd.nist.gov/rest/json/cves/2.0";
+const IPAPI_BASE = "https://ipapi.co";
 
 const DNS_TYPES: Record<string, number> = {
   A: 1, NS: 2, CNAME: 5, SOA: 6, PTR: 12, MX: 15, TXT: 16, AAAA: 28, SRV: 33, CAA: 257,
 };
 
+const SAFE_TARGET = /^[a-z0-9.-]+\.[a-z]{2,}$/i;
+const IPV4 = /^(?:(?:25[0-5]|2[0-4]\d|[01]?\d?\d)\.){3}(?:25[0-5]|2[0-4]\d|[01]?\d?\d)$/;
+
 /* ───────────────────────────  WHOIS / RDAP  ─────────────────────────── */
 
 export interface WhoisResult {
-  ok: boolean;
-  domain: string;
-  registrar?: string;
-  createdDate?: string;
-  expiresDate?: string;
-  updatedDate?: string;
-  nameservers?: string[];
-  statuses?: string[];
-  raw: string;
-  error?: string;
+  ok: boolean; domain: string;
+  registrar?: string; createdDate?: string; expiresDate?: string; updatedDate?: string;
+  nameservers?: string[]; statuses?: string[];
+  raw: string; error?: string;
 }
 
 export const whoisLookup = createServerFn({ method: "POST" })
@@ -44,10 +47,7 @@ export const whoisLookup = createServerFn({ method: "POST" })
     if (!ALLOWED_DOMAIN.test(domain)) return { ok: false, domain, raw: "", error: "Invalid domain format" };
     try {
       const res = await fetch(RDAP_BASE + domain, { headers: { Accept: "application/rdap+json" } });
-      if (!res.ok) {
-        const body = await res.text();
-        return { ok: false, domain, raw: body.slice(0, 2000), error: `RDAP ${res.status}` };
-      }
+      if (!res.ok) return { ok: false, domain, raw: (await res.text()).slice(0, 2000), error: `RDAP ${res.status}` };
       const json: any = await res.json();
       const events: Array<{ eventAction: string; eventDate: string }> = json.events ?? [];
       const created = events.find(e => e.eventAction === "registration")?.eventDate;
@@ -71,8 +71,7 @@ export const whoisLookup = createServerFn({ method: "POST" })
         `Expiration Date:    ${expires ?? "(unknown)"}`,
         `Domain Status:      ${statuses.join(", ") || "(unknown)"}`,
         ...nameservers.map((n: string) => `Name Server:        ${n}`),
-        "",
-        ">>> RDAP query complete.",
+        "", ">>> RDAP query complete.",
       ].join("\n");
       return { ok: true, domain, registrar, createdDate: created, expiresDate: expires, updatedDate: updated, nameservers, statuses, raw };
     } catch (e: any) {
@@ -126,12 +125,7 @@ function typeName(n: number): string {
 /* ─────────────────────  SUBDOMAIN ENUM (crt.sh)  ────────────────────── */
 
 export interface SubdomainResult {
-  ok: boolean;
-  domain: string;
-  unique: string[];
-  count: number;
-  raw: string;
-  error?: string;
+  ok: boolean; domain: string; unique: string[]; count: number; raw: string; error?: string;
 }
 
 export const subdomainEnum = createServerFn({ method: "POST" })
@@ -168,25 +162,11 @@ export const subdomainEnum = createServerFn({ method: "POST" })
 /* ─────────────────────────  HTTP HEADERS  ───────────────────────────── */
 
 export interface HeadersResult {
-  ok: boolean;
-  url: string;
-  status?: number;
-  server?: string;
+  ok: boolean; url: string; status?: number; server?: string;
   headers: Record<string, string>;
-  security: {
-    hsts: boolean;
-    csp: boolean;
-    xfo: boolean;
-    xcto: boolean;
-    referrer: boolean;
-    permissions: boolean;
-    score: number;
-  };
-  raw: string;
-  error?: string;
+  security: { hsts: boolean; csp: boolean; xfo: boolean; xcto: boolean; referrer: boolean; permissions: boolean; score: number };
+  raw: string; error?: string;
 }
-
-const SAFE_TARGET = /^[a-z0-9.-]+\.[a-z]{2,}$/i;
 
 export const httpHeaders = createServerFn({ method: "POST" })
   .inputValidator((input: { target: string }) => input)
@@ -237,14 +217,9 @@ function emptySec() { return { hsts: false, csp: false, xfo: false, xcto: false,
 /* ─────────────────────────  ROBOTS / SITEMAP  ───────────────────────── */
 
 export interface RobotsResult {
-  ok: boolean;
-  url: string;
-  disallow: string[];
-  allow: string[];
-  sitemaps: string[];
-  userAgents: string[];
-  raw: string;
-  error?: string;
+  ok: boolean; url: string;
+  disallow: string[]; allow: string[]; sitemaps: string[]; userAgents: string[];
+  raw: string; error?: string;
 }
 
 export const robotsScan = createServerFn({ method: "POST" })
@@ -295,14 +270,9 @@ export const robotsScan = createServerFn({ method: "POST" })
 /* ────────────────────────  WAYBACK MACHINE  ─────────────────────────── */
 
 export interface WaybackResult {
-  ok: boolean;
-  target: string;
-  totalSnapshots: number;
-  firstSnapshot?: string;
-  lastSnapshot?: string;
-  firstYear?: string;
-  raw: string;
-  error?: string;
+  ok: boolean; target: string; totalSnapshots: number;
+  firstSnapshot?: string; lastSnapshot?: string; firstYear?: string;
+  raw: string; error?: string;
 }
 
 export const waybackHistory = createServerFn({ method: "POST" })
@@ -315,7 +285,7 @@ export const waybackHistory = createServerFn({ method: "POST" })
       const res = await fetch(url);
       if (!res.ok) return { ok: false, target: host, totalSnapshots: 0, raw: "", error: `Wayback ${res.status}` };
       const rows: any[][] = await res.json().catch(() => []);
-      const data2 = rows.slice(1); // first row is header
+      const data2 = rows.slice(1);
       const total = data2.length;
       const first = data2[0]?.[0];
       const last = data2[data2.length - 1]?.[0];
@@ -333,5 +303,181 @@ export const waybackHistory = createServerFn({ method: "POST" })
       return { ok: true, target: host, totalSnapshots: total, firstSnapshot: fmt(first), lastSnapshot: fmt(last), firstYear: first?.slice(0, 4), raw };
     } catch (e: any) {
       return { ok: false, target: host, totalSnapshots: 0, raw: "", error: e?.message ?? "Network error" };
+    }
+  });
+
+/* ─────────────────────────  CVE SEARCH (NVD) ─────────────────────────── */
+
+export interface CveSearchResult {
+  ok: boolean; query: string; total: number;
+  items: { id: string; cvss?: number; severity?: string; published?: string; summary: string }[];
+  raw: string; error?: string;
+}
+
+export const cveSearch = createServerFn({ method: "POST" })
+  .inputValidator((input: { query: string }) => input)
+  .handler(async ({ data }): Promise<CveSearchResult> => {
+    const q = (data.query || "").trim().slice(0, 80);
+    if (!q || !/^[\w .+\-:/]+$/.test(q)) return { ok: false, query: q, total: 0, items: [], raw: "", error: "Invalid query" };
+    try {
+      const isCveId = /^CVE-\d{4}-\d{4,7}$/i.test(q);
+      const url = isCveId
+        ? `${NVD_BASE}?cveId=${encodeURIComponent(q.toUpperCase())}`
+        : `${NVD_BASE}?keywordSearch=${encodeURIComponent(q)}&resultsPerPage=20`;
+      const res = await fetch(url, { headers: { Accept: "application/json" } });
+      if (!res.ok) return { ok: false, query: q, total: 0, items: [], raw: "", error: `NVD ${res.status}` };
+      const json: any = await res.json();
+      const vulns: any[] = json.vulnerabilities ?? [];
+      const items = vulns.map((v) => {
+        const c = v.cve ?? {};
+        const desc = (c.descriptions ?? []).find((d: any) => d.lang === "en")?.value ?? "";
+        const m31 = c.metrics?.cvssMetricV31?.[0]?.cvssData;
+        const m30 = c.metrics?.cvssMetricV30?.[0]?.cvssData;
+        const m2 = c.metrics?.cvssMetricV2?.[0]?.cvssData;
+        const m = m31 ?? m30 ?? m2;
+        return {
+          id: c.id,
+          cvss: m?.baseScore,
+          severity: c.metrics?.cvssMetricV31?.[0]?.cvssData?.baseSeverity ?? c.metrics?.cvssMetricV2?.[0]?.baseSeverity,
+          published: c.published?.slice(0, 10),
+          summary: desc.slice(0, 240),
+        };
+      });
+      const raw = [
+        `;; NIST NVD 2.0 search`,
+        `;; Query: ${q}    Total: ${json.totalResults ?? items.length}    Showing: ${items.length}`,
+        ``,
+        ...items.map((i) => `${i.id}   CVSS ${i.cvss ?? "?"} (${i.severity ?? "-"})   ${i.published ?? ""}\n  ${i.summary}`),
+      ].join("\n");
+      return { ok: true, query: q, total: json.totalResults ?? items.length, items, raw };
+    } catch (e: any) {
+      return { ok: false, query: q, total: 0, items: [], raw: "", error: e?.message ?? "Network error" };
+    }
+  });
+
+/* ─────────────────────────  IP INTELLIGENCE  ─────────────────────────── */
+
+export interface IpIntelResult {
+  ok: boolean; query: string;
+  ip?: string; country?: string; countryCode?: string; region?: string; city?: string;
+  org?: string; asn?: string; timezone?: string;
+  raw: string; error?: string;
+}
+
+export const ipIntel = createServerFn({ method: "POST" })
+  .inputValidator((input: { target: string }) => input)
+  .handler(async ({ data }): Promise<IpIntelResult> => {
+    const t = (data.target || "").trim().toLowerCase();
+    if (!t) return { ok: false, query: t, raw: "", error: "Missing target" };
+    let ip = t;
+    try {
+      if (!IPV4.test(t)) {
+        if (!SAFE_TARGET.test(t)) return { ok: false, query: t, raw: "", error: "Invalid host/IP" };
+        const dns = await fetch(`${DOH_BASE}?name=${encodeURIComponent(t)}&type=A`, { headers: { Accept: "application/dns-json" } });
+        const j: any = await dns.json();
+        const a = (j.Answer ?? []).find((x: any) => x.type === 1)?.data;
+        if (!a) return { ok: false, query: t, raw: "", error: "No A record" };
+        ip = a;
+      }
+      const res = await fetch(`${IPAPI_BASE}/${ip}/json/`, { headers: { Accept: "application/json", "User-Agent": "ShadowXLab-Range/1.0" } });
+      if (!res.ok) return { ok: false, query: t, ip, raw: "", error: `ipapi ${res.status}` };
+      const j: any = await res.json();
+      if (j.error) return { ok: false, query: t, ip, raw: "", error: j.reason ?? "ipapi error" };
+      const out = {
+        ok: true,
+        query: t, ip,
+        country: j.country_name, countryCode: j.country,
+        region: j.region, city: j.city,
+        org: j.org, asn: j.asn, timezone: j.timezone,
+        raw: [
+          `;; IP intelligence for ${t} → ${ip}`,
+          `Country:   ${j.country_name} (${j.country})`,
+          `Region:    ${j.region}`,
+          `City:      ${j.city}`,
+          `ASN:       ${j.asn}`,
+          `Org:       ${j.org}`,
+          `Timezone:  ${j.timezone}`,
+          `Lat/Lng:   ${j.latitude}, ${j.longitude}`,
+        ].join("\n"),
+      };
+      return out;
+    } catch (e: any) {
+      return { ok: false, query: t, raw: "", error: e?.message ?? "Network error" };
+    }
+  });
+
+/* ──────────────────────────  TLS INSPECT  ────────────────────────────── */
+
+export interface TlsInspectResult {
+  ok: boolean; host: string;
+  issuer?: string; commonName?: string; sans?: string[];
+  notBefore?: string; notAfter?: string; serial?: string;
+  raw: string; error?: string;
+}
+
+export const tlsInspect = createServerFn({ method: "POST" })
+  .inputValidator((input: { target: string }) => input)
+  .handler(async ({ data }): Promise<TlsInspectResult> => {
+    const host = sanitize(data.target || "");
+    if (!SAFE_TARGET.test(host)) return { ok: false, host, raw: "", error: "Invalid host" };
+    try {
+      const res = await fetch(`${CRTSH_BASE}${encodeURIComponent(host)}&exclude=expired`, { headers: { Accept: "application/json" } });
+      if (!res.ok) return { ok: false, host, raw: "", error: `crt.sh ${res.status}` };
+      const json: any[] = await res.json().catch(() => []);
+      if (!json.length) return { ok: false, host, raw: "", error: "No certificates found" };
+      json.sort((a, b) => String(b.not_before).localeCompare(String(a.not_before)));
+      const top = json[0];
+      const sans = String(top.name_value || "").split("\n").map(s => s.trim().toLowerCase().replace(/^\*\./, "")).filter(Boolean);
+      const raw = [
+        `;; TLS certificate for ${host} via Certificate Transparency`,
+        `Issuer:        ${top.issuer_name}`,
+        `Common Name:   ${top.common_name}`,
+        `Not Before:    ${top.not_before}`,
+        `Not After:     ${top.not_after}`,
+        `Serial:        ${top.serial_number}`,
+        `SANs (${sans.length}):`,
+        ...sans.slice(0, 30).map(s => `  • ${s}`),
+        sans.length > 30 ? `  ... (+${sans.length - 30})` : ``,
+      ].filter(Boolean).join("\n");
+      return {
+        ok: true, host,
+        issuer: top.issuer_name, commonName: top.common_name, sans,
+        notBefore: top.not_before, notAfter: top.not_after, serial: top.serial_number,
+        raw,
+      };
+    } catch (e: any) {
+      return { ok: false, host, raw: "", error: e?.message ?? "Network error" };
+    }
+  });
+
+/* ─────────────────────────  HTTP METHODS  ────────────────────────────── */
+
+export interface HttpMethodsResult {
+  ok: boolean; url: string; status?: number; allow?: string[]; raw: string; error?: string;
+}
+
+export const httpMethods = createServerFn({ method: "POST" })
+  .inputValidator((input: { target: string }) => input)
+  .handler(async ({ data }): Promise<HttpMethodsResult> => {
+    const host = sanitize(data.target || "");
+    if (!SAFE_TARGET.test(host)) return { ok: false, url: host, raw: "", error: "Invalid host" };
+    const url = `https://${host}/`;
+    try {
+      const ctrl = new AbortController();
+      const t = setTimeout(() => ctrl.abort(), 8000);
+      const res = await fetch(url, { method: "OPTIONS", signal: ctrl.signal, headers: { "User-Agent": "ShadowXLab-Range/1.0" } });
+      clearTimeout(t);
+      const allow = (res.headers.get("allow") || res.headers.get("access-control-allow-methods") || "").split(",").map(s => s.trim().toUpperCase()).filter(Boolean);
+      const risky = allow.filter(m => ["PUT", "DELETE", "TRACE", "CONNECT", "PATCH"].includes(m));
+      const raw = [
+        `OPTIONS ${url}`,
+        `HTTP/${res.status} ${res.statusText}`,
+        ``,
+        `Allow: ${allow.length ? allow.join(", ") : "(not advertised)"}`,
+        `Risky methods exposed: ${risky.length ? risky.join(", ") : "none"}`,
+      ].join("\n");
+      return { ok: true, url, status: res.status, allow, raw };
+    } catch (e: any) {
+      return { ok: false, url, raw: "", error: e?.message ?? "Network error" };
     }
   });
