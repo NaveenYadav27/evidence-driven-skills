@@ -118,7 +118,7 @@ const LEARN_CONTENT: Record<string, { sections: { icon: any; title: string; body
       { icon: AlertTriangle, title: "CEH v13 exam focus & common traps", body: "Memorise: 7 kill-chain phases in order, 14 ATT&CK tactics, CIA vs DAD, hat colours (white/black/grey/red/blue/purple/green), vulnerability vs threat vs risk vs exposure, defence-in-depth layers, and the CVSS v3.1 metric groups (Base / Temporal / Environmental). Common traps: confusing risk and threat, calling zone transfer 'passive' (it's active), assuming ATT&CK and Kill Chain are interchangeable (they aren't — ATT&CK starts after Initial Access in Lockheed terms)." },
     ],
   },
-
+  m02: {
     sections: [
       { icon: Eye, title: "What is Footprinting?", body: "Footprinting is the methodical collection of information about a target — its domains, IPs, technologies, people, and exposed services — *before* sending any disruptive traffic. It is the first phase of the ethical-hacking lifecycle." },
       { icon: BookMarked, title: "Why it matters", body: "Strong footprinting shrinks the attack surface to the parts that actually exist. Lazy recon = noisy scans, missed assets, and false positives in later phases." },
