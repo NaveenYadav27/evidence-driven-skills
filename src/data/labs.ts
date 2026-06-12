@@ -73,6 +73,75 @@ export const LABS: Lab[] = [
       { key: "attackTactic", label: "Tactic", placeholder: "e.g. execution" },
     ],
   },
+  {
+    id: "lab-m01-cvss",
+    moduleId: "m01",
+    slug: "cvss-triage",
+    title: "CVSS v3.1 — Risk Triage of a Real CVE",
+    kind: "terminal",
+    difficulty: "intermediate",
+    estMinutes: 25,
+    target: "log4j",
+    scenario:
+      "An ethical hacker must justify severity to executives using a recognised scoring system. Search NVD for a Log4Shell-class CVE, then craft a CVSS v3.1 base vector and matching score that defends a Critical rating (RCE, network, no auth).",
+    tools: ["cve", "cvss"],
+    objectives: [
+      { id: "o-m01-cvss-cve", label: "Run cve search against log4j", type: "command", tool: "cve", argMatch: "log4j" },
+      { id: "o-m01-cvss-cmd", label: "Compute a CVSS score with the cvss tool", type: "command", tool: "cvss" },
+      { id: "o-m01-cvss-vec", label: "Submit the CVSS v3.1 base vector", type: "finding", key: "cvssVector", hint: "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H" },
+      { id: "o-m01-cvss-sc",  label: "Submit the resulting base score", type: "finding", key: "cvssScore", hint: "0.0 – 10.0, one decimal" },
+    ],
+    findingFields: [
+      { key: "cvssVector", label: "CVSS v3.1 vector", placeholder: "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H", help: "Lowercase or uppercase accepted." },
+      { key: "cvssScore",  label: "Base score",        placeholder: "9.8" },
+    ],
+  },
+  {
+    id: "lab-m01-persistence",
+    moduleId: "m01",
+    slug: "attack-persistence-mapping",
+    title: "ATT&CK — Persistence Technique Mapping",
+    kind: "terminal",
+    difficulty: "intermediate",
+    estMinutes: 15,
+    scenario:
+      "Blue team detected a new value under HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Run pointing to a binary in %APPDATA%. Identify the MITRE ATT&CK Technique ID for this persistence behaviour and the parent tactic.",
+    tools: [],
+    objectives: [
+      { id: "o-m01-per-tid", label: "Submit the ATT&CK Technique ID for Registry Run Keys persistence", type: "finding", key: "attackTechniqueId", hint: "Hint: T1547.001" },
+      { id: "o-m01-per-tac", label: "Submit the parent tactic", type: "finding", key: "attackTactic", hint: "persistence" },
+    ],
+    findingFields: [
+      { key: "attackTechniqueId", label: "Technique ID", placeholder: "T####.###" },
+      { key: "attackTactic",      label: "Tactic",        placeholder: "persistence" },
+    ],
+  },
+  {
+    id: "lab-m01-incident",
+    moduleId: "m01",
+    slug: "incident-decomposition",
+    title: "Incident Decomposition — Real Breach to Frameworks",
+    kind: "challenge",
+    difficulty: "advanced",
+    estMinutes: 35,
+    target: "log4j",
+    scenario:
+      "End-to-end analyst challenge. Pick a Log4Shell-related CVE from NVD, identify the Cyber Kill Chain phase where the vulnerability is weaponised against the target, and map the post-exploitation behaviour (downloading a second-stage payload over HTTP from a C2 host) to a MITRE ATT&CK Technique ID and tactic.",
+    tools: ["cve"],
+    objectives: [
+      { id: "o-m01-inc-cve",   label: "Run cve search against log4j",                                  type: "command", tool: "cve", argMatch: "log4j" },
+      { id: "o-m01-inc-id",    label: "Submit a CVE-ID returned by NVD",                              type: "finding", key: "cveId" },
+      { id: "o-m01-inc-phase", label: "Submit the kill-chain phase for RCE via crafted JNDI string",  type: "finding", key: "killChainPhase", hint: "exploitation" },
+      { id: "o-m01-inc-tid",   label: "Submit ATT&CK Technique ID for stage-2 payload download",       type: "finding", key: "attackTechniqueId", hint: "Hint: T1105 — Ingress Tool Transfer" },
+      { id: "o-m01-inc-tac",   label: "Submit the parent tactic",                                      type: "finding", key: "attackTactic", hint: "command-and-control" },
+    ],
+    findingFields: [
+      { key: "cveId",              label: "CVE Identifier",   placeholder: "CVE-2021-44228" },
+      { key: "killChainPhase",     label: "Kill-chain phase", placeholder: "exploitation" },
+      { key: "attackTechniqueId",  label: "Technique ID",     placeholder: "T1105" },
+      { key: "attackTactic",       label: "Tactic",            placeholder: "command-and-control" },
+    ],
+  },
 
   /* ══════════ Module 02 — Footprinting & Reconnaissance ══════════ */
   {
