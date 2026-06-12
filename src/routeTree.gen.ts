@@ -13,6 +13,7 @@ import { Route as ModulesRouteImport } from './routes/modules'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ModulesIndexRouteImport } from './routes/modules.index'
 import { Route as ModulesSlugRouteImport } from './routes/modules.$slug'
 import { Route as LabsSlugRouteImport } from './routes/labs.$slug'
 
@@ -36,6 +37,11 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ModulesIndexRoute = ModulesIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => ModulesRoute,
+} as any)
 const ModulesSlugRoute = ModulesSlugRouteImport.update({
   id: '/$slug',
   path: '/$slug',
@@ -54,14 +60,15 @@ export interface FileRoutesByFullPath {
   '/modules': typeof ModulesRouteWithChildren
   '/labs/$slug': typeof LabsSlugRoute
   '/modules/$slug': typeof ModulesSlugRoute
+  '/modules/': typeof ModulesIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/dashboard': typeof DashboardRoute
-  '/modules': typeof ModulesRouteWithChildren
   '/labs/$slug': typeof LabsSlugRoute
   '/modules/$slug': typeof ModulesSlugRoute
+  '/modules': typeof ModulesIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -71,6 +78,7 @@ export interface FileRoutesById {
   '/modules': typeof ModulesRouteWithChildren
   '/labs/$slug': typeof LabsSlugRoute
   '/modules/$slug': typeof ModulesSlugRoute
+  '/modules/': typeof ModulesIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -81,14 +89,15 @@ export interface FileRouteTypes {
     | '/modules'
     | '/labs/$slug'
     | '/modules/$slug'
+    | '/modules/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/auth'
     | '/dashboard'
-    | '/modules'
     | '/labs/$slug'
     | '/modules/$slug'
+    | '/modules'
   id:
     | '__root__'
     | '/'
@@ -97,6 +106,7 @@ export interface FileRouteTypes {
     | '/modules'
     | '/labs/$slug'
     | '/modules/$slug'
+    | '/modules/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -137,6 +147,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/modules/': {
+      id: '/modules/'
+      path: '/'
+      fullPath: '/modules/'
+      preLoaderRoute: typeof ModulesIndexRouteImport
+      parentRoute: typeof ModulesRoute
+    }
     '/modules/$slug': {
       id: '/modules/$slug'
       path: '/$slug'
@@ -156,10 +173,12 @@ declare module '@tanstack/react-router' {
 
 interface ModulesRouteChildren {
   ModulesSlugRoute: typeof ModulesSlugRoute
+  ModulesIndexRoute: typeof ModulesIndexRoute
 }
 
 const ModulesRouteChildren: ModulesRouteChildren = {
   ModulesSlugRoute: ModulesSlugRoute,
+  ModulesIndexRoute: ModulesIndexRoute,
 }
 
 const ModulesRouteWithChildren =
@@ -175,3 +194,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
