@@ -10,16 +10,24 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as ModulesRouteImport } from './routes/modules'
+import { Route as Day1RouteImport } from './routes/day1'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ModulesIndexRouteImport } from './routes/modules.index'
+import { Route as Day1IndexRouteImport } from './routes/day1.index'
 import { Route as ModulesSlugRouteImport } from './routes/modules.$slug'
 import { Route as LabsSlugRouteImport } from './routes/labs.$slug'
+import { Route as Day1HourRouteImport } from './routes/day1.$hour'
 
 const ModulesRoute = ModulesRouteImport.update({
   id: '/modules',
   path: '/modules',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const Day1Route = Day1RouteImport.update({
+  id: '/day1',
+  path: '/day1',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DashboardRoute = DashboardRouteImport.update({
@@ -42,6 +50,11 @@ const ModulesIndexRoute = ModulesIndexRouteImport.update({
   path: '/',
   getParentRoute: () => ModulesRoute,
 } as any)
+const Day1IndexRoute = Day1IndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => Day1Route,
+} as any)
 const ModulesSlugRoute = ModulesSlugRouteImport.update({
   id: '/$slug',
   path: '/$slug',
@@ -52,22 +65,32 @@ const LabsSlugRoute = LabsSlugRouteImport.update({
   path: '/labs/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
+const Day1HourRoute = Day1HourRouteImport.update({
+  id: '/$hour',
+  path: '/$hour',
+  getParentRoute: () => Day1Route,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/dashboard': typeof DashboardRoute
+  '/day1': typeof Day1RouteWithChildren
   '/modules': typeof ModulesRouteWithChildren
+  '/day1/$hour': typeof Day1HourRoute
   '/labs/$slug': typeof LabsSlugRoute
   '/modules/$slug': typeof ModulesSlugRoute
+  '/day1/': typeof Day1IndexRoute
   '/modules/': typeof ModulesIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/dashboard': typeof DashboardRoute
+  '/day1/$hour': typeof Day1HourRoute
   '/labs/$slug': typeof LabsSlugRoute
   '/modules/$slug': typeof ModulesSlugRoute
+  '/day1': typeof Day1IndexRoute
   '/modules': typeof ModulesIndexRoute
 }
 export interface FileRoutesById {
@@ -75,9 +98,12 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/dashboard': typeof DashboardRoute
+  '/day1': typeof Day1RouteWithChildren
   '/modules': typeof ModulesRouteWithChildren
+  '/day1/$hour': typeof Day1HourRoute
   '/labs/$slug': typeof LabsSlugRoute
   '/modules/$slug': typeof ModulesSlugRoute
+  '/day1/': typeof Day1IndexRoute
   '/modules/': typeof ModulesIndexRoute
 }
 export interface FileRouteTypes {
@@ -86,26 +112,34 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/dashboard'
+    | '/day1'
     | '/modules'
+    | '/day1/$hour'
     | '/labs/$slug'
     | '/modules/$slug'
+    | '/day1/'
     | '/modules/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/auth'
     | '/dashboard'
+    | '/day1/$hour'
     | '/labs/$slug'
     | '/modules/$slug'
+    | '/day1'
     | '/modules'
   id:
     | '__root__'
     | '/'
     | '/auth'
     | '/dashboard'
+    | '/day1'
     | '/modules'
+    | '/day1/$hour'
     | '/labs/$slug'
     | '/modules/$slug'
+    | '/day1/'
     | '/modules/'
   fileRoutesById: FileRoutesById
 }
@@ -113,6 +147,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthRoute: typeof AuthRoute
   DashboardRoute: typeof DashboardRoute
+  Day1Route: typeof Day1RouteWithChildren
   ModulesRoute: typeof ModulesRouteWithChildren
   LabsSlugRoute: typeof LabsSlugRoute
 }
@@ -124,6 +159,13 @@ declare module '@tanstack/react-router' {
       path: '/modules'
       fullPath: '/modules'
       preLoaderRoute: typeof ModulesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/day1': {
+      id: '/day1'
+      path: '/day1'
+      fullPath: '/day1'
+      preLoaderRoute: typeof Day1RouteImport
       parentRoute: typeof rootRouteImport
     }
     '/dashboard': {
@@ -154,6 +196,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ModulesIndexRouteImport
       parentRoute: typeof ModulesRoute
     }
+    '/day1/': {
+      id: '/day1/'
+      path: '/'
+      fullPath: '/day1/'
+      preLoaderRoute: typeof Day1IndexRouteImport
+      parentRoute: typeof Day1Route
+    }
     '/modules/$slug': {
       id: '/modules/$slug'
       path: '/$slug'
@@ -168,8 +217,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LabsSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/day1/$hour': {
+      id: '/day1/$hour'
+      path: '/$hour'
+      fullPath: '/day1/$hour'
+      preLoaderRoute: typeof Day1HourRouteImport
+      parentRoute: typeof Day1Route
+    }
   }
 }
+
+interface Day1RouteChildren {
+  Day1HourRoute: typeof Day1HourRoute
+  Day1IndexRoute: typeof Day1IndexRoute
+}
+
+const Day1RouteChildren: Day1RouteChildren = {
+  Day1HourRoute: Day1HourRoute,
+  Day1IndexRoute: Day1IndexRoute,
+}
+
+const Day1RouteWithChildren = Day1Route._addFileChildren(Day1RouteChildren)
 
 interface ModulesRouteChildren {
   ModulesSlugRoute: typeof ModulesSlugRoute
@@ -188,19 +256,10 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthRoute: AuthRoute,
   DashboardRoute: DashboardRoute,
+  Day1Route: Day1RouteWithChildren,
   ModulesRoute: ModulesRouteWithChildren,
   LabsSlugRoute: LabsSlugRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

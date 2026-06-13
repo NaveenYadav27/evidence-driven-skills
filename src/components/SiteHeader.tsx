@@ -1,12 +1,13 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import { PlatformBadge } from "./Brand";
-import { Activity, Shield, Terminal, LayoutDashboard, BookOpen, Cloud, CloudOff, CheckCircle2, LogOut, LogIn, Loader2 } from "lucide-react";
+import { Activity, Shield, Terminal, LayoutDashboard, BookOpen, Calendar, Cloud, CloudOff, CheckCircle2, LogOut, LogIn, Loader2 } from "lucide-react";
 import { useCloudSync } from "./CloudSyncProvider";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 const navItems = [
   { to: "/", label: "Home", icon: Shield },
+  { to: "/day1", label: "Day 1", icon: Calendar },
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { to: "/modules", label: "Modules", icon: BookOpen },
   { to: "/labs/whois-recon", label: "Quick Lab", icon: Terminal },
