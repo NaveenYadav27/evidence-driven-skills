@@ -69,7 +69,7 @@ function HourPage() {
           <h3 className="text-sm uppercase tracking-wider font-semibold">Micro Labs</h3>
         </div>
         <div className="space-y-5">
-          {h.labs.map((lab) => (
+          {h.labs.map((lab: typeof h.labs[number]) => (
             <div key={lab.id}>
               <div className="flex items-center gap-2 mb-2">
                 <span className="text-[10px] font-mono text-muted-foreground">{lab.kind.toUpperCase()}</span>
