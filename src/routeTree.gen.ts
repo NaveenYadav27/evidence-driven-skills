@@ -18,6 +18,7 @@ import { Route as ModulesIndexRouteImport } from './routes/modules.index'
 import { Route as Day1IndexRouteImport } from './routes/day1.index'
 import { Route as ModulesSlugRouteImport } from './routes/modules.$slug'
 import { Route as LabsSlugRouteImport } from './routes/labs.$slug'
+import { Route as Day1HourRouteImport } from './routes/day1.$hour'
 
 const ModulesRoute = ModulesRouteImport.update({
   id: '/modules',
@@ -64,6 +65,11 @@ const LabsSlugRoute = LabsSlugRouteImport.update({
   path: '/labs/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
+const Day1HourRoute = Day1HourRouteImport.update({
+  id: '/$hour',
+  path: '/$hour',
+  getParentRoute: () => Day1Route,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -71,6 +77,7 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof DashboardRoute
   '/day1': typeof Day1RouteWithChildren
   '/modules': typeof ModulesRouteWithChildren
+  '/day1/$hour': typeof Day1HourRoute
   '/labs/$slug': typeof LabsSlugRoute
   '/modules/$slug': typeof ModulesSlugRoute
   '/day1/': typeof Day1IndexRoute
@@ -80,6 +87,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/dashboard': typeof DashboardRoute
+  '/day1/$hour': typeof Day1HourRoute
   '/labs/$slug': typeof LabsSlugRoute
   '/modules/$slug': typeof ModulesSlugRoute
   '/day1': typeof Day1IndexRoute
@@ -92,6 +100,7 @@ export interface FileRoutesById {
   '/dashboard': typeof DashboardRoute
   '/day1': typeof Day1RouteWithChildren
   '/modules': typeof ModulesRouteWithChildren
+  '/day1/$hour': typeof Day1HourRoute
   '/labs/$slug': typeof LabsSlugRoute
   '/modules/$slug': typeof ModulesSlugRoute
   '/day1/': typeof Day1IndexRoute
@@ -105,6 +114,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/day1'
     | '/modules'
+    | '/day1/$hour'
     | '/labs/$slug'
     | '/modules/$slug'
     | '/day1/'
@@ -114,6 +124,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/dashboard'
+    | '/day1/$hour'
     | '/labs/$slug'
     | '/modules/$slug'
     | '/day1'
@@ -125,6 +136,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/day1'
     | '/modules'
+    | '/day1/$hour'
     | '/labs/$slug'
     | '/modules/$slug'
     | '/day1/'
@@ -205,14 +217,23 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LabsSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/day1/$hour': {
+      id: '/day1/$hour'
+      path: '/$hour'
+      fullPath: '/day1/$hour'
+      preLoaderRoute: typeof Day1HourRouteImport
+      parentRoute: typeof Day1Route
+    }
   }
 }
 
 interface Day1RouteChildren {
+  Day1HourRoute: typeof Day1HourRoute
   Day1IndexRoute: typeof Day1IndexRoute
 }
 
 const Day1RouteChildren: Day1RouteChildren = {
+  Day1HourRoute: Day1HourRoute,
   Day1IndexRoute: Day1IndexRoute,
 }
 
