@@ -425,11 +425,430 @@ const HOUR2: HourSpec = {
 
 /* ──────────────────────────────────────────────────────────────────────── */
 
+const HOUR3: HourSpec = {
+  hour: 3,
+  slug: "threat-actors-vectors",
+  title: "Threat Actors & Attack Vectors",
+  subtitle: "Script kiddies · Hacktivists · Crime · Insiders · APTs",
+  icon: Users,
+  status: "available",
+  cehObjectives: [
+    "Classify threat actors by capability, intent, resources, and motivation",
+    "Map common attack vectors to actor classes",
+    "Use threat-actor profiles to prioritise controls",
+  ],
+  estMinutes: 60,
+  mission: {
+    codename: "OP. KNOW-THY-ENEMY",
+    brief: "Glasshouse Bank's risk register lists 'cyber attack' as a single line item. The CISO wants you to decompose it into named adversaries with realistic playbooks so the defence budget can be aimed, not sprayed.",
+    success: [
+      "Profile 4 threat-actor classes most relevant to a regional bank",
+      "Match 8 real-world incidents to the actor type behind them",
+      "Recommend the top control per actor based on their preferred vector",
+    ],
+  },
+  story: {
+    title: "Three breaches, three very different attackers",
+    body: [
+      "In one month Glasshouse's industry peers suffered three incidents. A small credit union was crippled by LockBit ransomware demanding $2.1M. A government-owned bank in a neighbouring country had wire-transfer instructions silently altered for 11 days — fingerprints pointed to a state-sponsored APT. A fintech lost a confidential merger memo: posted to a leak forum by a contractor who'd been let go the prior Friday.",
+      "Same word — 'breach'. Three completely different attackers, with different goals, tools, patience, and tells. A defence built only for ransomware would have missed the APT and the insider entirely.",
+      "Threat-actor literacy is what turns generic security spending into targeted spending. By the end of this hour you'll read an incident summary and name the likely actor class within thirty seconds.",
+    ],
+  },
+  trainer: {
+    sections: [
+      { title: "Script Kiddie", body: "Low skill, runs off-the-shelf tooling (Metasploit modules, leaked exploit kits). Motivation: bragging rights, curiosity. Targets are opportunistic — whoever is exposed. Defends easily with patching, MFA, basic hygiene. They are noisy and unsubtle, which makes them the most common reason for a SOC alert." },
+      { title: "Hacktivist", body: "Skill ranges low to medium. Motivation is ideological (political, environmental, religious). Common vectors: web defacement, DDoS, doxxing, hack-and-leak. Anonymous, LulzSec, and modern groups like KillNet are archetypes. They want visibility, so attacks are public-facing and timed to events (elections, conflicts, protests)." },
+      { title: "Organised Cybercrime", body: "Skilled, well-resourced, financially motivated. Ransomware-as-a-Service crews (LockBit, BlackCat, Cl0p), business-email-compromise rings, banking trojan operators, initial-access brokers. They run businesses — affiliates, ransom negotiators, leak sites. Their preferred vectors: phishing, exposed RDP/VPN, exploited public CVEs, MSP supply chain." },
+      { title: "Insider Threat", body: "Has legitimate access already. Sub-types: MALICIOUS (disgruntled, espionage-for-hire, ideological), NEGLIGENT (clicks the phishing link, misconfigures the S3 bucket), COMPROMISED (account taken over without their knowledge). Hardest class to detect because their behaviour starts inside the trust boundary. UEBA, DLP, least-privilege, and offboarding rigor are the main controls." },
+      { title: "Advanced Persistent Threat (APT)", body: "Nation-state or state-sponsored. Highest skill, long-term resources, willing to spend months staging an operation. Goals: espionage, IP theft, sabotage, financial gain for the state (e.g. DPRK's Lazarus stealing crypto). Operate slowly, blend with legitimate admin activity, use zero-days when needed. Detection requires threat-intel-driven hunting and high-fidelity telemetry." },
+      { title: "Cyber Terrorist & state-aligned hybrid", body: "Aim to cause physical or societal disruption (power grids, transport, hospitals). Often state-tolerated or state-aligned. Vectors blur with APTs: spear-phish into OT environments, then destructive payloads. CEH groups them under 'cyber terrorism' but their tradecraft overlaps with both hacktivists and APTs." },
+    ],
+  },
+  knowledgeMap: {
+    nodes: [
+      { id: "sk", label: "Script Kiddie", group: "asset", def: "Low skill · off-the-shelf tools · opportunistic" },
+      { id: "ha", label: "Hacktivist", group: "adv", def: "Ideological · public-facing · timed to events" },
+      { id: "cc", label: "Cybercrime", group: "adv", def: "Financial · RaaS / BEC / IABs" },
+      { id: "in", label: "Insider", group: "weak", def: "Legitimate access · malicious / negligent / compromised" },
+      { id: "apt", label: "APT", group: "risk", def: "Nation-state · persistent · stealthy" },
+      { id: "ph", label: "Phishing", group: "ctrl", def: "Top initial vector for crime + APT" },
+      { id: "cve", label: "Public CVE", group: "ctrl", def: "Exposed unpatched service" },
+      { id: "rdp", label: "Exposed RDP/VPN", group: "ctrl", def: "Cred-stuffed → ransomware" },
+      { id: "sc", label: "Supply Chain", group: "ctrl", def: "Vendor / MSP / library compromise" },
+      { id: "zd", label: "Zero-Day", group: "ctrl", def: "Unknown vulnerability — APT signature" },
+    ],
+    edges: [
+      ["sk", "cve", "scans-for"],
+      ["ha", "ph", "uses"],
+      ["cc", "ph", "uses"],
+      ["cc", "rdp", "exploits"],
+      ["cc", "sc", "abuses"],
+      ["apt", "zd", "deploys"],
+      ["apt", "sc", "abuses"],
+      ["apt", "ph", "spear-phishes"],
+    ],
+  },
+  labs: [
+    {
+      id: "d1h3-l7-actors",
+      number: 7,
+      title: "Lab 7 · Profile the Actor",
+      kind: "classify",
+      brief: "Read each incident summary. Tag with the most likely threat-actor class.",
+      data: {
+        buckets: [
+          { id: "sk", label: "Script Kiddie", hint: "Noisy, opportunistic, low skill" },
+          { id: "ha", label: "Hacktivist", hint: "Ideological, public-facing" },
+          { id: "cc", label: "Cybercrime", hint: "Financially motivated, organised" },
+          { id: "in", label: "Insider", hint: "Already has access" },
+          { id: "apt", label: "APT", hint: "Stealth, persistence, state resources" },
+        ],
+        items: [
+          { id: "a", label: "Bank's homepage defaced with anti-globalisation slogans during a G20 summit", correct: "ha" },
+          { id: "b", label: "Ransomware encrypts 400 servers; affiliate of LockBit cartel claims responsibility", correct: "cc" },
+          { id: "c", label: "Departing relationship manager downloads client list to personal Dropbox on last day", correct: "in" },
+          { id: "d", label: "Stealth implants in the SWIFT terminal silently re-routing wires for 9 months", correct: "apt" },
+          { id: "e", label: "Defaced WordPress site running a 2-year-old exploit; attacker left 'pwned by xX' tag", correct: "sk" },
+          { id: "f", label: "Spear-phish to CFO's assistant; malware blends with admin tools and exfiltrates M&A docs over months", correct: "apt" },
+          { id: "g", label: "Initial-access broker sells working VPN credentials on a dark-web forum for $4,800", correct: "cc" },
+          { id: "h", label: "DBA emails customer table to wrong vendor address by accident", correct: "in" },
+        ],
+      },
+    },
+    {
+      id: "d1h3-l8-vectors",
+      number: 8,
+      title: "Lab 8 · Map Actor → Preferred Vector",
+      kind: "match",
+      brief: "Match each actor class to the attack vector that statistically appears most in their playbooks.",
+      data: {
+        left: [
+          { id: "sk", label: "Script Kiddie" },
+          { id: "ha", label: "Hacktivist collective" },
+          { id: "cc", label: "Ransomware affiliate" },
+          { id: "in", label: "Disgruntled insider" },
+          { id: "apt", label: "Nation-state APT" },
+        ],
+        right: [
+          { id: "r1", label: "Mass-scan for public CVEs / default credentials" },
+          { id: "r2", label: "DDoS + web defacement timed to political event" },
+          { id: "r3", label: "Phish + exposed RDP/VPN → encrypt + extort" },
+          { id: "r4", label: "Authorised access abused → bulk export to personal storage" },
+          { id: "r5", label: "Spear-phish + supply-chain compromise + zero-day, multi-month staging" },
+        ],
+        pairs: { sk: "r1", ha: "r2", cc: "r3", in: "r4", apt: "r5" },
+      },
+    },
+    {
+      id: "d1h3-l9-control",
+      number: 9,
+      title: "Lab 9 · Pick the High-Leverage Control",
+      kind: "decision",
+      brief: "For each threat-actor profile, which single control gives the most defensive leverage per dollar?",
+      data: {
+        scenarios: [
+          {
+            id: "s1",
+            ask: "Regional bank's biggest risk is ransomware (organised cybercrime). Limited budget for one initiative this quarter.",
+            choice: "best",
+            reasons: [
+              { id: "a", text: "Mandatory MFA on every external-facing service (VPN, email, admin portals)", correct: true },
+              { id: "b", text: "Buy a deception/honeypot platform", correct: false },
+              { id: "c", text: "Hire two more SOC analysts", correct: false },
+            ],
+          },
+          {
+            id: "s2",
+            ask: "Threat model now adds APT (state-sponsored economic espionage). Top single investment?",
+            choice: "best",
+            reasons: [
+              { id: "a", text: "Pay for a higher-tier next-gen antivirus", correct: false },
+              { id: "b", text: "Threat-intel-driven hunting + EDR with high-fidelity telemetry retained 1 year+", correct: true },
+              { id: "c", text: "Block all USB ports company-wide", correct: false },
+            ],
+          },
+          {
+            id: "s3",
+            ask: "Insider risk is rising — three contractor terminations next month. Single biggest control?",
+            choice: "best",
+            reasons: [
+              { id: "a", text: "Enforce a strict joiner-mover-leaver process with same-day access revocation and DLP egress alerts", correct: true },
+              { id: "b", text: "Install full keystroke logging on every endpoint", correct: false },
+              { id: "c", text: "Issue a stronger acceptable-use policy memo", correct: false },
+            ],
+          },
+        ],
+      },
+    },
+  ],
+  knowledgeCheck: [
+    { q: "Which actor class is MOST likely to use a zero-day exploit?", options: ["Script kiddie", "Hacktivist", "Ransomware affiliate", "APT"], answer: 3, explain: "Zero-days are expensive to develop and burn quickly once used. Only state-sponsored APTs typically have the resources, patience, and target value to justify deploying them." },
+    { q: "An attack defaces a corporate site with political slogans during an election week. Most likely actor?", options: ["Cybercrime", "Insider", "Hacktivist", "Script kiddie"], answer: 2, explain: "Public-facing, ideologically themed, timed to a political event = hacktivist hallmark." },
+    { q: "A negligent employee misconfiguring an S3 bucket counts as a…", options: ["Hacktivist incident", "Insider incident", "APT incident", "Not a security incident"], answer: 1, explain: "Insider threats include negligent insiders, not only malicious ones — they cause some of the largest data exposures on record." },
+    { q: "Initial-access brokers (IABs) primarily serve…", options: ["Script kiddies", "Organised cybercrime / ransomware affiliates", "Hacktivists", "Auditors"], answer: 1, explain: "IABs sell footholds (VPN creds, web-shells) to ransomware affiliates and other monetising crime crews — a key step in the modern criminal supply chain." },
+    { q: "The single biggest distinguishing trait of an APT vs. cybercrime is…", options: ["Use of malware", "Persistence and patience (months of dwell)", "Use of phishing", "Operating across borders"], answer: 1, explain: "Both use malware and phishing. APTs are defined by long-term, low-and-slow operations aimed at strategic value, not quick monetisation." },
+  ],
+  challenge: {
+    title: "Challenge · The 30-Second Triage",
+    brief: "Pick any one of Lab 7's scenarios. In ≤30 seconds, state: (1) actor class, (2) probable next move, (3) the ONE control that would have stopped them earliest in the kill chain.",
+    victory: "Naming the actor, predicting their next move, and pinning the earliest-kill control = you're thinking like a defender, not a checklist.",
+  },
+  exam: {
+    rating: 4,
+    tested: [
+      "Threat-actor classes and distinguishing motivations",
+      "Mapping actor → typical TTPs / vectors",
+      "Insider sub-types: malicious vs. negligent vs. compromised",
+      "Why zero-days correlate with APTs",
+    ],
+    mnemonics: [
+      "SHCIA — Script-kiddie, Hacktivist, Cybercrime, Insider, APT (low → high capability).",
+      "MNC insiders — Malicious, Negligent, Compromised: three flavours, one access path.",
+    ],
+    traps: [
+      "Equating 'sophisticated attack' with 'APT' — ransomware crews are sophisticated too.",
+      "Forgetting that negligent insiders count even without intent.",
+      "Calling state-aligned hacktivists 'just hacktivists' — tradecraft may overlap APT.",
+    ],
+    rapid: [
+      "Lone wolf / vandal = script kiddie",
+      "Ideology + public = hacktivist",
+      "Money + business model = cybercrime",
+      "Already inside = insider",
+      "Stealth + state = APT",
+    ],
+  },
+  interview: [
+    { level: "Junior", q: "Name three threat-actor classes and what motivates each.", answer: "Script kiddies — curiosity / bragging rights, using off-the-shelf tools. Cybercriminals — money, via ransomware, BEC, fraud. APTs — state strategic goals like espionage, IP theft, or sabotage." },
+    { level: "Mid", q: "How would you decide whether an incident is the work of an APT or a crime crew?", answer: "Look at dwell time, tooling sophistication, target selection, exfiltration patterns, and infrastructure. APTs show long dwell, custom tooling, strategic targets (R&D, M&A docs), and operational security on infra. Crime crews monetise quickly — ransomware deployment, data leak threats, predictable affiliate TTPs." },
+    { level: "Senior", q: "Walk me through how a threat-actor profile changes your control prioritisation.", answer: "Start from likely actors against the business model — a bank's top three are usually cybercrime (ransomware), insiders, and APTs targeting wires. For each, identify their preferred initial vector and pivot patterns, then layer controls per kill-chain phase. Spend is concentrated on the early phases of the actors most likely AND impactful — MFA, EDR, email security, JML for insiders, intel-led hunting for APTs." },
+    { level: "Manager", q: "Board asks why you spend on threat intelligence when an EDR vendor already 'covers everything'.", answer: "EDR is a detection capability tuned for known patterns; threat intel is the input that tells us which patterns matter to us this quarter and what novel TTPs to hunt for. Without intel we react to vendor signatures designed for the global average — with it we focus our analysts on the actors actually likely to come for us." },
+  ],
+};
+
+/* ──────────────────────────────────────────────────────────────────────── */
+
+const HOUR4: HourSpec = {
+  hour: 4,
+  slug: "cia-dad-controls",
+  title: "CIA / DAD & Security Controls",
+  subtitle: "Confidentiality · Integrity · Availability · Controls taxonomy",
+  icon: Network,
+  status: "available",
+  cehObjectives: [
+    "Apply the CIA triad and its inverse DAD to incident analysis",
+    "Differentiate Preventive / Detective / Corrective / Compensating / Deterrent controls",
+    "Differentiate Administrative / Technical / Physical control families",
+    "Pick the right control combination for a stated risk",
+  ],
+  estMinutes: 60,
+  mission: {
+    codename: "OP. TRIAD",
+    brief: "Three recent incidents at Glasshouse each broke one leg of the CIA triad. Your job: diagnose which property failed, classify the controls that should have been there, and design a layered defence the auditor can map line-by-line to NIST.",
+    success: [
+      "Tag 8 events by which CIA property they violated (using DAD)",
+      "Sort 8 controls into Preventive / Detective / Corrective / Compensating / Deterrent",
+      "Layer three controls across Admin / Technical / Physical for one scenario",
+    ],
+  },
+  story: {
+    title: "Three letters that explain every incident",
+    body: [
+      "Quarter close. Three incidents arrive on the CISO's desk in a single week. Monday: a customer statements bucket is found indexed by Google — anyone could read PDFs containing PAN-truncated account numbers. Wednesday: a ledger reconciliation flags that 27 wire amounts were silently changed by one penny each over three months. Friday: the online banking portal is down for four hours after a botnet hits the WAF.",
+      "Same week. Same word in the headlines — 'cyber incident'. Yet each broke a completely different security property: confidentiality, integrity, availability. The defensive playbook for each is also completely different — encryption and access control vs. hashing and tamper-evident logging vs. capacity, anti-DDoS and resilient architecture.",
+      "CIA is the simplest, most useful triangle in security. Its dark mirror — Disclosure, Alteration, Destruction (DAD) — is how attackers think. Spend this hour mastering both, plus the control taxonomy that maps every defence to a slot, and you'll never lose an architecture argument again.",
+    ],
+  },
+  trainer: {
+    sections: [
+      { title: "Confidentiality", body: "Only those authorised can read the data. Broken by: data leakage, unencrypted transit, weak access control, insider exfiltration. Controlled by: encryption (rest + transit), classification + handling, MFA + least privilege, DLP, key management." },
+      { title: "Integrity", body: "Data and systems are accurate and unaltered except by authorised processes. Broken by: tampering, MITM injection, malware modifying code, unauthorised privilege changes. Controlled by: hashing, digital signatures, code-signing, file-integrity monitoring, change management, separation of duties." },
+      { title: "Availability", body: "Authorised users can reach the resource when they need it. Broken by: DDoS, ransomware, hardware failure, misconfiguration, natural disaster. Controlled by: capacity planning, redundancy, backups (tested!), DDoS mitigation, BCP / DR, geo-distribution." },
+      { title: "DAD — the attacker's mirror", body: "Disclosure attacks Confidentiality. Alteration attacks Integrity. Destruction attacks Availability. Every offensive technique on the CEH syllabus can be slotted into one of these three buckets. When a SOC analyst reads an alert, asking 'which leg of CIA is this hitting?' instantly narrows triage." },
+      { title: "Control types · by function", body: "PREVENTIVE — stop the event (firewalls, MFA, encryption, hardened images). DETECTIVE — surface that it happened (SIEM, IDS, FIM, audit logs). CORRECTIVE — restore after (backups, patching, incident-response runbooks). COMPENSATING — substitute when the primary control is impractical (e.g. extra monitoring because you can't patch a legacy box). DETERRENT — discourage the actor (warning banners, visible cameras, prosecution policies)." },
+      { title: "Control families · by domain", body: "ADMINISTRATIVE — policies, procedures, training, background checks, separation of duties. TECHNICAL (logical) — hardware/software: MFA, encryption, firewalls, EDR. PHYSICAL — locks, badges, mantraps, cameras, environmental (HVAC, fire suppression). Every mature defence layers all three families — never just technical." },
+      { title: "Defence in Depth", body: "Layer controls so failure of any single control doesn't cause failure of the whole system. Concentric defences (perimeter → network → host → app → data), supported by Admin / Technical / Physical and Preventive / Detective / Corrective. Auditors map your architecture to this matrix — and so should you." },
+    ],
+  },
+  knowledgeMap: {
+    nodes: [
+      { id: "c", label: "Confidentiality", group: "core", def: "Only authorised can read" },
+      { id: "i", label: "Integrity", group: "core", def: "Data not altered without authority" },
+      { id: "a", label: "Availability", group: "core", def: "Authorised users can access when needed" },
+      { id: "d1", label: "Disclosure", group: "illegal", def: "Attacks Confidentiality" },
+      { id: "d2", label: "Alteration", group: "illegal", def: "Attacks Integrity" },
+      { id: "d3", label: "Destruction", group: "illegal", def: "Attacks Availability" },
+      { id: "pv", label: "Preventive", group: "ctrl", def: "Stop the event before it happens" },
+      { id: "dt", label: "Detective", group: "ctrl", def: "Surface that it happened" },
+      { id: "cr", label: "Corrective", group: "ctrl", def: "Restore after the event" },
+      { id: "cp", label: "Compensating", group: "ctrl", def: "Substitute when primary is impractical" },
+      { id: "dr", label: "Deterrent", group: "ctrl", def: "Discourage the actor" },
+    ],
+    edges: [
+      ["d1", "c", "attacks"],
+      ["d2", "i", "attacks"],
+      ["d3", "a", "attacks"],
+      ["pv", "c", "protects"],
+      ["pv", "i", "protects"],
+      ["pv", "a", "protects"],
+      ["dt", "d1", "surfaces"],
+      ["dt", "d2", "surfaces"],
+      ["dt", "d3", "surfaces"],
+      ["cr", "a", "restores"],
+      ["cp", "pv", "substitutes-for"],
+    ],
+  },
+  labs: [
+    {
+      id: "d1h4-l10-cia",
+      number: 10,
+      title: "Lab 10 · CIA / DAD Diagnoser",
+      kind: "classify",
+      brief: "Tag each event by which CIA property was violated (or DAD action observed).",
+      data: {
+        buckets: [
+          { id: "c", label: "Confidentiality / Disclosure", hint: "Data exposed to the unauthorised" },
+          { id: "i", label: "Integrity / Alteration", hint: "Data or system silently changed" },
+          { id: "a", label: "Availability / Destruction", hint: "Resource unreachable or destroyed" },
+        ],
+        items: [
+          { id: "a", label: "Customer statements PDF bucket indexed by Google", correct: "c" },
+          { id: "b", label: "27 wire transfer amounts silently changed by one penny over 3 months", correct: "i" },
+          { id: "c", label: "DDoS knocks the online banking portal offline for 4 hours", correct: "a" },
+          { id: "d", label: "Ransomware encrypts the loan-origination database; backups corrupted", correct: "a" },
+          { id: "e", label: "Insider replaces beneficiary IBANs in nightly batch with attacker-controlled accounts", correct: "i" },
+          { id: "f", label: "Source code repository leaked to Pastebin", correct: "c" },
+          { id: "g", label: "Web shell modifies legitimate index.php to add hidden admin route", correct: "i" },
+          { id: "h", label: "Stolen backup tape with cleartext PII recovered in a market raid", correct: "c" },
+        ],
+      },
+    },
+    {
+      id: "d1h4-l11-controltype",
+      number: 11,
+      title: "Lab 11 · Control Type Classifier",
+      kind: "classify",
+      brief: "Sort each control by FUNCTION — Preventive / Detective / Corrective / Compensating / Deterrent.",
+      data: {
+        buckets: [
+          { id: "pv", label: "Preventive", hint: "Blocks before the event" },
+          { id: "dt", label: "Detective", hint: "Surfaces during/after" },
+          { id: "cr", label: "Corrective", hint: "Restores after" },
+          { id: "cp", label: "Compensating", hint: "Substitutes for an impractical primary control" },
+          { id: "dr", label: "Deterrent", hint: "Discourages the actor" },
+        ],
+        items: [
+          { id: "a", label: "MFA on the VPN", correct: "pv" },
+          { id: "b", label: "SIEM rule alerting on impossible-travel sign-ins", correct: "dt" },
+          { id: "c", label: "Nightly off-site backups + tested restore runbook", correct: "cr" },
+          { id: "d", label: "Visible CCTV signage at the datacentre entrance", correct: "dr" },
+          { id: "e", label: "24×7 SOC monitoring an unsupported legacy app that cannot be patched", correct: "cp" },
+          { id: "f", label: "Warning banner: 'Authorised use only — activity is monitored'", correct: "dr" },
+          { id: "g", label: "Disk encryption on all corporate laptops", correct: "pv" },
+          { id: "h", label: "File-integrity monitoring (FIM) on /etc and web roots", correct: "dt" },
+        ],
+      },
+    },
+    {
+      id: "d1h4-l12-layering",
+      number: 12,
+      title: "Lab 12 · Layered Defence Picker",
+      kind: "decision",
+      brief: "For each risk, pick the layered control set (Administrative + Technical + Physical) that an auditor will accept.",
+      data: {
+        scenarios: [
+          {
+            id: "s1",
+            ask: "Risk: insider exfiltrates customer PII via USB from a branch workstation.",
+            choice: "best",
+            reasons: [
+              { id: "a", text: "Issue a strongly-worded data-handling policy — staff will comply", correct: false },
+              { id: "b", text: "ADMIN: data-handling policy + signed acceptable-use · TECHNICAL: USB port DLP block on managed images · PHYSICAL: locked workstation tower with intrusion sensor", correct: true },
+              { id: "c", text: "Install a NGFW at the branch perimeter and call it done", correct: false },
+            ],
+          },
+          {
+            id: "s2",
+            ask: "Risk: ransomware encrypts the primary fileserver; attackers also delete the backup volume.",
+            choice: "best",
+            reasons: [
+              { id: "a", text: "Pay an insurer to cover the ransom; no architectural changes", correct: false },
+              { id: "b", text: "ADMIN: incident-response runbook with tabletop drills · TECHNICAL: EDR + segmented backup network with immutable / air-gapped copies · PHYSICAL: locked backup appliance offsite", correct: true },
+              { id: "c", text: "Tell users to be careful with email attachments", correct: false },
+            ],
+          },
+          {
+            id: "s3",
+            ask: "Risk: silent integrity attack on the wire-payments queue.",
+            choice: "best",
+            reasons: [
+              { id: "a", text: "Read all transactions out loud at end of day", correct: false },
+              { id: "b", text: "ADMIN: separation of duties (initiator ≠ approver) + dual-control policy · TECHNICAL: signed message digests + tamper-evident WORM log + FIM · PHYSICAL: HSM in a locked rack with witnessed key ceremonies", correct: true },
+              { id: "c", text: "Disable logging to reduce noise the SOC investigates", correct: false },
+            ],
+          },
+        ],
+      },
+    },
+  ],
+  knowledgeCheck: [
+    { q: "An attacker silently modifies records in a database. Which CIA property is primarily violated?", options: ["Confidentiality", "Integrity", "Availability", "Authorization"], answer: 1, explain: "Modification = Alteration in DAD terms = Integrity attack. Confidentiality is unaffected if the data is not read; availability is unaffected if the system still responds." },
+    { q: "A SIEM rule that alerts on impossible-travel logins is a…", options: ["Preventive control", "Detective control", "Corrective control", "Deterrent control"], answer: 1, explain: "It does not block the login (so not preventive) — it surfaces the suspicious event for response. That is the textbook definition of detective." },
+    { q: "Visible CCTV signage at a datacentre is BEST classified as…", options: ["Detective only", "Physical preventive", "Deterrent (with detective if cameras are real)", "Compensating"], answer: 2, explain: "Signage discourages would-be intruders (deterrent). The actual camera feed is detective. The control's category depends on intent + effect — CEH frequently tests this nuance." },
+    { q: "Choosing 24×7 monitoring because a legacy app cannot be patched is a…", options: ["Detective control", "Corrective control", "Compensating control", "Preventive control"], answer: 2, explain: "Compensating controls substitute for a primary control (here, patching) when implementing it isn't feasible. Auditors require explicit documentation as a compensating control." },
+    { q: "Which of these is an ADMINISTRATIVE control?", options: ["Disk encryption", "Background checks for staff handling cash", "A door lock", "An IDS"], answer: 1, explain: "Administrative controls are policies, procedures, training, and personnel controls like background checks. The others are technical (encryption, IDS) and physical (lock)." },
+    { q: "DAD stands for…", options: ["Disclosure · Alteration · Destruction", "Deny · Allow · Detect", "Discover · Attack · Destroy", "Data · Authorisation · Defence"], answer: 0, explain: "DAD is the attacker's inverse of CIA: Disclosure breaks Confidentiality, Alteration breaks Integrity, Destruction breaks Availability." },
+  ],
+  challenge: {
+    title: "Challenge · The Audit-Proof Triangle",
+    brief: "Pick one CIA leg and one threat-actor class from Hour 3. Design ONE preventive + ONE detective + ONE corrective control across Admin / Technical / Physical. Aim for a defence the auditor cannot mark 'compensating only'.",
+    victory: "If every cell of the {function × family} matrix has at least one control AND the CIA leg + actor are addressed, you've delivered audit-grade defence in depth.",
+  },
+  exam: {
+    rating: 5,
+    tested: [
+      "CIA triad definitions and concrete examples per leg",
+      "DAD as the inverse of CIA",
+      "Five control functions: Preventive / Detective / Corrective / Compensating / Deterrent",
+      "Three control families: Administrative / Technical / Physical",
+      "Compensating vs. corrective control distinction",
+    ],
+    mnemonics: [
+      "CIA inverts to DAD — Disclosure / Alteration / Destruction.",
+      "PDCCD — Preventive, Detective, Corrective, Compensating, Deterrent (five control functions).",
+      "ATP — Administrative · Technical · Physical (three families; layer all three).",
+    ],
+    traps: [
+      "Calling a backup a 'preventive' control — it's CORRECTIVE (restores after).",
+      "Calling a SIEM 'preventive' — it's DETECTIVE.",
+      "Mixing up compensating (substitute) with corrective (restore).",
+      "Forgetting that signage / banners are DETERRENT, not detective.",
+    ],
+    rapid: [
+      "Encryption = preventive (confidentiality)",
+      "FIM = detective (integrity)",
+      "Backup = corrective (availability)",
+      "Extra monitoring on unpatchable system = compensating",
+      "Warning banner / 'prosecution will follow' = deterrent",
+      "Policy / training / background check = administrative",
+    ],
+  },
+  interview: [
+    { level: "Junior", q: "Explain the CIA triad with one concrete example each.", answer: "Confidentiality: encrypt the customer database so only authorised services can read it. Integrity: digitally sign transaction logs so silent tampering is detectable. Availability: deploy the banking portal across two regions with auto-failover so a single outage doesn't take it down." },
+    { level: "Mid", q: "Walk me through the difference between corrective and compensating controls with examples.", answer: "Corrective controls restore normal operations after an event — backups, IR runbooks, patching, rebuilding from gold images. Compensating controls substitute for a primary control you cannot implement — e.g. you can't patch a legacy SCADA box, so you network-segment it and add 24×7 monitoring as a compensating control. Auditors require explicit justification and risk acceptance for compensating choices." },
+    { level: "Senior", q: "Design a defence-in-depth approach for a wire-transfer system protecting integrity.", answer: "Administrative: separation of duties (initiator ≠ approver), dual-control policy, mandatory training, signed risk acceptance for residuals. Technical: signed and hashed messages, tamper-evident WORM transaction log, FIM, change management workflow, HSM-backed key signing, anomaly detection on value/beneficiary drift. Physical: HSM in a locked rack, witnessed key ceremonies, restricted datacentre access. Detective + corrective: SIEM rules on log gaps and value anomalies; runbook for quarantining queue + reconciliation playbook." },
+    { level: "Manager", q: "Board challenges you: 'we already have a firewall and EDR — why invest in detective and corrective controls?'", answer: "Preventive controls fail. Even the best EDR misses novel TTPs; firewalls don't stop authorised users abusing access. Detective controls give us time-to-detect, corrective controls give us time-to-recover — both directly reduce business impact when prevention fails. Industry benchmarks (Mandiant M-Trends, Verizon DBIR) show median dwell time and recovery costs drop sharply with mature detect + respond. The investment is in resilience, not paranoia." },
+  ],
+};
+
+/* ──────────────────────────────────────────────────────────────────────── */
+
 export const DAY1_HOURS: HourSpec[] = [
   HOUR1,
   HOUR2,
-  { hour: 3, slug: "threat-actors-vectors", title: "Threat Actors & Attack Vectors", subtitle: "Script kiddies → Nation-states", icon: Users, status: "upcoming", cehObjectives: [], estMinutes: 60, mission: { codename: "", brief: "", success: [] }, story: { title: "", body: [] }, trainer: { sections: [] }, knowledgeMap: { nodes: [], edges: [] }, labs: [], knowledgeCheck: [], exam: { rating: 4, tested: [], mnemonics: [], traps: [], rapid: [] }, interview: [] },
-  { hour: 4, slug: "cia-dad-controls", title: "CIA / DAD / Security Controls", subtitle: "Confidentiality · Integrity · Availability", icon: Network, status: "upcoming", cehObjectives: [], estMinutes: 60, mission: { codename: "", brief: "", success: [] }, story: { title: "", body: [] }, trainer: { sections: [] }, knowledgeMap: { nodes: [], edges: [] }, labs: [], knowledgeCheck: [], exam: { rating: 5, tested: [], mnemonics: [], traps: [], rapid: [] }, interview: [] },
+  HOUR3,
+  HOUR4,
   { hour: 5, slug: "kill-chain-mitre", title: "Cyber Kill Chain & MITRE ATT&CK", subtitle: "Adversary lifecycle frameworks", icon: GitBranch, status: "upcoming", cehObjectives: [], estMinutes: 70, mission: { codename: "", brief: "", success: [] }, story: { title: "", body: [] }, trainer: { sections: [] }, knowledgeMap: { nodes: [], edges: [] }, labs: [], knowledgeCheck: [], exam: { rating: 5, tested: [], mnemonics: [], traps: [], rapid: [] }, interview: [] },
   { hour: 6, slug: "hacking-methodology", title: "Ethical Hacking Methodology", subtitle: "Recon → Reporting", icon: Workflow, status: "upcoming", cehObjectives: [], estMinutes: 60, mission: { codename: "", brief: "", success: [] }, story: { title: "", body: [] }, trainer: { sections: [] }, knowledgeMap: { nodes: [], edges: [] }, labs: [], knowledgeCheck: [], exam: { rating: 4, tested: [], mnemonics: [], traps: [], rapid: [] }, interview: [] },
   { hour: 7, slug: "footprinting-fundamentals", title: "Footprinting & Reconnaissance", subtitle: "Passive / Active / OSINT", icon: Search, status: "upcoming", cehObjectives: [], estMinutes: 60, mission: { codename: "", brief: "", success: [] }, story: { title: "", body: [] }, trainer: { sections: [] }, knowledgeMap: { nodes: [], edges: [] }, labs: [], knowledgeCheck: [], exam: { rating: 5, tested: [], mnemonics: [], traps: [], rapid: [] }, interview: [] },
