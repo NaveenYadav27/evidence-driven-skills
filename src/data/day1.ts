@@ -843,14 +843,419 @@ const HOUR4: HourSpec = {
 };
 
 /* ──────────────────────────────────────────────────────────────────────── */
+/* HOUR 5 — Cyber Kill Chain & MITRE ATT&CK                                */
+/* ──────────────────────────────────────────────────────────────────────── */
+
+const HOUR5: HourSpec = {
+  hour: 5,
+  slug: "kill-chain-mitre",
+  title: "Cyber Kill Chain & MITRE ATT&CK",
+  subtitle: "Two lenses on the adversary lifecycle",
+  icon: GitBranch,
+  status: "available",
+  cehObjectives: [
+    "Describe the 7 stages of the Lockheed Martin Cyber Kill Chain",
+    "Differentiate Kill Chain (linear) vs MITRE ATT&CK (matrix of TTPs)",
+    "Map a real intrusion to both frameworks and identify break points",
+    "Use Tactic / Technique / Sub-technique / Procedure correctly",
+  ],
+  estMinutes: 70,
+  mission: {
+    codename: "OP. NIGHTJAR",
+    brief: "Glasshouse Bank's SOC just pulled a week of alerts that 'don't seem connected'. Your job: stitch them into a kill chain narrative AND map each step to an ATT&CK technique. Deliver a one-page intrusion timeline the CISO can hand to the board.",
+    success: [
+      "Order seven scrambled SOC events into the correct kill-chain stage",
+      "Tag each event with its ATT&CK Tactic",
+      "Identify the earliest stage where a control could have broken the chain",
+    ],
+  },
+  story: {
+    title: "Seven alerts, one adversary",
+    body: [
+      "Monday: a marketing manager's LinkedIn profile is scraped at 03:00 UTC. Tuesday: she receives a 'Q3 board pack' DOCX with a macro. Wednesday: an outbound HTTPS beacon to a residential ASN every 47 minutes. Thursday: a service account suddenly enumerates Active Directory. Friday: ntds.dit is staged to C:\\Windows\\Temp. Saturday: 14GB of compressed data exits via a legitimate cloud-storage SaaS. Sunday: ransomware notes appear on twelve file servers.",
+      "On a whiteboard the SOC lead writes seven dates. Junior analysts see seven incidents. You see ONE adversary moving through seven stages — and you can name each stage, name the ATT&CK tactic, and point at the cheapest place to break the chain next time.",
+      "That's the difference between alert-chasing and threat-informed defence. The Kill Chain gives you the story. ATT&CK gives you the vocabulary the entire industry already speaks.",
+    ],
+  },
+  trainer: {
+    sections: [
+      { title: "Lockheed Martin Cyber Kill Chain — the 7 stages", body: "Reconnaissance → Weaponisation → Delivery → Exploitation → Installation → Command & Control (C2) → Actions on Objectives. Linear, intruder-centric, born in 2011. Strength: tells a story executives understand. Weakness: ransomware/insider/cloud attacks don't always go left-to-right." },
+      { title: "Break-the-chain principle", body: "You don't need to stop the attacker everywhere — just ONCE. The earlier you break, the cheaper the response. A blocked phish (Delivery) costs minutes; ransomware encryption (Actions) costs millions. Every control gets mapped to the stages it addresses; gaps become the next investment." },
+      { title: "MITRE ATT&CK — the matrix", body: "ATT&CK is a globally-curated knowledge base of adversary Tactics (the WHY — 14 columns for Enterprise: Recon, Resource Dev, Initial Access, Execution, Persistence, Privilege Escalation, Defence Evasion, Credential Access, Discovery, Lateral Movement, Collection, C2, Exfiltration, Impact) and Techniques (the HOW). Updated continuously from real incidents — not theoretical." },
+      { title: "Tactic vs Technique vs Sub-technique vs Procedure", body: "Tactic = adversary's goal (Credential Access). Technique = method (T1003 OS Credential Dumping). Sub-technique = specific variant (T1003.003 NTDS). Procedure = exactly how a named actor did it (APT29 used Mimikatz on a DC at 02:14 UTC). CEH expects you to read T-numbers fluently." },
+      { title: "Kill Chain vs ATT&CK — when to use which", body: "Use Kill Chain for executive storytelling, gap analysis, and tabletop exercises. Use ATT&CK for detection engineering, purple-team planning, threat intel, and SOC content (Sigma/Splunk rules). Mature programs use BOTH: Kill Chain as the spine, ATT&CK as the muscle." },
+    ],
+  },
+  knowledgeMap: {
+    nodes: [
+      { id: "recon", label: "Recon", group: "kc", def: "Adversary researches targets — LinkedIn, WHOIS, Shodan" },
+      { id: "weap", label: "Weaponisation", group: "kc", def: "Builds payload — malicious DOCX, exploit + RAT" },
+      { id: "deliv", label: "Delivery", group: "kc", def: "Transmits to target — phish, USB, watering hole" },
+      { id: "expl", label: "Exploitation", group: "kc", def: "Code executes on victim — macro fires, CVE triggered" },
+      { id: "inst", label: "Installation", group: "kc", def: "Persistence — registry run key, scheduled task, service" },
+      { id: "c2", label: "C2", group: "kc", def: "Beacon to attacker infrastructure for tasking" },
+      { id: "aoo", label: "Actions on Objectives", group: "kc", def: "Steal, encrypt, destroy, pivot — the actual goal" },
+      { id: "attack", label: "MITRE ATT&CK", group: "framework", def: "Matrix of 14 tactics × hundreds of techniques" },
+      { id: "tactic", label: "Tactic (why)", group: "attack", def: "Adversary's goal in a stage — e.g. Credential Access" },
+      { id: "tech", label: "Technique (how)", group: "attack", def: "T-number method — e.g. T1003 OS Credential Dumping" },
+      { id: "proc", label: "Procedure (who+how)", group: "attack", def: "Specific named-actor implementation observed in IR" },
+    ],
+    edges: [
+      ["recon", "weap", "feeds"],
+      ["weap", "deliv"], ["deliv", "expl"], ["expl", "inst"],
+      ["inst", "c2"], ["c2", "aoo"],
+      ["attack", "tactic", "contains"], ["tactic", "tech", "implements"], ["tech", "proc", "observed as"],
+      ["aoo", "attack", "maps to"],
+    ],
+  },
+  labs: [
+    {
+      id: "lab-13-killchain-sequence", number: 13, kind: "classify",
+      title: "Lab 13 · Order the Intrusion (Kill Chain stage)",
+      brief: "Seven SOC events from the Glasshouse incident. Place each under its correct Kill Chain stage.",
+      data: {
+        buckets: [
+          { id: "recon", label: "Reconnaissance", hint: "Researching the target" },
+          { id: "deliv", label: "Delivery", hint: "Payload transmitted" },
+          { id: "expl", label: "Exploitation", hint: "Code executes" },
+          { id: "inst", label: "Installation", hint: "Persistence established" },
+          { id: "c2", label: "Command & Control", hint: "Beacon to attacker" },
+          { id: "aoo", label: "Actions on Objectives", hint: "The actual goal" },
+        ],
+        items: [
+          { id: "i1", label: "Marketing manager's LinkedIn scraped at 03:00 UTC", correct: "recon" },
+          { id: "i2", label: "Phishing email with malicious 'Q3 board pack' DOCX received", correct: "deliv" },
+          { id: "i3", label: "Office macro spawns powershell.exe with encoded command", correct: "expl" },
+          { id: "i4", label: "Scheduled task 'WindowsUpdateHelper' created in C:\\Windows\\System32\\Tasks", correct: "inst" },
+          { id: "i5", label: "Outbound HTTPS beacon to residential ASN every 47 minutes", correct: "c2" },
+          { id: "i6", label: "ntds.dit copied to C:\\Windows\\Temp and 7-zipped", correct: "aoo" },
+          { id: "i7", label: "14GB compressed archive uploaded to mega.nz", correct: "aoo" },
+        ],
+      },
+    },
+    {
+      id: "lab-14-attack-tactic-match", number: 14, kind: "match",
+      title: "Lab 14 · Match Event → ATT&CK Tactic",
+      brief: "Same incidents, different lens. Match each event to the MITRE ATT&CK Tactic that best describes the adversary's goal at that moment.",
+      data: {
+        left: [
+          { id: "e1", label: "Phishing email with malicious DOCX" },
+          { id: "e2", label: "PowerShell decoded and executed in memory" },
+          { id: "e3", label: "Scheduled task created for persistence" },
+          { id: "e4", label: "Mimikatz dumps LSASS on a domain controller" },
+          { id: "e5", label: "Beacon to attacker C2 over HTTPS every 47 min" },
+          { id: "e6", label: "14GB archive uploaded to cloud storage" },
+        ],
+        right: [
+          { id: "t1", label: "TA0001 Initial Access" },
+          { id: "t2", label: "TA0002 Execution" },
+          { id: "t3", label: "TA0003 Persistence" },
+          { id: "t4", label: "TA0006 Credential Access" },
+          { id: "t5", label: "TA0011 Command and Control" },
+          { id: "t6", label: "TA0010 Exfiltration" },
+        ],
+        pairs: { e1: "t1", e2: "t2", e3: "t3", e4: "t4", e5: "t5", e6: "t6" },
+      },
+    },
+    {
+      id: "lab-15-break-the-chain", number: 15, kind: "decision",
+      title: "Lab 15 · Break the Chain (cheapest break point)",
+      brief: "For each scenario, pick the stage where a single control would have broken this intrusion at lowest blast radius.",
+      data: {
+        scenarios: [
+          {
+            id: "s1",
+            ask: "Macro-laden phishing email lands in 1,400 inboxes. Three users open it; one enables macros. What's the cheapest break point?",
+            choice: "stage",
+            reasons: [
+              { id: "a", text: "Break at Delivery — mail gateway sandbox + macro-stripping policy stops payload before any user sees it", correct: true },
+              { id: "b", text: "Wait until C2 — let the beacon out and tombstone the destination at the firewall", correct: false },
+              { id: "c", text: "Detect at Actions on Objectives — restore from backup after encryption", correct: false },
+            ],
+          },
+          {
+            id: "s2",
+            ask: "An attacker has valid credentials from a third-party breach. Reuse is the only TTP. Where do you break it?",
+            choice: "stage",
+            reasons: [
+              { id: "a", text: "Reconnaissance — make LinkedIn private", correct: false },
+              { id: "b", text: "Exploitation / Initial Access — phishing-resistant MFA + impossible-travel detection makes the stolen password worthless", correct: true },
+              { id: "c", text: "Installation — EDR on the laptop", correct: false },
+            ],
+          },
+          {
+            id: "s3",
+            ask: "Insider with legitimate access slowly exfiltrates customer data over 6 weeks to personal Dropbox. Kill Chain is awkward here. Best break point?",
+            choice: "stage",
+            reasons: [
+              { id: "a", text: "Delivery — block all phishing", correct: false },
+              { id: "b", text: "Exfiltration / Actions — DLP egress controls + UEBA flagging anomalous upload volume to unsanctioned cloud", correct: true },
+              { id: "c", text: "Weaponisation — there is no malware", correct: false },
+            ],
+          },
+        ],
+      },
+    },
+  ],
+  knowledgeCheck: [
+    { q: "Which Kill Chain stage covers crafting a malicious DOCX with an embedded macro?", options: ["Reconnaissance", "Weaponisation", "Delivery", "Exploitation"], answer: 1, explain: "Weaponisation COMBINES a payload (macro/RAT) with a deliverable wrapper. Delivery is the act of sending it." },
+    { q: "In MITRE ATT&CK, T1003.003 is a…", options: ["Tactic", "Technique", "Sub-technique", "Procedure"], answer: 2, explain: "T-numbers with two dots are sub-techniques. T1003 is the parent Technique (OS Credential Dumping); .003 is the NTDS sub-technique. A Procedure is a specific named-actor implementation." },
+    { q: "Best one-line distinction between Kill Chain and ATT&CK?", options: ["Kill Chain is older", "Kill Chain is linear stages; ATT&CK is a matrix of tactics × techniques", "ATT&CK only covers malware", "Kill Chain has 14 stages"], answer: 1, explain: "Kill Chain = sequential narrative (7 stages). ATT&CK = matrix-shaped knowledge base of TTPs (14 Enterprise tactics × hundreds of techniques)." },
+    { q: "An adversary uses Mimikatz to dump LSASS. Which ATT&CK Tactic?", options: ["Execution", "Credential Access", "Defence Evasion", "Collection"], answer: 1, explain: "Dumping LSASS to extract credentials = TA0006 Credential Access (T1003.001 LSASS Memory)." },
+    { q: "Which Kill Chain stage offers the CHEAPEST defensive ROI for a phishing attack?", options: ["Actions on Objectives", "Installation", "Delivery", "Reconnaissance"], answer: 2, explain: "Delivery (mail gateway, sandboxing, attachment policy) stops the chain before any endpoint touches the payload. Earlier breaks always cost less." },
+  ],
+  challenge: {
+    title: "Challenge · The Two-Lens Brief",
+    brief: "Write a 5-sentence executive summary of the Glasshouse intrusion using Kill Chain as the spine and ATT&CK T-numbers in parentheses. Identify the ONE control that, if it had existed, would have cut the highest-cost branch.",
+    victory: "If your sentence names a stage, a tactic, a T-number, and a specific control — AND your control sits LEFT of the highest-cost stage — you've written a board-ready intrusion brief.",
+  },
+  exam: {
+    rating: 5,
+    tested: [
+      "Cyber Kill Chain 7 stages, in order",
+      "Reading T-numbers (Technique vs Sub-technique)",
+      "Mapping incidents to ATT&CK Tactics",
+      "Break-the-chain reasoning",
+      "Where Kill Chain breaks down (insider, cloud, ransomware-as-a-service)",
+    ],
+    mnemonics: [
+      "RWDEICA — Recon · Weaponise · Deliver · Exploit · Install · C2 · Actions",
+      "'Really Wicked Dogs Eat Inside Crunchy Apples' — 7 KC stages",
+      "ATT&CK = Adversarial Tactics, Techniques & Common Knowledge",
+    ],
+    traps: [
+      "Confusing Weaponisation (build) with Delivery (transmit)",
+      "Calling C2 'Command and Conquer' — it's Command and Control",
+      "Treating ATT&CK as linear — it's a MATRIX",
+      "Mixing Tactic (WHY/goal) with Technique (HOW/method)",
+    ],
+    rapid: [
+      "7 KC stages: Recon → Weaponise → Deliver → Exploit → Install → C2 → Actions",
+      "14 ATT&CK Enterprise tactics",
+      "Mimikatz → T1003 Credential Dumping",
+      "Scheduled Task → T1053 Persistence",
+      "Phishing → T1566 Initial Access",
+    ],
+  },
+  interview: [
+    { level: "Junior", q: "Name the 7 stages of the Cyber Kill Chain.", answer: "Reconnaissance, Weaponisation, Delivery, Exploitation, Installation, Command & Control, Actions on Objectives." },
+    { level: "Mid", q: "When would you reach for ATT&CK instead of the Kill Chain?", answer: "Whenever I need precision rather than narrative — detection engineering (writing Sigma rules), purple-team exercises, threat-intel reports, or measuring SOC coverage. Kill Chain is the spine I use for executive storytelling; ATT&CK is the language I use with engineers and analysts." },
+    { level: "Senior", q: "Walk me through mapping a ransomware-as-a-service intrusion to both frameworks.", answer: "Kill Chain as timeline: Initial Access broker scraped LinkedIn (Recon), bought credentials (skip Weaponise/Deliver — RaaS often inherits access), tested logins (Exploitation), dropped Cobalt Strike (Installation), beaconed (C2), then handed off to an affiliate for AOO (data theft + encryption). In ATT&CK: TA0042 Resource Development, TA0001 Initial Access (T1078 Valid Accounts), TA0003 Persistence, TA0011 C2, TA0010 Exfiltration, TA0040 Impact (T1486 Data Encrypted for Impact). Overlay detections to find the gap with the lowest cost-to-close." },
+    { level: "Manager", q: "Board asks: 'Are we MITRE ATT&CK aligned?' Honest answer?", answer: "ATT&CK alignment isn't a checkbox — it's a maturity arc. I'd report: (1) how many of the 14 tactics we have any detection for, (2) coverage of the top-20 techniques relevant to our threat profile from CTI, (3) average dwell time before and after we started purple-teaming, and (4) the three gaps we're closing this quarter. If we can't answer those four, we're not aligned — we're aspirational." },
+  ],
+};
+
+/* ──────────────────────────────────────────────────────────────────────── */
+/* HOUR 6 — Ethical Hacking Methodology                                    */
+/* ──────────────────────────────────────────────────────────────────────── */
+
+const HOUR6: HourSpec = {
+  hour: 6,
+  slug: "hacking-methodology",
+  title: "Ethical Hacking Methodology",
+  subtitle: "Recon · Scanning · Gaining · Maintaining · Covering · Reporting",
+  icon: Workflow,
+  status: "available",
+  cehObjectives: [
+    "List the 5 CEH phases of ethical hacking and the Reporting deliverable",
+    "Differentiate passive vs active reconnaissance",
+    "Explain which phase produces which client deliverable",
+    "Apply the methodology to a scoped engagement without scope creep",
+  ],
+  estMinutes: 60,
+  mission: {
+    codename: "OP. LANTERN",
+    brief: "ShadowX Labs hands you your first solo pentest: a 5-day external + internal engagement for Glasshouse Bank's new mobile-banking API. You must walk the team through your methodology in tomorrow's kick-off — and prove you won't go out of scope.",
+    success: [
+      "Place 12 pentest activities into the correct CEH phase",
+      "Distinguish passive vs active recon decisions",
+      "Make the right ethical call when scope ambiguity appears mid-engagement",
+    ],
+  },
+  story: {
+    title: "Five days, six phases, one signed scope",
+    body: [
+      "Last quarter another vendor lost their PCI accreditation because a junior consultant ran a full nmap -sS against the entire /16 — including a /24 that belonged to the bank's payment processor, not the bank. The processor's IDS lit up, lawyers got involved, and the engagement was terminated.",
+      "Methodology isn't bureaucracy. It's how ethical hackers stay ethical when adrenaline kicks in. The CEH phases give you a checklist you can defend in a deposition: 'I was in Scanning. The target was in scope. The technique was authorised. Here's the timestamp.'",
+      "Today you learn the spine: Reconnaissance → Scanning → Gaining Access → Maintaining Access → Covering Tracks → Reporting. Six words. Memorise them. Every CEH module from here forward lives inside one of these phases.",
+    ],
+  },
+  trainer: {
+    sections: [
+      { title: "Phase 1 — Reconnaissance", body: "Information gathering. Passive (WHOIS, Google, LinkedIn, Shodan, certificate transparency, leaked credentials — no packets to target) vs Active (DNS zone transfers, banner grabbing, light probing — packets touch target infra). Passive recon is almost always in scope by default; active recon requires explicit RoE approval." },
+      { title: "Phase 2 — Scanning", body: "Identify live hosts, open ports, services, versions, and vulnerabilities. Tools: nmap, masscan, nessus, nuclei. This phase produces noisy traffic — schedule windows, notify SOC, stay inside agreed IP ranges. Output: target-service inventory + ranked vulnerability list." },
+      { title: "Phase 3 — Gaining Access", body: "Exploit vulnerabilities to obtain a foothold: password attacks, public exploits, web app flaws (OWASP Top 10), social engineering if authorised. Document every command. Stop at the agreed depth (e.g. 'prove RCE, don't pivot')." },
+      { title: "Phase 4 — Maintaining Access", body: "Persistence: backdoors, scheduled tasks, additional users, C2 beacons. In a pentest this is usually time-boxed and reversed at the end of the engagement. In Red Team ops it's stealthy and longer-lived. Every artefact must be inventoried for cleanup." },
+      { title: "Phase 5 — Covering Tracks", body: "Clearing logs, disabling auditing, timestomping. In ethical hacking we DEMONSTRATE the technique to prove the gap, but we PRESERVE logs (the client needs them for forensics) and document everything we touched. Real attackers destroy evidence; ethical hackers create it." },
+      { title: "Phase 6 — Reporting (the deliverable)", body: "The phase that pays the invoice. Executive summary, methodology, findings (with CVSS + business impact), reproduction steps, evidence, remediation guidance, and a cleanup checklist. Without a report, the engagement never happened — and the client can't fix anything." },
+    ],
+  },
+  knowledgeMap: {
+    nodes: [
+      { id: "recon", label: "Reconnaissance", group: "phase", def: "Passive + Active info gathering" },
+      { id: "scan", label: "Scanning", group: "phase", def: "Hosts, ports, services, vulns" },
+      { id: "gain", label: "Gaining Access", group: "phase", def: "Exploit to foothold" },
+      { id: "maint", label: "Maintaining Access", group: "phase", def: "Persistence (time-boxed)" },
+      { id: "cover", label: "Covering Tracks", group: "phase", def: "Demonstrate but preserve evidence" },
+      { id: "report", label: "Reporting", group: "phase", def: "The deliverable that fixes things" },
+      { id: "passive", label: "Passive Recon", group: "sub", def: "No packets to target — OSINT, WHOIS, CT logs" },
+      { id: "active", label: "Active Recon", group: "sub", def: "Probes touch target — DNS, banners, light scans" },
+      { id: "roe", label: "Rules of Engagement", group: "gov", def: "Written scope, timing, contacts — gates every phase" },
+    ],
+    edges: [
+      ["recon", "scan"], ["scan", "gain"], ["gain", "maint"],
+      ["maint", "cover"], ["cover", "report"],
+      ["recon", "passive", "includes"], ["recon", "active", "includes"],
+      ["roe", "recon", "gates"], ["roe", "scan", "gates"], ["roe", "gain", "gates"],
+    ],
+  },
+  labs: [
+    {
+      id: "lab-16-methodology-phase", number: 16, kind: "classify",
+      title: "Lab 16 · Place the Activity in the Right Phase",
+      brief: "Twelve activities from your Glasshouse pentest. Drop each into the CEH phase where it belongs.",
+      data: {
+        buckets: [
+          { id: "recon", label: "Reconnaissance", hint: "Info gathering" },
+          { id: "scan", label: "Scanning", hint: "Ports, services, vulns" },
+          { id: "gain", label: "Gaining Access", hint: "Exploit to foothold" },
+          { id: "maint", label: "Maintaining", hint: "Persistence" },
+          { id: "cover", label: "Covering Tracks", hint: "Log handling" },
+          { id: "report", label: "Reporting", hint: "Deliverable" },
+        ],
+        items: [
+          { id: "a1", label: "Querying crt.sh for subdomains of glasshouse.bank", correct: "recon" },
+          { id: "a2", label: "nmap -sV -p- against an authorised /24", correct: "scan" },
+          { id: "a3", label: "Running nuclei templates against discovered web apps", correct: "scan" },
+          { id: "a4", label: "Exploiting Log4Shell to obtain a reverse shell on an app server", correct: "gain" },
+          { id: "a5", label: "Adding a low-privilege scheduled task as 'backup-test'", correct: "maint" },
+          { id: "a6", label: "Demonstrating timestomp on a test file (originals preserved)", correct: "cover" },
+          { id: "a7", label: "Writing the executive summary and CVSS-rated findings", correct: "report" },
+          { id: "a8", label: "Reading the CISO's LinkedIn for org-chart clues", correct: "recon" },
+          { id: "a9", label: "Bruteforcing the VPN portal with a 10-password list (RoE-approved)", correct: "gain" },
+          { id: "a10", label: "Dropping a Cobalt Strike beacon that auto-expires end-of-engagement", correct: "maint" },
+          { id: "a11", label: "Banner-grabbing HTTPS services on the in-scope range", correct: "scan" },
+          { id: "a12", label: "Producing a cleanup checklist of every artefact created", correct: "report" },
+        ],
+      },
+    },
+    {
+      id: "lab-17-passive-vs-active", number: 17, kind: "classify",
+      title: "Lab 17 · Passive vs Active Reconnaissance",
+      brief: "Same engagement, finer call. Which recon activities are passive (no packets to target) vs active (probes touch target)?",
+      data: {
+        buckets: [
+          { id: "passive", label: "Passive Recon", hint: "Zero packets to target infra" },
+          { id: "active", label: "Active Recon", hint: "Probes touch target — needs RoE" },
+        ],
+        items: [
+          { id: "p1", label: "Searching haveibeenpwned for glasshouse.bank breaches", correct: "passive" },
+          { id: "p2", label: "Querying public WHOIS for glasshouse.bank", correct: "passive" },
+          { id: "p3", label: "Reading Glasshouse engineers' GitHub commits", correct: "passive" },
+          { id: "p4", label: "DNS zone transfer attempt (AXFR) against ns1.glasshouse.bank", correct: "active" },
+          { id: "p5", label: "Banner grab on port 443 of api.glasshouse.bank", correct: "active" },
+          { id: "p6", label: "Shodan search for 'org:Glasshouse'", correct: "passive" },
+          { id: "p7", label: "Sending one ICMP echo to the gateway to confirm liveness", correct: "active" },
+          { id: "p8", label: "Pulling certificate transparency logs from crt.sh", correct: "passive" },
+        ],
+      },
+    },
+    {
+      id: "lab-18-authorisation-call", number: 18, kind: "decision",
+      title: "Lab 18 · Will You Run It? (Authorisation Decision)",
+      brief: "Three live calls during the engagement. Pick the answer that keeps you ethical AND useful.",
+      data: {
+        scenarios: [
+          {
+            id: "s1",
+            ask: "Day 2: your scan finds an open RDP on 203.0.113.42. Reverse DNS resolves to 'shared-host.payment-co.net'. RoE lists 203.0.113.0/26 in scope.",
+            choice: "act",
+            reasons: [
+              { id: "a", text: "Skip it and notify the client point-of-contact — the host appears to belong to a third party even though the IP falls inside your range", correct: true },
+              { id: "b", text: "Exploit it — the IP is technically in scope, RoE is RoE", correct: false },
+              { id: "c", text: "Quietly nmap it harder to confirm ownership", correct: false },
+            ],
+          },
+          {
+            id: "s2",
+            ask: "Day 3: you have RCE on an in-scope app server. RoE says 'prove impact, do not pivot to internal networks'. You can see a path to the domain controller.",
+            choice: "act",
+            reasons: [
+              { id: "a", text: "Pivot — domain admin would be a great finding", correct: false },
+              { id: "b", text: "Stop at RCE. Document the visible pivot path, screenshot the route, recommend it as the next-phase test. Get RoE amended in writing if the client wants the full chain.", correct: true },
+              { id: "c", text: "Pivot just enough to grab one screenshot, then stop", correct: false },
+            ],
+          },
+          {
+            id: "s3",
+            ask: "Day 5: time to clean up. You created a scheduled task, a local user, and dropped a beacon binary. The client's SOC kept full logs.",
+            choice: "act",
+            reasons: [
+              { id: "a", text: "Delete the scheduled task, remove the user, remove the beacon, then DELETE the SOC log entries so the client has a clean slate", correct: false },
+              { id: "b", text: "Remove all artefacts, hand the client an itemised cleanup checklist, and PRESERVE the SOC logs — they are the client's incident-response record", correct: true },
+              { id: "c", text: "Leave the artefacts so the client can use them to test their EDR", correct: false },
+            ],
+          },
+        ],
+      },
+    },
+  ],
+  knowledgeCheck: [
+    { q: "Correct CEH phase order?", options: ["Recon → Scan → Gain → Maintain → Cover → Report", "Scan → Recon → Exploit → Report", "Recon → Exploit → Pivot → Report", "Recon → Scan → Pivot → Persist → Cover → Report"], answer: 0, explain: "CEH defines six phases: Reconnaissance, Scanning, Gaining Access, Maintaining Access, Covering Tracks, Reporting. Reporting is part of the methodology — not optional." },
+    { q: "Which is PASSIVE reconnaissance?", options: ["DNS zone transfer attempt", "nmap ping sweep", "Reading certificate transparency logs on crt.sh", "Banner grabbing"], answer: 2, explain: "Passive recon sends no packets to target infrastructure. crt.sh, WHOIS, Shodan, LinkedIn, GitHub are all passive sources." },
+    { q: "During Covering Tracks in a pentest, you should…", options: ["Delete all client SOC logs to be thorough", "Demonstrate the technique but preserve evidence the client needs", "Skip the phase — it's only for criminals", "Encrypt the logs"], answer: 1, explain: "Ethical hackers demonstrate log-clearing capabilities to prove the gap, but preserve evidence and document everything. Destroying client logs would itself be unethical and likely illegal." },
+    { q: "Which deliverable proves the engagement happened?", options: ["The shells you got", "The screenshots", "The Reporting phase output (exec summary + findings + remediation)", "The CVE list"], answer: 2, explain: "Without a written report — executive summary, findings, evidence, remediation guidance, cleanup checklist — the client can't fix anything and there's no defensible record of what was tested." },
+  ],
+  challenge: {
+    title: "Challenge · The 60-second Kickoff Walk",
+    brief: "You have 60 seconds in tomorrow's kickoff. Walk the client from Phase 1 to Phase 6 naming, for each phase, ONE activity, ONE tool, and ONE deliverable. Bonus: name the phase where scope creep most often happens (it's Gaining Access).",
+    victory: "Six phases × activity + tool + deliverable AND you name the scope-creep risk = ready to lead a kickoff.",
+  },
+  exam: {
+    rating: 4,
+    tested: [
+      "Five hacking phases (six with Reporting)",
+      "Passive vs active recon — sources and tools",
+      "When written authorisation is required",
+      "What 'Covering Tracks' means in an ETHICAL context",
+      "Deliverables per phase",
+    ],
+    mnemonics: [
+      "RSGMCR — Recon · Scan · Gain · Maintain · Cover · Report",
+      "'Real Spies Generally Move Carefully, Reporting' — the 6 phases",
+      "Passive = 'no packets to target'. Active = 'packets land on target'.",
+    ],
+    traps: [
+      "Forgetting Reporting as a phase (CEH counts it)",
+      "Calling nmap passive recon — it's ACTIVE",
+      "Thinking 'Covering Tracks' means deleting client logs in a pentest",
+      "Conflating Pentest (time-boxed, noisy, reversed) with Red Team (stealth, longer, simulates real adversary)",
+    ],
+    rapid: [
+      "WHOIS / crt.sh / Shodan = passive",
+      "nmap / nessus / nuclei = active",
+      "Burp = scanning + gaining access (web)",
+      "Mimikatz = gaining-access / credential phase",
+      "Cleanup checklist = reporting phase artefact",
+    ],
+  },
+  interview: [
+    { level: "Junior", q: "Name the five CEH hacking phases.", answer: "Reconnaissance, Scanning, Gaining Access, Maintaining Access, Covering Tracks — with Reporting as the sixth that produces the deliverable." },
+    { level: "Mid", q: "Difference between passive and active recon, with examples.", answer: "Passive recon sends no packets to target infrastructure — WHOIS, crt.sh, Shodan, LinkedIn, GitHub, breach databases. Active recon's packets land on target — DNS AXFR, banner grabs, ping sweeps, nmap. Passive is almost always in scope; active needs written RoE approval and SOC notification windows." },
+    { level: "Senior", q: "How do you prevent scope creep during Gaining Access?", answer: "Three controls. First, RoE explicitly states depth ('prove RCE, do not pivot to AD'). Second, every exploit attempt is logged with timestamp + target + technique against a pre-approved list. Third, before any action that could leave the agreed scope, I pause and request written amendment — even if it slows the engagement. The cost of out-of-scope action is engagement termination plus legal exposure; pausing for an email is cheap." },
+    { level: "Manager", q: "Pentest vs Red Team — when do you recommend each to a client?", answer: "Pentest when the goal is breadth — find as many exploitable issues as possible inside a scoped surface, time-boxed, with full client cooperation. Red Team when the goal is to test detection + response capability against a realistic adversary — narrower objective, stealthy, only a tiny 'white cell' inside the client knows. A mature program runs annual pentests for compliance and quarterly red-team exercises against specific objectives (e.g. 'can we reach the wire-transfer system from a phished laptop in 48 hours?')." },
+  ],
+};
+
+/* ──────────────────────────────────────────────────────────────────────── */
 
 export const DAY1_HOURS: HourSpec[] = [
   HOUR1,
   HOUR2,
   HOUR3,
   HOUR4,
-  { hour: 5, slug: "kill-chain-mitre", title: "Cyber Kill Chain & MITRE ATT&CK", subtitle: "Adversary lifecycle frameworks", icon: GitBranch, status: "upcoming", cehObjectives: [], estMinutes: 70, mission: { codename: "", brief: "", success: [] }, story: { title: "", body: [] }, trainer: { sections: [] }, knowledgeMap: { nodes: [], edges: [] }, labs: [], knowledgeCheck: [], exam: { rating: 5, tested: [], mnemonics: [], traps: [], rapid: [] }, interview: [] },
-  { hour: 6, slug: "hacking-methodology", title: "Ethical Hacking Methodology", subtitle: "Recon → Reporting", icon: Workflow, status: "upcoming", cehObjectives: [], estMinutes: 60, mission: { codename: "", brief: "", success: [] }, story: { title: "", body: [] }, trainer: { sections: [] }, knowledgeMap: { nodes: [], edges: [] }, labs: [], knowledgeCheck: [], exam: { rating: 4, tested: [], mnemonics: [], traps: [], rapid: [] }, interview: [] },
+  HOUR5,
+  HOUR6,
   { hour: 7, slug: "footprinting-fundamentals", title: "Footprinting & Reconnaissance", subtitle: "Passive / Active / OSINT", icon: Search, status: "upcoming", cehObjectives: [], estMinutes: 60, mission: { codename: "", brief: "", success: [] }, story: { title: "", body: [] }, trainer: { sections: [] }, knowledgeMap: { nodes: [], edges: [] }, labs: [], knowledgeCheck: [], exam: { rating: 5, tested: [], mnemonics: [], traps: [], rapid: [] }, interview: [] },
   { hour: 8, slug: "recon-simulators", title: "Interactive Reconnaissance Labs", subtitle: "WHOIS / DNS / OSINT simulators", icon: Crosshair, status: "upcoming", cehObjectives: [], estMinutes: 80, mission: { codename: "", brief: "", success: [] }, story: { title: "", body: [] }, trainer: { sections: [] }, knowledgeMap: { nodes: [], edges: [] }, labs: [], knowledgeCheck: [], exam: { rating: 5, tested: [], mnemonics: [], traps: [], rapid: [] }, interview: [] },
 ];
