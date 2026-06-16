@@ -2,7 +2,11 @@ import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { DAY1_HOURS, getHour } from "@/data/day1";
 import { MissionBrief, StoryPanel, TrainerExplain, KnowledgeMap, KnowledgeCheck, ChallengeCard, ExamFocus, InterviewPrep } from "@/components/day1/Lesson";
 import { ClassifyLab, MatchLab, DecisionLab } from "@/components/day1/Labs";
-import { ArrowLeft, ArrowRight, Clock, Terminal } from "lucide-react";
+import { SimulatorLab } from "@/components/day1/SimulatorLab";
+import { ArrowLeft, ArrowRight, Clock, Terminal, BookOpen } from "lucide-react";
+import { MODULES } from "@/data/modules";
+import { MODULE_TO_HOURS } from "@/data/day1";
+import { Link as RLink } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/day1/$hour")({
   loader: ({ params }) => {
@@ -16,11 +20,17 @@ export const Route = createFileRoute("/day1/$hour")({
       { name: "description", content: loaderData?.h.subtitle ?? "" },
     ],
   }),
+  head: ({ loaderData }) => ({
+    meta: [
+      { title: `Hour ${loaderData?.h.hour} · ${loaderData?.h.title} — CEH v13 Week 1` },
+      { name: "description", content: loaderData?.h.subtitle ?? "" },
+    ],
+  }),
   notFoundComponent: () => (
     <div className="mx-auto max-w-2xl py-24 px-6 text-center">
       <h1 className="text-2xl font-bold">Hour not available yet</h1>
-      <p className="text-sm text-muted-foreground mt-2">This hour is in Phase 2 of the build.</p>
-      <Link to="/day1" className="text-[var(--cyan)] hover:underline mt-3 inline-block">← Day 1 hub</Link>
+      <p className="text-sm text-muted-foreground mt-2">This hour is still in build.</p>
+      <Link to="/day1" className="text-[var(--cyan)] hover:underline mt-3 inline-block">← Week 1 hub</Link>
     </div>
   ),
   component: HourPage,
