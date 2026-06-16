@@ -16,12 +16,6 @@ export const Route = createFileRoute("/day1/$hour")({
   },
   head: ({ loaderData }) => ({
     meta: [
-      { title: `Hour ${loaderData?.h.hour} · ${loaderData?.h.title} — CEH v13 Day 1` },
-      { name: "description", content: loaderData?.h.subtitle ?? "" },
-    ],
-  }),
-  head: ({ loaderData }) => ({
-    meta: [
       { title: `Hour ${loaderData?.h.hour} · ${loaderData?.h.title} — CEH v13 Week 1` },
       { name: "description", content: loaderData?.h.subtitle ?? "" },
     ],
