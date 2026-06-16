@@ -7,7 +7,7 @@ import { toast } from "sonner";
 
 const navItems = [
   { to: "/", label: "Home", icon: Shield },
-  { to: "/day1", label: "Day 1", icon: Calendar },
+  { to: "/day1", label: "Week 1", icon: Calendar },
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { to: "/modules", label: "Modules", icon: BookOpen },
   { to: "/labs/whois-recon", label: "Quick Lab", icon: Terminal },
