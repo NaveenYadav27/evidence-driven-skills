@@ -83,6 +83,7 @@ function HourPage() {
               {lab.kind === "classify" && <ClassifyLab labId={lab.id} data={lab.data as any} />}
               {lab.kind === "match" && <MatchLab labId={lab.id} data={lab.data as any} />}
               {lab.kind === "decision" && <DecisionLab labId={lab.id} data={lab.data as any} />}
+              {lab.kind === "simulator" && <SimulatorLab labId={lab.id} data={lab.data as any} />}
             </div>
           ))}
         </div>
