@@ -2,7 +2,8 @@ import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { useState } from "react";
 import { getModule, MODULES } from "@/data/modules";
 import { getModuleLabs } from "@/data/labs";
-import { BookOpen, Terminal, Trophy, ClipboardCheck, GraduationCap, ArrowRight, Lock, AlertTriangle, Lightbulb, Eye, BookMarked } from "lucide-react";
+import { hoursForModule } from "@/data/day1";
+import { BookOpen, Terminal, Trophy, ClipboardCheck, GraduationCap, ArrowRight, Lock, AlertTriangle, Lightbulb, Eye, BookMarked, Calendar } from "lucide-react";
 
 export const Route = createFileRoute("/modules/$slug")({
   loader: ({ params }) => {
@@ -66,6 +67,38 @@ function ModuleDetail() {
           </div>
         </div>
       </div>
+
+      {/* Week 1 cross-reference */}
+      {(() => {
+        const hours = hoursForModule(m.id);
+        if (!hours.length) return null;
+        return (
+          <div className="mt-6 panel p-5">
+            <div className="flex items-center gap-2 mb-3">
+              <Calendar className="h-4 w-4 text-[var(--cyan)]" />
+              <h3 className="text-sm uppercase tracking-wider font-semibold">Covered in Week 1 — Mission-driven walkthrough</h3>
+            </div>
+            <p className="text-xs text-muted-foreground mb-3">Every concept in this module is taught hour-by-hour in Week 1 with story, knowledge maps, and interactive labs.</p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+              {hours.map((h) => {
+                const Icon = h.icon;
+                return (
+                  <Link key={h.slug} to="/day1/$hour" params={{ hour: h.slug }}
+                    className="rounded-md border border-border bg-secondary/30 p-3 flex items-center gap-3 hover:border-[var(--cyan)]/50 transition group">
+                    <div className="rounded border border-border bg-background/50 p-2"><Icon className="h-4 w-4 text-[var(--cyan)]" /></div>
+                    <div className="flex-1 min-w-0">
+                      <div className="text-[10px] font-mono text-muted-foreground uppercase tracking-[0.2em]">Hour {h.hour} · {h.labs.length} labs</div>
+                      <div className="text-sm font-semibold truncate">{h.title}</div>
+                      <div className="text-xs text-muted-foreground truncate">{h.subtitle}</div>
+                    </div>
+                    <ArrowRight className="h-4 w-4 text-[var(--cyan)] group-hover:translate-x-1 transition" />
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Tabs */}
       <div className="mt-8 border-b border-border flex gap-1 overflow-x-auto">
