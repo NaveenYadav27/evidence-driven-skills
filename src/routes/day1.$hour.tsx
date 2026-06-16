@@ -6,7 +6,6 @@ import { SimulatorLab } from "@/components/day1/SimulatorLab";
 import { ArrowLeft, ArrowRight, Clock, Terminal, BookOpen } from "lucide-react";
 import { MODULES } from "@/data/modules";
 import { MODULE_TO_HOURS } from "@/data/day1";
-import { Link as RLink } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/day1/$hour")({
   loader: ({ params }) => {
@@ -40,7 +39,7 @@ function HourPage() {
   return (
     <div className="mx-auto max-w-6xl px-4 sm:px-6 py-8 space-y-8">
       <Link to="/day1" className="text-xs text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5">
-        <ArrowLeft className="h-3 w-3" /> Day 1 hub
+        <ArrowLeft className="h-3 w-3" /> Week 1 hub
       </Link>
 
       {/* Header */}
@@ -59,6 +58,17 @@ function HourPage() {
             <span className="font-mono text-[var(--cyan)]">CEH Objectives ▸</span> {h.cehObjectives.join(" · ")}
           </div>
         )}
+        {(() => {
+          const moduleId = Object.entries(MODULE_TO_HOURS).find(([, slugs]) => slugs.includes(h.slug))?.[0];
+          const mod = moduleId ? MODULES.find((m) => m.id === moduleId) : undefined;
+          if (!mod) return null;
+          return (
+            <Link to="/modules/$slug" params={{ slug: mod.slug }}
+              className="mt-3 inline-flex items-center gap-1.5 text-[11px] font-mono px-2 py-1 rounded border border-[var(--cyan)]/40 text-[var(--cyan)] hover:bg-[var(--cyan)]/5">
+              <BookOpen className="h-3 w-3" /> Maps to Module {String(mod.number).padStart(2, "0")} · {mod.title}
+            </Link>
+          );
+        })()}
       </header>
 
       <MissionBrief mission={h.mission} />
