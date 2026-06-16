@@ -6,10 +6,10 @@ import { ArrowRight, Clock, Lock, CheckCircle2, Calendar } from "lucide-react";
 export const Route = createFileRoute("/day1/")({
   head: () => ({
     meta: [
-      { title: "CEH v13 · Day 1 — Foundations & Reconnaissance · ShadowXLab" },
-      { name: "description", content: "8-hour interactive CEH v13 Day 1: foundations, ethics, kill chain, MITRE, methodology, and footprinting — 30+ hands-on labs, story-based learning." },
-      { property: "og:title", content: "CEH v13 · Day 1 — Foundations & Reconnaissance" },
-      { property: "og:description", content: "Story-driven, lab-driven CEH v13 Day 1. 30+ micro-labs, knowledge maps, kill-chain simulators, evidence-based progress." },
+      { title: "CEH v13 · Week 1 — Foundations & Reconnaissance · ShadowXLab" },
+      { name: "description", content: "Week 1 of the ShadowXLab CEH v13 cyber range: 8 mission-driven hours covering Modules 01 + 02 with 27 interactive labs and live recon simulators." },
+      { property: "og:title", content: "CEH v13 · Week 1 — Foundations & Reconnaissance" },
+      { property: "og:description", content: "Story-driven, lab-driven CEH v13 Week 1. 27 micro-labs, knowledge maps, live WHOIS/DNS/CT/Wayback simulators, evidence-based progress." },
     ],
   }),
   component: Day1Hub,
@@ -24,7 +24,7 @@ function Day1Hub() {
     <div className="mx-auto max-w-7xl px-4 sm:px-6 py-10">
       <div className="panel panel-accent p-6 sm:p-8">
         <div className="flex items-center gap-2 text-xs font-mono text-[var(--cyan)] uppercase tracking-[0.25em]">
-          <Calendar className="h-3 w-3" /> Day 1 · 8 Hours · Modules 01 + 02
+          <Calendar className="h-3 w-3" /> Week 1 · 8 Hours · Modules 01 + 02
         </div>
         <h1 className="text-3xl sm:text-4xl font-bold tracking-tight mt-2">Foundations &amp; Reconnaissance</h1>
         <p className="mt-3 text-muted-foreground max-w-3xl">
