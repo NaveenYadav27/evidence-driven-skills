@@ -1247,19 +1247,357 @@ const HOUR6: HourSpec = {
   ],
 };
 
+/* ──────────────── HOUR 7 — Footprinting Fundamentals ──────────────── */
+
+const HOUR7: HourSpec = {
+  hour: 7,
+  slug: "footprinting-fundamentals",
+  title: "Footprinting & Reconnaissance",
+  subtitle: "OSINT · Passive vs Active · Sources, Tools, Tradecraft",
+  icon: Search,
+  status: "available",
+  cehObjectives: [
+    "Define footprinting & list its objectives",
+    "Differentiate passive vs active reconnaissance",
+    "Identify OSINT sources: WHOIS, DNS, CT logs, search engines, Wayback, social",
+    "Map footprinting tools to data types",
+    "Recognise footprinting countermeasures",
+  ],
+  estMinutes: 60,
+  mission: {
+    codename: "OP. GLASSHOUSE — RECON",
+    brief: "The CISO at Glasshouse Bank wants to see what an attacker would see BEFORE they touch a single packet on production. Build a passive footprint covering organisation, infrastructure, people, and history — using only public sources.",
+    success: [
+      "Produce a 1-page passive footprint covering 5 data categories",
+      "Correctly tag each finding as passive or active",
+      "Identify at least 3 attacker entry-points from the footprint alone",
+    ],
+  },
+  story: {
+    title: "The bank that thought it was invisible",
+    body: [
+      "Glasshouse Bank's CISO opens with: 'We're not on social media, our domain is private-registered, and nobody knows our subdomains. Good luck.'",
+      "You smile politely. Within 20 minutes — and zero packets to production — you have: the registrar and contact email, every subdomain ever issued a TLS cert (87 of them), the mail provider from MX + SPF, a forgotten staging portal still indexed by archive.org, three employee LinkedIn profiles naming internal tooling, and a GitHub repo with a .env file from 2022.",
+      "This is footprinting. Done well, the noisy phases that follow only ever target assets that actually exist.",
+    ],
+  },
+  trainer: {
+    sections: [
+      { title: "Footprinting defined", body: "The methodical collection of information about a target — domains, IPs, technologies, people, exposed services, historical artefacts — before any disruptive action. CEH treats it as Phase 1 of the ethical-hacking lifecycle and the foundation of the Reconnaissance tactic in MITRE ATT&CK (TA0043)." },
+      { title: "Passive vs Active — the legal boundary", body: "PASSIVE = no packets sent to target infrastructure. Sources are third-party: RDAP/WHOIS, Certificate Transparency (crt.sh), Shodan/Censys cached data, Wayback Machine, search engines, LinkedIn, GitHub, breach dumps. ACTIVE = packets land on the target: DNS queries to their authoritative NS, port scans, banner grabs, web crawls. Passive is almost always in scope; active needs explicit RoE approval." },
+      { title: "The 7 data categories CEH expects", body: "1) Organisational (people, structure, partners) · 2) Network (IP ranges, ASN, routing) · 3) System (OS, services, banners) · 4) DNS (records, zones, mail infra) · 5) Web (technologies, headers, paths, archived versions) · 6) Email (formats, MX, SPF/DKIM/DMARC) · 7) People (roles, contacts, breach exposure)." },
+      { title: "Tools per category", body: "WHOIS/RDAP for ownership · dig/nslookup + DoH for DNS · crt.sh / Sublist3r / amass for subdomains · theHarvester for emails/hosts · Shodan/Censys for service intel · Wayback Machine for historical content · Maltego for graph correlation · Google dorks (site:, filetype:, inurl:) for content discovery · Hunter.io for email format · HaveIBeenPwned for breach exposure." },
+      { title: "Countermeasures", body: "Privacy-registered WHOIS · scrub document metadata (exiftool) · disable directory listing · serve a thoughtful robots.txt (not security through obscurity) · monitor CT logs for unauthorised certs · rotate developer secrets and audit GitHub for leaks · employee training on what to publish on LinkedIn." },
+    ],
+  },
+  knowledgeMap: {
+    nodes: [
+      { id: "fp", label: "Footprinting", def: "Phase-1 passive intel collection", group: "core" },
+      { id: "pas", label: "Passive", def: "No packets to target", group: "mode" },
+      { id: "act", label: "Active", def: "Packets to target", group: "mode" },
+      { id: "whois", label: "WHOIS / RDAP", def: "Domain ownership", group: "passive" },
+      { id: "ct", label: "CT Logs", def: "Issued TLS certs (crt.sh)", group: "passive" },
+      { id: "wb", label: "Wayback", def: "Historical content", group: "passive" },
+      { id: "shodan", label: "Shodan", def: "Cached service banners", group: "passive" },
+      { id: "linkedin", label: "LinkedIn", def: "Org chart + tooling", group: "passive" },
+      { id: "dig", label: "dig / DoH", def: "Authoritative DNS", group: "active" },
+      { id: "nmap", label: "nmap", def: "Live port/banner scan", group: "active" },
+      { id: "axfr", label: "Zone Transfer", def: "AXFR/IXFR — active!", group: "active" },
+    ],
+    edges: [
+      ["fp","pas","mode"],["fp","act","mode"],
+      ["pas","whois"],["pas","ct"],["pas","wb"],["pas","shodan"],["pas","linkedin"],
+      ["act","dig"],["act","nmap"],["act","axfr"],
+    ],
+  },
+  labs: [
+    {
+      id: "wk1-h7-lab19-passive-active", number: 19, kind: "classify",
+      title: "Lab 19 · Passive vs Active classifier",
+      brief: "Tag each recon activity as PASSIVE (no packets to target) or ACTIVE (packets to target).",
+      data: {
+        buckets: [
+          { id: "pas", label: "Passive recon", hint: "Third-party / cached / public" },
+          { id: "act", label: "Active recon", hint: "Touches target infrastructure" },
+        ],
+        items: [
+          { id: "i1", label: "Query crt.sh for subdomains", correct: "pas" },
+          { id: "i2", label: "dig @ns1.target.com AXFR", correct: "act" },
+          { id: "i3", label: "RDAP lookup via rdap.org", correct: "pas" },
+          { id: "i4", label: "nmap -sV target.com", correct: "act" },
+          { id: "i5", label: "Browse archived pages on web.archive.org", correct: "pas" },
+          { id: "i6", label: "Shodan search 'org:Glasshouse'", correct: "pas" },
+          { id: "i7", label: "Banner grab with curl -I https://target.com", correct: "act" },
+          { id: "i8", label: "Search LinkedIn for current employees", correct: "pas" },
+          { id: "i9", label: "DNS query to target's authoritative NS", correct: "act" },
+          { id: "i10", label: "Read commit history on a public GitHub repo", correct: "pas" },
+        ],
+      },
+    },
+    {
+      id: "wk1-h7-lab20-source-to-data", number: 20, kind: "match",
+      title: "Lab 20 · Source → Data category",
+      brief: "Match each OSINT source to the data category it most reliably yields.",
+      data: {
+        left: [
+          { id: "L1", label: "MX + TXT (SPF/DMARC) records" },
+          { id: "L2", label: "crt.sh certificate transparency" },
+          { id: "L3", label: "Wayback Machine CDX" },
+          { id: "L4", label: "Shodan host search" },
+          { id: "L5", label: "LinkedIn employee profiles" },
+        ],
+        right: [
+          { id: "R1", label: "Email infrastructure & anti-spoofing posture" },
+          { id: "R2", label: "Subdomain / hostname enumeration" },
+          { id: "R3", label: "Historical pages, removed admin portals" },
+          { id: "R4", label: "Exposed services, banners, geo/ASN" },
+          { id: "R5", label: "Org chart, internal tooling, hiring intel" },
+        ],
+        pairs: { L1: "R1", L2: "R2", L3: "R3", L4: "R4", L5: "R5" },
+      },
+    },
+    {
+      id: "wk1-h7-lab21-countermeasure", number: 21, kind: "decision",
+      title: "Lab 21 · Pick the right countermeasure",
+      brief: "For each leak, pick the single most effective countermeasure.",
+      data: {
+        scenarios: [
+          {
+            id: "s1", ask: "An attacker enumerates 87 subdomains from crt.sh, several pointing to internal-only staging apps.",
+            choice: "Best mitigation?",
+            reasons: [
+              { id: "a", text: "Stop using TLS on staging hosts", correct: false },
+              { id: "b", text: "Use a private CA for internal subdomains and monitor CT logs for unauthorised issuance", correct: true },
+              { id: "c", text: "Add staging hosts to robots.txt", correct: false },
+            ],
+          },
+          {
+            id: "s2", ask: "A 2021 admin portal still appears in Wayback Machine snapshots.",
+            choice: "Best mitigation?",
+            reasons: [
+              { id: "a", text: "Request archive.org removal AND rotate any credentials/paths the snapshot exposed", correct: true },
+              { id: "b", text: "Block the Internet Archive crawler today (snapshots are already public)", correct: false },
+              { id: "c", text: "Ignore it — old content can't hurt", correct: false },
+            ],
+          },
+          {
+            id: "s3", ask: "A developer's GitHub repo contains a 2022 .env with what looks like an old DB password.",
+            choice: "First action?",
+            reasons: [
+              { id: "a", text: "Delete the repo and assume cleanup is complete", correct: false },
+              { id: "b", text: "Assume the secret is burned: rotate the credential, scan for use, then purge from git history", correct: true },
+              { id: "c", text: "Make the repo private — secret stays valid", correct: false },
+            ],
+          },
+        ],
+      },
+    },
+  ],
+  knowledgeCheck: [
+    { q: "Which of these is unambiguously ACTIVE reconnaissance?", options: ["crt.sh subdomain lookup", "DNS zone transfer (AXFR) attempt", "Reading Shodan cached banners", "Wayback Machine browsing"], answer: 1, explain: "AXFR sends a query to the target's authoritative nameserver — a packet to target infrastructure. The others rely on third-party services." },
+    { q: "Which record family leaks the most about a target's email infrastructure?", options: ["A / AAAA", "MX + TXT (SPF/DMARC/DKIM)", "CAA", "SOA"], answer: 1, explain: "MX names the mail provider; SPF/DKIM/DMARC TXT records reveal sending hosts, key selectors, and reporting addresses." },
+    { q: "Privacy-registered WHOIS primarily defends against…", options: ["Subdomain enumeration", "Direct social-engineering of named registrant contacts", "TLS interception", "DDoS"], answer: 1, explain: "Privacy proxies hide registrant name/email/phone, reducing targeted phishing/vishing. They do not affect CT logs, DNS, or scanning." },
+    { q: "Which is NOT a footprinting countermeasure?", options: ["Document metadata scrubbing", "Monitoring CT logs", "Disabling TLS sitewide", "Auditing public GitHub for secrets"], answer: 2, explain: "Disabling TLS creates a much larger problem than it solves." },
+  ],
+  challenge: {
+    title: "Challenge · 1-page Glasshouse footprint",
+    brief: "Using only passive sources, write a 1-page footprint covering: organisation, infrastructure, mail posture, web history, and people exposure — each bullet tagged [P] passive or [A] active and cited.",
+    victory: "5 categories × ≥2 cited findings, every finding correctly tagged P/A.",
+  },
+  exam: {
+    rating: 5,
+    tested: [
+      "Definition of footprinting and its 7 data categories",
+      "Passive vs active boundary — and the trap of AXFR/banner grab",
+      "Tools mapped to data types (theHarvester, Sublist3r, Maltego, Shodan, crt.sh)",
+      "Google dorks: site:, filetype:, inurl:, intitle:, cache:",
+      "Countermeasures: WHOIS privacy, metadata scrubbing, CT monitoring",
+    ],
+    mnemonics: [
+      "ONS-DWE-P — Org, Network, System, DNS, Web, Email, People (the 7 categories)",
+      "Passive = 'no packets to target'. Memorise the four-word version.",
+      "AXFR is ACTIVE — always.",
+    ],
+    traps: [
+      "Calling DNS zone transfer passive",
+      "Calling 'curl -I' passive (it hits the target)",
+      "Forgetting that Shodan ITSELF is passive for you, even though Shodan actively scanned earlier",
+      "Confusing CT logs with DNS — CT lists certs ever issued, not currently live hosts",
+    ],
+    rapid: [
+      "WHOIS/RDAP → ownership",
+      "crt.sh → subdomains",
+      "Wayback → history",
+      "Shodan → banners",
+      "theHarvester → emails+subs+hosts",
+      "Maltego → graph correlation",
+    ],
+  },
+  interview: [
+    { level: "Junior", q: "What is footprinting and why do it first?", answer: "The methodical collection of public information about a target before any disruptive action. Doing it first means later, noisier phases only ever touch assets that actually exist — fewer false positives, smaller blast radius, and a defensible record of how we discovered each asset." },
+    { level: "Mid", q: "Walk me through how you'd footprint a new corporate target in 30 minutes, passive only.", answer: "WHOIS/RDAP for ownership and any non-privacy-proxied contacts. crt.sh for every subdomain ever issued a TLS cert. DoH lookups (third-party resolver) for MX/NS/TXT to read mail posture and providers. Wayback CDX for removed paths and historical tech. Shodan/Censys for cached service banners on the ASN. theHarvester or Hunter.io for email format. LinkedIn + GitHub for people and leaked secrets. Tag every finding [P] and cite source." },
+    { level: "Senior", q: "Client says 'we don't need footprinting, we have an asset inventory.' Respond.", answer: "Inventories describe what the org thinks it owns; footprinting describes what the internet thinks it owns. The delta is where breaches live — forgotten subdomains, shadow IT, third-party SaaS still using a leaked subdomain CNAME, archived staging portals. I run footprinting precisely to find that delta and deliver it as a reconciliation report against their inventory." },
+    { level: "Manager", q: "Business case for continuous CT monitoring.", answer: "CT logs are append-only and public — anyone, including the attacker, sees every cert issued for your domains in near real time. Continuous monitoring detects shadow IT, unauthorised cert issuance (compromised registrar/DNS), and supply-chain partners exposing your brand within minutes. Tooling is cheap (CertStream, Cert Spotter) and integrates into SIEM. ROI = mean-time-to-detect-shadow-IT dropping from quarters to minutes." },
+  ],
+};
+
+/* ──────────────── HOUR 8 — Live Recon Simulators ──────────────── */
+
+const HOUR8: HourSpec = {
+  hour: 8,
+  slug: "recon-simulators",
+  title: "Live Reconnaissance Simulators",
+  subtitle: "Real WHOIS · DNS · CT · Wayback · Headers · Robots",
+  icon: Crosshair,
+  status: "available",
+  cehObjectives: [
+    "Execute live passive recon against real public targets",
+    "Interpret RDAP, DoH, crt.sh, Wayback, header, and robots output",
+    "Synthesise findings into a footprint report",
+  ],
+  estMinutes: 80,
+  mission: {
+    codename: "OP. GLASSHOUSE — LIVE FIRE",
+    brief: "Theory is over. Run six live OSINT tools against approved public targets (your choice — try iana.org, example.com, github.com) and turn each raw output into one actionable finding for the Glasshouse report.",
+    success: [
+      "Execute all six recon tools successfully",
+      "Capture at least one finding per tool",
+      "Submit a synthesised footprint by end of session",
+    ],
+  },
+  story: {
+    title: "The terminal opens",
+    body: [
+      "Your senior consultant slides a laptop across. 'Real APIs. Real targets. Public only — iana.org, example.com, github.com, your own domain. No production scanning. Go.'",
+      "Six tools. Six readouts. Six lessons in what hides in plain sight.",
+    ],
+  },
+  trainer: {
+    sections: [
+      { title: "How to read RDAP output", body: "Look for: registrar (who controls the domain), creation date (older = more trust + more legacy infra), expiry (impending = social-engineering pretext), nameservers (often reveal hosting/DNS provider), and status flags (clientTransferProhibited is good hygiene)." },
+      { title: "How to read DoH (DNS) output", body: "A/AAAA → live hosts. MX → mail provider. NS → DNS provider. TXT → SPF (sending hosts), DMARC (anti-spoof posture), site-verification tokens (which SaaS they use!). CAA → which CAs may issue certs." },
+      { title: "How to read crt.sh", body: "Every cert ever issued for the domain is here. Look for: unusual subdomains (dev-*, internal-*, *-staging), wildcard certs (broad attack surface), short-lived ACME certs (modern infra), and surprise sibling domains (M&A footprint)." },
+      { title: "How to read Wayback CDX", body: "First-seen date tells the domain's web history. Look for removed paths (/admin, /portal, /old-app) that may still resolve. 200-status snapshots of pages that now 404 are an OSINT goldmine." },
+      { title: "How to read HTTP headers", body: "Server header → fingerprint. HSTS/CSP/XFO/XCTO/Referrer/Permissions → 6-point security score. <3 = immature. 6 = mature defensive engineering." },
+      { title: "How to read robots.txt", body: "NOT a security control — it's a sign-posted map of what the operator wanted hidden. Every Disallow path is a candidate for manual review. Sitemaps reveal content inventories." },
+    ],
+  },
+  knowledgeMap: {
+    nodes: [
+      { id: "tgt", label: "Public target", def: "Approved, non-production", group: "core" },
+      { id: "rdap", label: "RDAP", def: "Ownership + lifecycle", group: "tool" },
+      { id: "doh", label: "DoH", def: "DNS over HTTPS", group: "tool" },
+      { id: "ct", label: "crt.sh", def: "Certificate transparency", group: "tool" },
+      { id: "wb", label: "Wayback", def: "Web history", group: "tool" },
+      { id: "hdr", label: "Headers", def: "Security posture", group: "tool" },
+      { id: "rob", label: "robots", def: "Operator's hidden map", group: "tool" },
+      { id: "rpt", label: "Footprint report", def: "Synthesis", group: "out" },
+    ],
+    edges: [
+      ["tgt","rdap"],["tgt","doh"],["tgt","ct"],["tgt","wb"],["tgt","hdr"],["tgt","rob"],
+      ["rdap","rpt"],["doh","rpt"],["ct","rpt"],["wb","rpt"],["hdr","rpt"],["rob","rpt"],
+    ],
+  },
+  labs: [
+    {
+      id: "wk1-h8-lab22-whois", number: 22, kind: "simulator",
+      title: "Lab 22 · Live WHOIS / RDAP",
+      brief: "Run an RDAP lookup against a public target. Identify the registrar and creation date.",
+      data: { tool: "whois", defaultTarget: "iana.org", prompt: "Query RDAP via rdap.org. Approved public targets only.", successContains: ["Registrar:"], debrief: "Registrar + creation date establish trust signals and pretext for social engineering. Status flags reveal hygiene." },
+    },
+    {
+      id: "wk1-h8-lab23-dns", number: 23, kind: "simulator",
+      title: "Lab 23 · Live DNS (DoH)",
+      brief: "Pull MX or TXT records to read the target's email posture.",
+      data: { tool: "dns", defaultTarget: "github.com", dnsType: "TXT", prompt: "Use Cloudflare DoH. Try TXT to see SPF/DMARC + SaaS verification tokens.", minCount: 1, debrief: "SPF tells you which hosts may send mail; DMARC tells you the enforcement posture (none/quarantine/reject). Site-verification TXT records reveal SaaS usage." },
+    },
+    {
+      id: "wk1-h8-lab24-subs", number: 24, kind: "simulator",
+      title: "Lab 24 · CT-log subdomain enumeration",
+      brief: "Pull every subdomain ever issued a TLS cert for the target via crt.sh.",
+      data: { tool: "subs", defaultTarget: "iana.org", prompt: "Search Certificate Transparency. Look for non-obvious hosts (dev-*, internal-*, *-staging).", minCount: 1, debrief: "CT logs are append-only — every cert is permanent intel. Anomalous subdomains often point to shadow IT or M&A footprint." },
+    },
+    {
+      id: "wk1-h8-lab25-wayback", number: 25, kind: "simulator",
+      title: "Lab 25 · Wayback Machine history",
+      brief: "Pull the snapshot history of a target to find first-seen date and removed content.",
+      data: { tool: "wayback", defaultTarget: "example.com", prompt: "Use the Internet Archive CDX API.", minCount: 1, debrief: "Removed pages still in Wayback often expose forgotten admin portals or legacy stack details. First-seen date is a useful trust signal." },
+    },
+    {
+      id: "wk1-h8-lab26-headers", number: 26, kind: "simulator",
+      title: "Lab 26 · HTTP security header audit",
+      brief: "Score the target's defensive web headers out of 6.",
+      data: { tool: "headers", defaultTarget: "github.com", prompt: "Fetch the homepage. Read HSTS / CSP / XFO / XCTO / Referrer-Policy / Permissions-Policy.", successContains: ["score:"], debrief: "<3 = immature posture. 6 = mature defensive engineering. The Server header often reveals stack." },
+    },
+    {
+      id: "wk1-h8-lab27-robots", number: 27, kind: "simulator",
+      title: "Lab 27 · robots.txt + sitemap recon",
+      brief: "Parse the target's robots.txt and surface every Disallow path + sitemap reference.",
+      data: { tool: "robots", defaultTarget: "github.com", prompt: "Read /robots.txt — Disallow entries are recon hints, not security.", successContains: ["Parsed"], debrief: "Every Disallow is a sign-posted map of what the operator wanted hidden. Sitemaps reveal content inventories." },
+    },
+  ],
+  knowledgeCheck: [
+    { q: "An RDAP response shows clientTransferProhibited status. This indicates…", options: ["The domain is suspended", "A registrar lock preventing transfer-out — good hygiene", "DNS is broken", "The domain expired"], answer: 1, explain: "A registrar-side lock preventing unauthorised transfer — a sign of mature domain hygiene." },
+    { q: "A target's DMARC TXT record says 'p=none'. What does that tell an attacker?", options: ["Mail spoofing will likely succeed without alerting end-users", "Domain is fully protected", "All mail is rejected", "DKIM is enabled"], answer: 0, explain: "p=none = monitor only. Spoofed mail still delivers. Quarantine or reject are the enforcing policies." },
+    { q: "crt.sh shows a wildcard *.dev.target.com cert issued last week. Most useful follow-up?", options: ["File a CT abuse report", "Enumerate live hosts under dev.target.com via DNS", "Ignore — wildcards are normal", "Revoke the cert"], answer: 1, explain: "The cert proves a wildcard exists; live-host enumeration tells you what's actually deployed under it." },
+    { q: "HTTP security score is 1/6 on a banking site. Single highest-ROI fix?", options: ["Add Permissions-Policy", "Add HSTS (Strict-Transport-Security) with preload", "Add Referrer-Policy", "Add X-Content-Type-Options"], answer: 1, explain: "HSTS forces TLS for all future requests and (with preload) protects first-visit too — the largest single security gain." },
+  ],
+  challenge: {
+    title: "Challenge · Six-tool footprint sprint",
+    brief: "Pick one approved public target. Run all six simulators. Produce a 5-bullet footprint with one finding per category (ownership, DNS, certs, history, headers, robots).",
+    victory: "Six tools executed, six findings written, each cited to its source tool.",
+  },
+  exam: {
+    rating: 5,
+    tested: [
+      "Reading RDAP / WHOIS output fields",
+      "Interpreting DNS record types and DMARC policies",
+      "Using CT logs for subdomain discovery",
+      "HTTP security header taxonomy",
+      "robots.txt as recon (not security)",
+    ],
+    mnemonics: [
+      "RDAP fields: REG-DATE-NS-STATUS",
+      "DMARC policies: none → quarantine → reject (least to most enforcing)",
+      "6 headers to score: HSTS, CSP, XFO, XCTO, Referrer, Permissions",
+    ],
+    traps: [
+      "Treating robots.txt as a defence",
+      "Assuming privacy-WHOIS hides everything (CT logs still leak hosts)",
+      "Reading p=none as 'protected' (it's monitor-only)",
+      "Confusing 'HSTS present' with 'HSTS preloaded'",
+    ],
+    rapid: [
+      "RDAP > legacy WHOIS (structured JSON)",
+      "DoH = DNS-over-HTTPS (RFC 8484)",
+      "CT logs = append-only, public, permanent",
+      "CDX = Wayback's query interface",
+      "robots.txt = recon goldmine",
+    ],
+  },
+  interview: [
+    { level: "Junior", q: "Difference between WHOIS and RDAP?", answer: "WHOIS is the legacy plaintext protocol; RDAP is its modern JSON/HTTPS successor (RFC 7480). RDAP returns structured fields, supports redirection to the authoritative registry, and is the direction the IETF and registries are moving." },
+    { level: "Mid", q: "You see TXT 'v=DMARC1; p=none; rua=mailto:dmarc@target.com'. Diagnose.", answer: "DMARC is published but in monitor-only mode. Spoofed mail still delivers — but reports go to the team, so they're watching. Offensive: spoofing is viable for phishing. Defensive: move to quarantine, then reject, once SPF/DKIM alignment is clean." },
+    { level: "Senior", q: "Synthesise six tool outputs into one footprint finding.", answer: "RDAP shows the registrar; crt.sh surfaces 'dev-admin.target.com'; DoH resolves it to a Cloudflare IP; headers show no HSTS and a Server: nginx/1.18; robots.txt has Disallow: /internal-only. Synthesis: 'dev-admin.target.com is a live, internet-exposed administrative subdomain on outdated nginx behind Cloudflare with no HSTS — operator has explicitly marked /internal-only as sensitive. Recommend IP-allowlist, nginx upgrade, HSTS+preload, audit /internal-only.' Each clause cited." },
+    { level: "Manager", q: "Defend OSINT-only engagements to a CFO.", answer: "Low-cost, low-risk, high-signal. No production impact, no SOC noise, and the deliverable is a list of attack surface the org didn't know existed — usually including shadow IT and leaked credentials worth more than the engagement fee. One prevented incident pays for years of OSINT tooling and consultancy." },
+  ],
+};
+
 /* ──────────────────────────────────────────────────────────────────────── */
 
-export const DAY1_HOURS: HourSpec[] = [
-  HOUR1,
-  HOUR2,
-  HOUR3,
-  HOUR4,
-  HOUR5,
-  HOUR6,
-  { hour: 7, slug: "footprinting-fundamentals", title: "Footprinting & Reconnaissance", subtitle: "Passive / Active / OSINT", icon: Search, status: "upcoming", cehObjectives: [], estMinutes: 60, mission: { codename: "", brief: "", success: [] }, story: { title: "", body: [] }, trainer: { sections: [] }, knowledgeMap: { nodes: [], edges: [] }, labs: [], knowledgeCheck: [], exam: { rating: 5, tested: [], mnemonics: [], traps: [], rapid: [] }, interview: [] },
-  { hour: 8, slug: "recon-simulators", title: "Interactive Reconnaissance Labs", subtitle: "WHOIS / DNS / OSINT simulators", icon: Crosshair, status: "upcoming", cehObjectives: [], estMinutes: 80, mission: { codename: "", brief: "", success: [] }, story: { title: "", body: [] }, trainer: { sections: [] }, knowledgeMap: { nodes: [], edges: [] }, labs: [], knowledgeCheck: [], exam: { rating: 5, tested: [], mnemonics: [], traps: [], rapid: [] }, interview: [] },
-];
+export const DAY1_HOURS: HourSpec[] = [HOUR1, HOUR2, HOUR3, HOUR4, HOUR5, HOUR6, HOUR7, HOUR8];
+
+/** Map a CEH module slug → Week-1 hour slugs that cover it. */
+export const MODULE_TO_HOURS: Record<string, string[]> = {
+  m01: ["why-cybersecurity-exists", "ethics-authorization-roe", "threat-actors-vectors", "cia-dad-controls", "kill-chain-attack", "ethical-hacking-methodology"],
+  m02: ["footprinting-fundamentals", "recon-simulators"],
+};
 
 export function getHour(slug: string) {
   return DAY1_HOURS.find((h) => h.slug === slug);
+}
+
+export function hoursForModule(moduleId: string) {
+  const slugs = MODULE_TO_HOURS[moduleId] ?? [];
+  return slugs.map((s) => DAY1_HOURS.find((h) => h.slug === s)).filter(Boolean) as HourSpec[];
 }
