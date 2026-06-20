@@ -20,7 +20,7 @@ export const Route = createFileRoute("/dashboard")({
 function DashboardPage() {
   const reset = useTelemetry((s) => s.reset);
   const progressReset = useProgress((s) => s.reset);
-  const agg = useProgress(selectAggregate);
+  const agg = useProgress(useShallow(selectAggregate));
   return (
     <div className="mx-auto max-w-7xl px-4 sm:px-6 py-12 space-y-8">
       <div className="flex items-end justify-between">
