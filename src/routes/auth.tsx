@@ -107,6 +107,21 @@ function AuthPage() {
         </div>
 
         <form onSubmit={handleEmail} className="space-y-3">
+          {mode === "sign-up" && (
+            <label className="block">
+              <span className="text-xs text-muted-foreground">Full name</span>
+              <div className="mt-1 relative">
+                <User className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+                <input
+                  type="text" required minLength={2} maxLength={100}
+                  value={fullName} onChange={(e) => setFullName(e.target.value)}
+                  className="w-full rounded-md bg-secondary/40 border border-border pl-9 pr-3 py-2 text-sm focus:outline-none focus:border-primary/60"
+                  placeholder="Jane Operator"
+                  autoComplete="name"
+                />
+              </div>
+            </label>
+          )}
           <label className="block">
             <span className="text-xs text-muted-foreground">Email</span>
             <div className="mt-1 relative">
