@@ -55,6 +55,9 @@ export function SiteHeader() {
           <Link to="/" className="group flex items-center gap-2 px-3 py-1.5 rounded-md text-sm text-muted-foreground hover:text-foreground hover:bg-secondary/60 transition" activeProps={{ className: "text-foreground bg-secondary/80" }}>
             <Shield className="h-3.5 w-3.5" /> Home
           </Link>
+          <Link to="/day1" className="group flex items-center gap-2 px-3 py-1.5 rounded-md text-sm text-muted-foreground hover:text-foreground hover:bg-secondary/60 transition" activeProps={{ className: "text-foreground bg-secondary/80" }}>
+            <Calendar className="h-3.5 w-3.5" /> Week 1
+          </Link>
           <Link to="/ops" className="group flex items-center gap-2 px-3 py-1.5 rounded-md text-sm text-muted-foreground hover:text-foreground hover:bg-secondary/60 transition" activeProps={{ className: "text-foreground bg-secondary/80" }}>
             <Ticket className="h-3.5 w-3.5" /> Ops Center
           </Link>
