@@ -81,7 +81,7 @@ export const patchProgress = createServerFn({ method: "POST" })
     if (data.notes !== undefined) patch.notes = data.notes;
     const { error } = await context.supabase
       .from("ticket_progress")
-      .update(patch)
+      .update(patch as never)
       .eq("user_id", context.userId)
       .eq("ticket_id", data.ticketId);
     if (error) throw error;
