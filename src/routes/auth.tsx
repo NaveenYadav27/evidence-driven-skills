@@ -103,7 +103,7 @@ function AuthPage() {
           <Shield className="h-4 w-4 text-primary" />
           <span className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground">Operator Access</span>
         </div>
-        <h1 className="text-2xl font-bold mb-1">{mode === "sign-in" ? "Sign in" : "Create operator profile"}</h1>
+        <h1 className="text-2xl font-bold mb-1">{mode === "sign-in" ? "Sign in" : mode === "sign-up" ? "Create operator profile" : "Reset password"}</h1>
         <p className="text-sm text-muted-foreground mb-6">
           Sync your lab telemetry, streaks, and exam readiness across every device.
         </p>
