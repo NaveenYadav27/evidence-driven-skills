@@ -1,6 +1,6 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import { PlatformBadge } from "./Brand";
-import { Shield, LogOut, LogIn, Loader2, ShieldCheck, Cloud, CloudOff, CheckCircle2, Ticket } from "lucide-react";
+import { Shield, LogOut, LogIn, Loader2, ShieldCheck, Cloud, CloudOff, CheckCircle2, Ticket, Calendar } from "lucide-react";
 import { useCloudSync } from "./CloudSyncProvider";
 import { useIsAdmin } from "@/hooks/useIsAdmin";
 import { supabase } from "@/integrations/supabase/client";
@@ -54,6 +54,9 @@ export function SiteHeader() {
         <nav className="hidden md:flex items-center gap-1">
           <Link to="/" className="group flex items-center gap-2 px-3 py-1.5 rounded-md text-sm text-muted-foreground hover:text-foreground hover:bg-secondary/60 transition" activeProps={{ className: "text-foreground bg-secondary/80" }}>
             <Shield className="h-3.5 w-3.5" /> Home
+          </Link>
+          <Link to="/day1" className="group flex items-center gap-2 px-3 py-1.5 rounded-md text-sm text-muted-foreground hover:text-foreground hover:bg-secondary/60 transition" activeProps={{ className: "text-foreground bg-secondary/80" }}>
+            <Calendar className="h-3.5 w-3.5" /> Week 1
           </Link>
           <Link to="/ops" className="group flex items-center gap-2 px-3 py-1.5 rounded-md text-sm text-muted-foreground hover:text-foreground hover:bg-secondary/60 transition" activeProps={{ className: "text-foreground bg-secondary/80" }}>
             <Ticket className="h-3.5 w-3.5" /> Ops Center
