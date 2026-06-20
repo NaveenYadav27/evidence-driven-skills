@@ -34,12 +34,23 @@ function AuthPage() {
     setBusy(true);
     try {
       if (mode === "sign-up") {
+        const name = fullName.trim();
+        if (name.length < 2) throw new Error("Please enter your full name");
+        if (name.length > 100) throw new Error("Name must be under 100 characters");
         const { error } = await supabase.auth.signUp({
           email,
           password,
-          options: { emailRedirectTo: window.location.origin },
+          options: {
+            emailRedirectTo: window.location.origin,
+            data: { full_name: name },
+          },
         });
         if (error) throw error;
+        // Ensure profile reflects the chosen name even if a profile row already existed.
+        const { data: sess } = await supabase.auth.getSession();
+        if (sess.session?.user.id) {
+          await supabase.from("profiles").update({ full_name: name }).eq("id", sess.session.user.id);
+        }
         toast.success("Account created", { description: "Check your inbox to confirm, then sign in." });
         setMode("sign-in");
       } else {
