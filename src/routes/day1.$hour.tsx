@@ -133,6 +133,7 @@ function HourPage() {
                 <h4 className="font-semibold">{lab.title}</h4>
               </div>
               <p className="text-sm text-muted-foreground mb-3">{lab.brief}</p>
+              <LabVisual labId={lab.id} />
               {lab.kind === "classify" && <ClassifyLab labId={lab.id} data={lab.data as any} />}
               {lab.kind === "match" && <MatchLab labId={lab.id} data={lab.data as any} />}
               {lab.kind === "decision" && <DecisionLab labId={lab.id} data={lab.data as any} />}
