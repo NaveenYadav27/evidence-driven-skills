@@ -19,6 +19,7 @@ import { Route as AccessRestrictedRouteImport } from './routes/access-restricted
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ModulesIndexRouteImport } from './routes/modules.index'
 import { Route as Day1IndexRouteImport } from './routes/day1.index'
+import { Route as OpsTicketIdRouteImport } from './routes/ops.$ticketId'
 import { Route as ModulesSlugRouteImport } from './routes/modules.$slug'
 import { Route as LabsSlugRouteImport } from './routes/labs.$slug'
 import { Route as Day1HourRouteImport } from './routes/day1.$hour'
@@ -73,6 +74,11 @@ const Day1IndexRoute = Day1IndexRouteImport.update({
   path: '/',
   getParentRoute: () => Day1Route,
 } as any)
+const OpsTicketIdRoute = OpsTicketIdRouteImport.update({
+  id: '/$ticketId',
+  path: '/$ticketId',
+  getParentRoute: () => OpsRoute,
+} as any)
 const ModulesSlugRoute = ModulesSlugRouteImport.update({
   id: '/$slug',
   path: '/$slug',
@@ -97,10 +103,11 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof DashboardRoute
   '/day1': typeof Day1RouteWithChildren
   '/modules': typeof ModulesRouteWithChildren
-  '/ops': typeof OpsRoute
+  '/ops': typeof OpsRouteWithChildren
   '/day1/$hour': typeof Day1HourRoute
   '/labs/$slug': typeof LabsSlugRoute
   '/modules/$slug': typeof ModulesSlugRoute
+  '/ops/$ticketId': typeof OpsTicketIdRoute
   '/day1/': typeof Day1IndexRoute
   '/modules/': typeof ModulesIndexRoute
 }
@@ -110,10 +117,11 @@ export interface FileRoutesByTo {
   '/admin': typeof AdminRoute
   '/auth': typeof AuthRoute
   '/dashboard': typeof DashboardRoute
-  '/ops': typeof OpsRoute
+  '/ops': typeof OpsRouteWithChildren
   '/day1/$hour': typeof Day1HourRoute
   '/labs/$slug': typeof LabsSlugRoute
   '/modules/$slug': typeof ModulesSlugRoute
+  '/ops/$ticketId': typeof OpsTicketIdRoute
   '/day1': typeof Day1IndexRoute
   '/modules': typeof ModulesIndexRoute
 }
@@ -126,10 +134,11 @@ export interface FileRoutesById {
   '/dashboard': typeof DashboardRoute
   '/day1': typeof Day1RouteWithChildren
   '/modules': typeof ModulesRouteWithChildren
-  '/ops': typeof OpsRoute
+  '/ops': typeof OpsRouteWithChildren
   '/day1/$hour': typeof Day1HourRoute
   '/labs/$slug': typeof LabsSlugRoute
   '/modules/$slug': typeof ModulesSlugRoute
+  '/ops/$ticketId': typeof OpsTicketIdRoute
   '/day1/': typeof Day1IndexRoute
   '/modules/': typeof ModulesIndexRoute
 }
@@ -147,6 +156,7 @@ export interface FileRouteTypes {
     | '/day1/$hour'
     | '/labs/$slug'
     | '/modules/$slug'
+    | '/ops/$ticketId'
     | '/day1/'
     | '/modules/'
   fileRoutesByTo: FileRoutesByTo
@@ -160,6 +170,7 @@ export interface FileRouteTypes {
     | '/day1/$hour'
     | '/labs/$slug'
     | '/modules/$slug'
+    | '/ops/$ticketId'
     | '/day1'
     | '/modules'
   id:
@@ -175,6 +186,7 @@ export interface FileRouteTypes {
     | '/day1/$hour'
     | '/labs/$slug'
     | '/modules/$slug'
+    | '/ops/$ticketId'
     | '/day1/'
     | '/modules/'
   fileRoutesById: FileRoutesById
@@ -187,7 +199,7 @@ export interface RootRouteChildren {
   DashboardRoute: typeof DashboardRoute
   Day1Route: typeof Day1RouteWithChildren
   ModulesRoute: typeof ModulesRouteWithChildren
-  OpsRoute: typeof OpsRoute
+  OpsRoute: typeof OpsRouteWithChildren
   LabsSlugRoute: typeof LabsSlugRoute
 }
 
@@ -263,6 +275,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof Day1IndexRouteImport
       parentRoute: typeof Day1Route
     }
+    '/ops/$ticketId': {
+      id: '/ops/$ticketId'
+      path: '/$ticketId'
+      fullPath: '/ops/$ticketId'
+      preLoaderRoute: typeof OpsTicketIdRouteImport
+      parentRoute: typeof OpsRoute
+    }
     '/modules/$slug': {
       id: '/modules/$slug'
       path: '/$slug'
@@ -312,6 +331,16 @@ const ModulesRouteChildren: ModulesRouteChildren = {
 const ModulesRouteWithChildren =
   ModulesRoute._addFileChildren(ModulesRouteChildren)
 
+interface OpsRouteChildren {
+  OpsTicketIdRoute: typeof OpsTicketIdRoute
+}
+
+const OpsRouteChildren: OpsRouteChildren = {
+  OpsTicketIdRoute: OpsTicketIdRoute,
+}
+
+const OpsRouteWithChildren = OpsRoute._addFileChildren(OpsRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AccessRestrictedRoute: AccessRestrictedRoute,
@@ -320,7 +349,7 @@ const rootRouteChildren: RootRouteChildren = {
   DashboardRoute: DashboardRoute,
   Day1Route: Day1RouteWithChildren,
   ModulesRoute: ModulesRouteWithChildren,
-  OpsRoute: OpsRoute,
+  OpsRoute: OpsRouteWithChildren,
   LabsSlugRoute: LabsSlugRoute,
 }
 export const routeTree = rootRouteImport
