@@ -145,12 +145,15 @@ function ReviewDetail({ userId, ticketId }: { userId: string; ticketId: string }
         {(deliverables ?? []).length === 0 && <div className="text-xs text-muted-foreground">No deliverables submitted.</div>}
       </div>
 
-      {(progress?.notes?._global) && (
-        <div className="panel p-4">
-          <div className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground mb-2">Analyst Notes</div>
-          <pre className="text-xs whitespace-pre-wrap font-mono">{progress.notes._global}</pre>
-        </div>
-      )}
+      {(() => {
+        const globalNote = (progress?.notes as Record<string, string> | undefined)?._global;
+        return globalNote ? (
+          <div className="panel p-4">
+            <div className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground mb-2">Analyst Notes</div>
+            <pre className="text-xs whitespace-pre-wrap font-mono">{globalNote}</pre>
+          </div>
+        ) : null;
+      })()}
 
       <div className="panel panel-accent p-4 space-y-3">
         <div className="font-semibold text-sm">Leave a review</div>
