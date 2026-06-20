@@ -1,6 +1,6 @@
 import { Outlet, createFileRoute } from "@tanstack/react-router";
-import { AdminGuard } from "@/components/AdminGuard";
+import { AccessGuard } from "@/components/AccessGuard";
 
 export const Route = createFileRoute("/modules")({
-  component: () => <AdminGuard><Outlet /></AdminGuard>,
+  component: () => <AccessGuard><Outlet /></AccessGuard>,
 });
