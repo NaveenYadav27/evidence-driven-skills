@@ -14,6 +14,282 @@ export type Database = {
   }
   public: {
     Tables: {
+      lms_audit_log: {
+        Row: {
+          action: string
+          actor_id: string | null
+          created_at: string
+          id: string
+          payload: Json | null
+          target_user_id: string | null
+        }
+        Insert: {
+          action: string
+          actor_id?: string | null
+          created_at?: string
+          id?: string
+          payload?: Json | null
+          target_user_id?: string | null
+        }
+        Update: {
+          action?: string
+          actor_id?: string | null
+          created_at?: string
+          id?: string
+          payload?: Json | null
+          target_user_id?: string | null
+        }
+        Relationships: []
+      }
+      lms_courses: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          slug: string
+          tier: string | null
+          title: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          slug: string
+          tier?: string | null
+          title: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          slug?: string
+          tier?: string | null
+          title?: string
+        }
+        Relationships: []
+      }
+      lms_enrollments: {
+        Row: {
+          course_id: string
+          created_at: string
+          expires_at: string | null
+          hours_spent: number
+          id: string
+          progress_pct: number
+          started_at: string
+          status: Database["public"]["Enums"]["enrollment_status"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          course_id: string
+          created_at?: string
+          expires_at?: string | null
+          hours_spent?: number
+          id?: string
+          progress_pct?: number
+          started_at?: string
+          status?: Database["public"]["Enums"]["enrollment_status"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          course_id?: string
+          created_at?: string
+          expires_at?: string | null
+          hours_spent?: number
+          id?: string
+          progress_pct?: number
+          started_at?: string
+          status?: Database["public"]["Enums"]["enrollment_status"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lms_enrollments_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "lms_courses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      lms_invites: {
+        Row: {
+          accepted_at: string | null
+          course_ids: string[] | null
+          email: string
+          id: string
+          invited_at: string
+          invited_by: string | null
+          role: Database["public"]["Enums"]["app_role"]
+        }
+        Insert: {
+          accepted_at?: string | null
+          course_ids?: string[] | null
+          email: string
+          id?: string
+          invited_at?: string
+          invited_by?: string | null
+          role?: Database["public"]["Enums"]["app_role"]
+        }
+        Update: {
+          accepted_at?: string | null
+          course_ids?: string[] | null
+          email?: string
+          id?: string
+          invited_at?: string
+          invited_by?: string | null
+          role?: Database["public"]["Enums"]["app_role"]
+        }
+        Relationships: []
+      }
+      lms_mentor_assignments: {
+        Row: {
+          assigned_at: string
+          id: string
+          mentor_id: string
+          student_id: string
+        }
+        Insert: {
+          assigned_at?: string
+          id?: string
+          mentor_id: string
+          student_id: string
+        }
+        Update: {
+          assigned_at?: string
+          id?: string
+          mentor_id?: string
+          student_id?: string
+        }
+        Relationships: []
+      }
+      lms_module_assignments: {
+        Row: {
+          assigned_at: string
+          assigned_by: string | null
+          id: string
+          module_id: string
+          user_id: string
+        }
+        Insert: {
+          assigned_at?: string
+          assigned_by?: string | null
+          id?: string
+          module_id: string
+          user_id: string
+        }
+        Update: {
+          assigned_at?: string
+          assigned_by?: string | null
+          id?: string
+          module_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lms_module_assignments_module_id_fkey"
+            columns: ["module_id"]
+            isOneToOne: false
+            referencedRelation: "lms_modules"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      lms_modules: {
+        Row: {
+          course_id: string
+          created_at: string
+          hours: number
+          id: string
+          order_index: number
+          slug: string
+          title: string
+        }
+        Insert: {
+          course_id: string
+          created_at?: string
+          hours?: number
+          id?: string
+          order_index?: number
+          slug: string
+          title: string
+        }
+        Update: {
+          course_id?: string
+          created_at?: string
+          hours?: number
+          id?: string
+          order_index?: number
+          slug?: string
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lms_modules_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "lms_courses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      lms_soc_tiers: {
+        Row: {
+          tier: string | null
+          updated_at: string
+          updated_by: string | null
+          user_id: string
+        }
+        Insert: {
+          tier?: string | null
+          updated_at?: string
+          updated_by?: string | null
+          user_id: string
+        }
+        Update: {
+          tier?: string | null
+          updated_at?: string
+          updated_by?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          country: string | null
+          created_at: string
+          full_name: string | null
+          id: string
+          last_active_at: string | null
+          ssid: string | null
+          suspended: boolean
+          updated_at: string
+        }
+        Insert: {
+          country?: string | null
+          created_at?: string
+          full_name?: string | null
+          id: string
+          last_active_at?: string | null
+          ssid?: string | null
+          suspended?: boolean
+          updated_at?: string
+        }
+        Update: {
+          country?: string | null
+          created_at?: string
+          full_name?: string | null
+          id?: string
+          last_active_at?: string | null
+          ssid?: string | null
+          suspended?: boolean
+          updated_at?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -58,6 +334,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      gen_ssid: { Args: never; Returns: string }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -65,9 +342,11 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_admin: { Args: { _user: string }; Returns: boolean }
     }
     Enums: {
       app_role: "super_admin" | "admin" | "instructor" | "student"
+      enrollment_status: "full" | "demo" | "suspended" | "revoked"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -196,6 +475,7 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["super_admin", "admin", "instructor", "student"],
+      enrollment_status: ["full", "demo", "suspended", "revoked"],
     },
   },
 } as const
