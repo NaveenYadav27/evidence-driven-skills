@@ -1,0 +1,1 @@
+INSERT INTO public.lms_enrollments (user_id, course_id, status) VALUES ('1fe645ed-f90d-4347-be40-b35cc508e93d', '272d5a63-ca1c-4c52-8bc1-3875c54b058f', 'full'), ('1fe645ed-f90d-4347-be40-b35cc508e93d', '8b11238f-726a-4a63-b85c-906aae4c2386', 'full') ON CONFLICT (user_id, course_id) DO UPDATE SET status='full';
