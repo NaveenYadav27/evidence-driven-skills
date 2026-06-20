@@ -4,6 +4,7 @@ import { DAY1_HOURS, getHour } from "@/data/day1";
 import { MissionBrief, StoryPanel, TrainerExplain, KnowledgeMap, KnowledgeCheck, ChallengeCard, ExamFocus, InterviewPrep } from "@/components/day1/Lesson";
 import { ClassifyLab, MatchLab, DecisionLab } from "@/components/day1/Labs";
 import { SimulatorLab } from "@/components/day1/SimulatorLab";
+import { LabVisual } from "@/components/day1/LabVisual";
 import { ArrowLeft, ArrowRight, Clock, Terminal, BookOpen } from "lucide-react";
 import { MODULES } from "@/data/modules";
 import { MODULE_TO_HOURS } from "@/data/day1";
@@ -132,6 +133,7 @@ function HourPage() {
                 <h4 className="font-semibold">{lab.title}</h4>
               </div>
               <p className="text-sm text-muted-foreground mb-3">{lab.brief}</p>
+              <LabVisual labId={lab.id} />
               {lab.kind === "classify" && <ClassifyLab labId={lab.id} data={lab.data as any} />}
               {lab.kind === "match" && <MatchLab labId={lab.id} data={lab.data as any} />}
               {lab.kind === "decision" && <DecisionLab labId={lab.id} data={lab.data as any} />}
