@@ -1,6 +1,6 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import { PlatformBadge } from "./Brand";
-import { Shield, LogOut, LogIn, Loader2, ShieldCheck, Cloud, CloudOff, CheckCircle2 } from "lucide-react";
+import { Shield, LogOut, LogIn, Loader2, ShieldCheck, Cloud, CloudOff, CheckCircle2, Ticket } from "lucide-react";
 import { useCloudSync } from "./CloudSyncProvider";
 import { useIsAdmin } from "@/hooks/useIsAdmin";
 import { supabase } from "@/integrations/supabase/client";
