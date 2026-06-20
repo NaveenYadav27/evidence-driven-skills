@@ -17,6 +17,7 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AccessRestrictedRouteImport } from './routes/access-restricted'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as OpsIndexRouteImport } from './routes/ops.index'
 import { Route as ModulesIndexRouteImport } from './routes/modules.index'
 import { Route as Day1IndexRouteImport } from './routes/day1.index'
 import { Route as OpsTicketIdRouteImport } from './routes/ops.$ticketId'
@@ -64,6 +65,11 @@ const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const OpsIndexRoute = OpsIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => OpsRoute,
 } as any)
 const ModulesIndexRoute = ModulesIndexRouteImport.update({
   id: '/',
@@ -117,6 +123,7 @@ export interface FileRoutesByFullPath {
   '/ops/$ticketId': typeof OpsTicketIdRoute
   '/day1/': typeof Day1IndexRoute
   '/modules/': typeof ModulesIndexRoute
+  '/ops/': typeof OpsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -124,7 +131,6 @@ export interface FileRoutesByTo {
   '/admin': typeof AdminRouteWithChildren
   '/auth': typeof AuthRoute
   '/dashboard': typeof DashboardRoute
-  '/ops': typeof OpsRouteWithChildren
   '/admin/review': typeof AdminReviewRoute
   '/day1/$hour': typeof Day1HourRoute
   '/labs/$slug': typeof LabsSlugRoute
@@ -132,6 +138,7 @@ export interface FileRoutesByTo {
   '/ops/$ticketId': typeof OpsTicketIdRoute
   '/day1': typeof Day1IndexRoute
   '/modules': typeof ModulesIndexRoute
+  '/ops': typeof OpsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -150,6 +157,7 @@ export interface FileRoutesById {
   '/ops/$ticketId': typeof OpsTicketIdRoute
   '/day1/': typeof Day1IndexRoute
   '/modules/': typeof ModulesIndexRoute
+  '/ops/': typeof OpsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -169,6 +177,7 @@ export interface FileRouteTypes {
     | '/ops/$ticketId'
     | '/day1/'
     | '/modules/'
+    | '/ops/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -176,7 +185,6 @@ export interface FileRouteTypes {
     | '/admin'
     | '/auth'
     | '/dashboard'
-    | '/ops'
     | '/admin/review'
     | '/day1/$hour'
     | '/labs/$slug'
@@ -184,6 +192,7 @@ export interface FileRouteTypes {
     | '/ops/$ticketId'
     | '/day1'
     | '/modules'
+    | '/ops'
   id:
     | '__root__'
     | '/'
@@ -201,6 +210,7 @@ export interface FileRouteTypes {
     | '/ops/$ticketId'
     | '/day1/'
     | '/modules/'
+    | '/ops/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -272,6 +282,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/ops/': {
+      id: '/ops/'
+      path: '/'
+      fullPath: '/ops/'
+      preLoaderRoute: typeof OpsIndexRouteImport
+      parentRoute: typeof OpsRoute
     }
     '/modules/': {
       id: '/modules/'
@@ -362,10 +379,12 @@ const ModulesRouteWithChildren =
 
 interface OpsRouteChildren {
   OpsTicketIdRoute: typeof OpsTicketIdRoute
+  OpsIndexRoute: typeof OpsIndexRoute
 }
 
 const OpsRouteChildren: OpsRouteChildren = {
   OpsTicketIdRoute: OpsTicketIdRoute,
+  OpsIndexRoute: OpsIndexRoute,
 }
 
 const OpsRouteWithChildren = OpsRoute._addFileChildren(OpsRouteChildren)
