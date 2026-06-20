@@ -4,11 +4,12 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Users, BarChart3, UserPlus, LifeBuoy, Activity, Eye, History,
   RefreshCw, Search, X, KeyRound, Trash2, UserMinus, UserCheck, ShieldCheck, Loader2,
+  Pencil, Check,
 } from "lucide-react";
 import {
   checkAmIAdmin, listUsers, getUserDetail, setSuspended, resetPassword,
   deleteUser, setEnrollment, setSocTier, listCatalog, inviteUser,
-  listInvites, listAudit,
+  listInvites, listAudit, setUserName,
 } from "@/lib/admin.functions";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
