@@ -107,7 +107,7 @@ function ReviewDetail({ userId, ticketId }: { userId: string; ticketId: string }
         <div className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground mb-2">Decisions</div>
         <ul className="space-y-1 text-xs">
           {ticket.steps.filter((s) => s.decision).map((s) => {
-            const chosenId = (progress?.decisions ?? {})[s.id];
+            const chosenId = (progress?.decisions as Record<string, string> | undefined ?? {})[s.id];
             const opt = s.decision!.options.find((o) => o.id === chosenId);
             return (
               <li key={s.id}>

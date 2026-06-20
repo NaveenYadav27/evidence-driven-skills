@@ -23,6 +23,7 @@ import { Route as OpsTicketIdRouteImport } from './routes/ops.$ticketId'
 import { Route as ModulesSlugRouteImport } from './routes/modules.$slug'
 import { Route as LabsSlugRouteImport } from './routes/labs.$slug'
 import { Route as Day1HourRouteImport } from './routes/day1.$hour'
+import { Route as AdminReviewRouteImport } from './routes/admin.review'
 
 const OpsRoute = OpsRouteImport.update({
   id: '/ops',
@@ -94,16 +95,22 @@ const Day1HourRoute = Day1HourRouteImport.update({
   path: '/$hour',
   getParentRoute: () => Day1Route,
 } as any)
+const AdminReviewRoute = AdminReviewRouteImport.update({
+  id: '/review',
+  path: '/review',
+  getParentRoute: () => AdminRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/access-restricted': typeof AccessRestrictedRoute
-  '/admin': typeof AdminRoute
+  '/admin': typeof AdminRouteWithChildren
   '/auth': typeof AuthRoute
   '/dashboard': typeof DashboardRoute
   '/day1': typeof Day1RouteWithChildren
   '/modules': typeof ModulesRouteWithChildren
   '/ops': typeof OpsRouteWithChildren
+  '/admin/review': typeof AdminReviewRoute
   '/day1/$hour': typeof Day1HourRoute
   '/labs/$slug': typeof LabsSlugRoute
   '/modules/$slug': typeof ModulesSlugRoute
@@ -114,10 +121,11 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/access-restricted': typeof AccessRestrictedRoute
-  '/admin': typeof AdminRoute
+  '/admin': typeof AdminRouteWithChildren
   '/auth': typeof AuthRoute
   '/dashboard': typeof DashboardRoute
   '/ops': typeof OpsRouteWithChildren
+  '/admin/review': typeof AdminReviewRoute
   '/day1/$hour': typeof Day1HourRoute
   '/labs/$slug': typeof LabsSlugRoute
   '/modules/$slug': typeof ModulesSlugRoute
@@ -129,12 +137,13 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/access-restricted': typeof AccessRestrictedRoute
-  '/admin': typeof AdminRoute
+  '/admin': typeof AdminRouteWithChildren
   '/auth': typeof AuthRoute
   '/dashboard': typeof DashboardRoute
   '/day1': typeof Day1RouteWithChildren
   '/modules': typeof ModulesRouteWithChildren
   '/ops': typeof OpsRouteWithChildren
+  '/admin/review': typeof AdminReviewRoute
   '/day1/$hour': typeof Day1HourRoute
   '/labs/$slug': typeof LabsSlugRoute
   '/modules/$slug': typeof ModulesSlugRoute
@@ -153,6 +162,7 @@ export interface FileRouteTypes {
     | '/day1'
     | '/modules'
     | '/ops'
+    | '/admin/review'
     | '/day1/$hour'
     | '/labs/$slug'
     | '/modules/$slug'
@@ -167,6 +177,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/dashboard'
     | '/ops'
+    | '/admin/review'
     | '/day1/$hour'
     | '/labs/$slug'
     | '/modules/$slug'
@@ -183,6 +194,7 @@ export interface FileRouteTypes {
     | '/day1'
     | '/modules'
     | '/ops'
+    | '/admin/review'
     | '/day1/$hour'
     | '/labs/$slug'
     | '/modules/$slug'
@@ -194,7 +206,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AccessRestrictedRoute: typeof AccessRestrictedRoute
-  AdminRoute: typeof AdminRoute
+  AdminRoute: typeof AdminRouteWithChildren
   AuthRoute: typeof AuthRoute
   DashboardRoute: typeof DashboardRoute
   Day1Route: typeof Day1RouteWithChildren
@@ -303,8 +315,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof Day1HourRouteImport
       parentRoute: typeof Day1Route
     }
+    '/admin/review': {
+      id: '/admin/review'
+      path: '/review'
+      fullPath: '/admin/review'
+      preLoaderRoute: typeof AdminReviewRouteImport
+      parentRoute: typeof AdminRoute
+    }
   }
 }
+
+interface AdminRouteChildren {
+  AdminReviewRoute: typeof AdminReviewRoute
+}
+
+const AdminRouteChildren: AdminRouteChildren = {
+  AdminReviewRoute: AdminReviewRoute,
+}
+
+const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
 
 interface Day1RouteChildren {
   Day1HourRoute: typeof Day1HourRoute
@@ -344,7 +373,7 @@ const OpsRouteWithChildren = OpsRoute._addFileChildren(OpsRouteChildren)
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AccessRestrictedRoute: AccessRestrictedRoute,
-  AdminRoute: AdminRoute,
+  AdminRoute: AdminRouteWithChildren,
   AuthRoute: AuthRoute,
   DashboardRoute: DashboardRoute,
   Day1Route: Day1RouteWithChildren,
