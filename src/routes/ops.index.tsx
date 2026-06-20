@@ -5,7 +5,7 @@ import { ALL_TICKETS } from "@/data/tickets";
 import { listMyProgress, getMyXp } from "@/lib/tickets.functions";
 import { Ticket as TicketIcon, Clock, Shield, ChevronRight, Award } from "lucide-react";
 
-export const Route = createFileRoute("/ops")({
+export const Route = createFileRoute("/ops/")({
   head: () => ({
     meta: [
       { title: "Operations Center · CEH Tickets" },
