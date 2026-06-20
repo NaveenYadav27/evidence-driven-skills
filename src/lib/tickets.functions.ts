@@ -69,7 +69,12 @@ export const patchProgress = createServerFn({ method: "POST" })
     }).parse(d),
   )
   .handler(async ({ data, context }) => {
-    const patch: Record<string, unknown> = {};
+    const patch: {
+      current_step?: number;
+      completed_steps?: number[];
+      decisions?: Record<string, unknown>;
+      notes?: Record<string, unknown>;
+    } = {};
     if (data.currentStep !== undefined) patch.current_step = data.currentStep;
     if (data.completedSteps !== undefined) patch.completed_steps = data.completedSteps;
     if (data.decisions !== undefined) patch.decisions = data.decisions;
