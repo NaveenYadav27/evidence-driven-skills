@@ -1,6 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { LiveDashboard } from "@/components/LiveDashboard";
 import { useTelemetry } from "@/lib/telemetry";
+import { useProgress, selectAggregate } from "@/lib/progress/engine";
+import { ContinueLearningCard } from "@/components/progress/ContinueLearningCard";
 import { Trash2 } from "lucide-react";
 import { AccessGuard } from "@/components/AccessGuard";
 
