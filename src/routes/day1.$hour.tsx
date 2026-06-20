@@ -1,4 +1,5 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
+import { useEffect, useRef } from "react";
 import { DAY1_HOURS, getHour } from "@/data/day1";
 import { MissionBrief, StoryPanel, TrainerExplain, KnowledgeMap, KnowledgeCheck, ChallengeCard, ExamFocus, InterviewPrep } from "@/components/day1/Lesson";
 import { ClassifyLab, MatchLab, DecisionLab } from "@/components/day1/Labs";
@@ -6,6 +7,7 @@ import { SimulatorLab } from "@/components/day1/SimulatorLab";
 import { ArrowLeft, ArrowRight, Clock, Terminal, BookOpen } from "lucide-react";
 import { MODULES } from "@/data/modules";
 import { MODULE_TO_HOURS } from "@/data/day1";
+import { useProgress } from "@/lib/progress/engine";
 
 export const Route = createFileRoute("/day1/$hour")({
   loader: ({ params }) => {
@@ -35,6 +37,46 @@ function HourPage() {
   const prev = DAY1_HOURS.slice(0, idx).reverse().find((x) => x.status === "available");
   const next = DAY1_HOURS.slice(idx + 1).find((x) => x.status === "available");
   const Icon = h.icon;
+
+  // Engine: track lesson view + time + scroll + resume metadata
+  const touchLesson = useProgress((s) => s.touchLesson);
+  const addLessonTime = useProgress((s) => s.addLessonTime);
+  const setLessonScroll = useProgress((s) => s.setLessonScroll);
+  const setLessonViewed = useProgress((s) => s.setLessonViewed);
+  const updateSession = useProgress((s) => s.updateSession);
+  const lessonId = `week1-hour-${h.slug}`;
+  const tStart = useRef(Date.now());
+
+  useEffect(() => {
+    touchLesson(lessonId, {
+      courseId: "ceh-v13",
+      requiredTimeMs: Math.max(60_000, Math.round((h.estMinutes ?? 15) * 60 * 1000 * 0.66)),
+    });
+    updateSession({ lastCourseId: "ceh-v13", lastLessonId: lessonId });
+    const tick = setInterval(() => addLessonTime(lessonId, 5_000), 5_000);
+    let lastScroll = 0;
+    let scrollT: ReturnType<typeof setTimeout> | null = null;
+    const onScroll = () => {
+      lastScroll = window.scrollY;
+      if (scrollT) clearTimeout(scrollT);
+      scrollT = setTimeout(() => {
+        setLessonScroll(lessonId, lastScroll);
+        const doc = document.documentElement;
+        const max = Math.max(1, doc.scrollHeight - window.innerHeight);
+        setLessonViewed(lessonId, Math.min(1, (lastScroll + window.innerHeight) / doc.scrollHeight) || 0);
+        // also feed viewed as fraction scrolled
+        setLessonViewed(lessonId, Math.min(1, lastScroll / max));
+      }, 250);
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => {
+      clearInterval(tick);
+      window.removeEventListener("scroll", onScroll);
+      if (scrollT) clearTimeout(scrollT);
+      addLessonTime(lessonId, Date.now() - tStart.current);
+    };
+  }, [lessonId, h.estMinutes, touchLesson, addLessonTime, setLessonScroll, setLessonViewed, updateSession]);
+
 
   return (
     <div className="mx-auto max-w-6xl px-4 sm:px-6 py-8 space-y-8">
