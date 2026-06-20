@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable/index";
 import { toast } from "sonner";
-import { Shield, Mail, Lock, Loader2 } from "lucide-react";
+import { Shield, Mail, Lock, Loader2, User } from "lucide-react";
 
 export const Route = createFileRoute("/auth")({
   head: () => ({
@@ -19,6 +19,7 @@ function AuthPage() {
   const navigate = useNavigate();
   const [mode, setMode] = useState<"sign-in" | "sign-up">("sign-in");
   const [email, setEmail] = useState("");
+  const [fullName, setFullName] = useState("");
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
 
@@ -33,12 +34,23 @@ function AuthPage() {
     setBusy(true);
     try {
       if (mode === "sign-up") {
+        const name = fullName.trim();
+        if (name.length < 2) throw new Error("Please enter your full name");
+        if (name.length > 100) throw new Error("Name must be under 100 characters");
         const { error } = await supabase.auth.signUp({
           email,
           password,
-          options: { emailRedirectTo: window.location.origin },
+          options: {
+            emailRedirectTo: window.location.origin,
+            data: { full_name: name },
+          },
         });
         if (error) throw error;
+        // Ensure profile reflects the chosen name even if a profile row already existed.
+        const { data: sess } = await supabase.auth.getSession();
+        if (sess.session?.user.id) {
+          await supabase.from("profiles").update({ full_name: name }).eq("id", sess.session.user.id);
+        }
         toast.success("Account created", { description: "Check your inbox to confirm, then sign in." });
         setMode("sign-in");
       } else {
@@ -95,6 +107,21 @@ function AuthPage() {
         </div>
 
         <form onSubmit={handleEmail} className="space-y-3">
+          {mode === "sign-up" && (
+            <label className="block">
+              <span className="text-xs text-muted-foreground">Full name</span>
+              <div className="mt-1 relative">
+                <User className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+                <input
+                  type="text" required minLength={2} maxLength={100}
+                  value={fullName} onChange={(e) => setFullName(e.target.value)}
+                  className="w-full rounded-md bg-secondary/40 border border-border pl-9 pr-3 py-2 text-sm focus:outline-none focus:border-primary/60"
+                  placeholder="Jane Operator"
+                  autoComplete="name"
+                />
+              </div>
+            </label>
+          )}
           <label className="block">
             <span className="text-xs text-muted-foreground">Email</span>
             <div className="mt-1 relative">
