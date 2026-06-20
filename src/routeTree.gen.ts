@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as OpsRouteImport } from './routes/ops'
 import { Route as ModulesRouteImport } from './routes/modules'
 import { Route as Day1RouteImport } from './routes/day1'
 import { Route as DashboardRouteImport } from './routes/dashboard'
@@ -25,6 +26,11 @@ import { Route as LabsSlugRouteImport } from './routes/labs.$slug'
 import { Route as Day1HourRouteImport } from './routes/day1.$hour'
 import { Route as AdminReviewRouteImport } from './routes/admin.review'
 
+const OpsRoute = OpsRouteImport.update({
+  id: '/ops',
+  path: '/ops',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ModulesRoute = ModulesRouteImport.update({
   id: '/modules',
   path: '/modules',
@@ -61,9 +67,9 @@ const IndexRoute = IndexRouteImport.update({
   getParentRoute: () => rootRouteImport,
 } as any)
 const OpsIndexRoute = OpsIndexRouteImport.update({
-  id: '/ops/',
-  path: '/ops/',
-  getParentRoute: () => rootRouteImport,
+  id: '/',
+  path: '/',
+  getParentRoute: () => OpsRoute,
 } as any)
 const ModulesIndexRoute = ModulesIndexRouteImport.update({
   id: '/',
@@ -76,9 +82,9 @@ const Day1IndexRoute = Day1IndexRouteImport.update({
   getParentRoute: () => Day1Route,
 } as any)
 const OpsTicketIdRoute = OpsTicketIdRouteImport.update({
-  id: '/ops/$ticketId',
-  path: '/ops/$ticketId',
-  getParentRoute: () => rootRouteImport,
+  id: '/$ticketId',
+  path: '/$ticketId',
+  getParentRoute: () => OpsRoute,
 } as any)
 const ModulesSlugRoute = ModulesSlugRouteImport.update({
   id: '/$slug',
@@ -109,6 +115,7 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof DashboardRoute
   '/day1': typeof Day1RouteWithChildren
   '/modules': typeof ModulesRouteWithChildren
+  '/ops': typeof OpsRouteWithChildren
   '/admin/review': typeof AdminReviewRoute
   '/day1/$hour': typeof Day1HourRoute
   '/labs/$slug': typeof LabsSlugRoute
@@ -142,6 +149,7 @@ export interface FileRoutesById {
   '/dashboard': typeof DashboardRoute
   '/day1': typeof Day1RouteWithChildren
   '/modules': typeof ModulesRouteWithChildren
+  '/ops': typeof OpsRouteWithChildren
   '/admin/review': typeof AdminReviewRoute
   '/day1/$hour': typeof Day1HourRoute
   '/labs/$slug': typeof LabsSlugRoute
@@ -161,6 +169,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/day1'
     | '/modules'
+    | '/ops'
     | '/admin/review'
     | '/day1/$hour'
     | '/labs/$slug'
@@ -193,6 +202,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/day1'
     | '/modules'
+    | '/ops'
     | '/admin/review'
     | '/day1/$hour'
     | '/labs/$slug'
@@ -211,13 +221,19 @@ export interface RootRouteChildren {
   DashboardRoute: typeof DashboardRoute
   Day1Route: typeof Day1RouteWithChildren
   ModulesRoute: typeof ModulesRouteWithChildren
+  OpsRoute: typeof OpsRouteWithChildren
   LabsSlugRoute: typeof LabsSlugRoute
-  OpsTicketIdRoute: typeof OpsTicketIdRoute
-  OpsIndexRoute: typeof OpsIndexRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/ops': {
+      id: '/ops'
+      path: '/ops'
+      fullPath: '/ops'
+      preLoaderRoute: typeof OpsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/modules': {
       id: '/modules'
       path: '/modules'
@@ -269,10 +285,10 @@ declare module '@tanstack/react-router' {
     }
     '/ops/': {
       id: '/ops/'
-      path: '/ops'
+      path: '/'
       fullPath: '/ops/'
       preLoaderRoute: typeof OpsIndexRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof OpsRoute
     }
     '/modules/': {
       id: '/modules/'
@@ -290,10 +306,10 @@ declare module '@tanstack/react-router' {
     }
     '/ops/$ticketId': {
       id: '/ops/$ticketId'
-      path: '/ops/$ticketId'
+      path: '/$ticketId'
       fullPath: '/ops/$ticketId'
       preLoaderRoute: typeof OpsTicketIdRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof OpsRoute
     }
     '/modules/$slug': {
       id: '/modules/$slug'
@@ -361,6 +377,18 @@ const ModulesRouteChildren: ModulesRouteChildren = {
 const ModulesRouteWithChildren =
   ModulesRoute._addFileChildren(ModulesRouteChildren)
 
+interface OpsRouteChildren {
+  OpsTicketIdRoute: typeof OpsTicketIdRoute
+  OpsIndexRoute: typeof OpsIndexRoute
+}
+
+const OpsRouteChildren: OpsRouteChildren = {
+  OpsTicketIdRoute: OpsTicketIdRoute,
+  OpsIndexRoute: OpsIndexRoute,
+}
+
+const OpsRouteWithChildren = OpsRoute._addFileChildren(OpsRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AccessRestrictedRoute: AccessRestrictedRoute,
@@ -369,9 +397,8 @@ const rootRouteChildren: RootRouteChildren = {
   DashboardRoute: DashboardRoute,
   Day1Route: Day1RouteWithChildren,
   ModulesRoute: ModulesRouteWithChildren,
+  OpsRoute: OpsRouteWithChildren,
   LabsSlugRoute: LabsSlugRoute,
-  OpsTicketIdRoute: OpsTicketIdRoute,
-  OpsIndexRoute: OpsIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
