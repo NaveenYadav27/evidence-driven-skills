@@ -5,6 +5,7 @@ import { MODULES } from "@/data/modules";
 import { Terminal } from "@/components/Terminal";
 import { LabObjectives } from "@/components/LabObjectives";
 import { useTelemetry } from "@/lib/telemetry";
+import { useProgress } from "@/lib/progress/engine";
 import { ArrowLeft, Target, Wrench, Clock } from "lucide-react";
 import { AccessGuard } from "@/components/AccessGuard";
 
@@ -36,28 +37,53 @@ function LabPage() {
   const satisfy = useTelemetry((s) => s.satisfyObjective);
   const attempt = useTelemetry((s) => s.attemptObjective);
   const tick = useTelemetry((s) => s.tick);
+  // Progress engine bindings
+  const pEnsure = useProgress((s) => s.ensureLab);
+  const pCmd = useProgress((s) => s.recordLabCommand);
+  const pSat = useProgress((s) => s.setObjective);
+  const pAttempt = useProgress((s) => s.attemptObjective);
+  const pAddTime = useProgress((s) => s.addLabTime);
+  const updateSession = useProgress((s) => s.updateSession);
   const tStart = useRef(Date.now());
 
-  useEffect(() => { ensureLab(lab.id); }, [lab.id, ensureLab]);
+  useEffect(() => {
+    ensureLab(lab.id);
+    pEnsure(lab.id, lab.moduleId);
+    updateSession({
+      lastCourseId: "ceh-v13",
+      lastModuleId: lab.moduleId,
+      lastLessonId: lab.id,
+    });
+  }, [lab.id, lab.moduleId, ensureLab, pEnsure, updateSession]);
 
   // Time-on-lab tracker
   useEffect(() => {
-    const i = setInterval(() => tick(5000), 5000);
-    const onUnload = () => tick(Date.now() - tStart.current);
+    const i = setInterval(() => {
+      tick(5000);
+      pAddTime(lab.id, 5000);
+    }, 5000);
+    const onUnload = () => {
+      const delta = Date.now() - tStart.current;
+      tick(delta);
+      pAddTime(lab.id, delta);
+    };
     window.addEventListener("beforeunload", onUnload);
     return () => { clearInterval(i); window.removeEventListener("beforeunload", onUnload); };
-  }, [tick]);
+  }, [tick, pAddTime, lab.id]);
 
   const onCommand = (tool: string, args: string, success: boolean) => {
+    pCmd(lab.id, tool, args, success);
     // Match command-type objectives.
     for (const o of lab.objectives) {
       if (o.type !== "command") continue;
       if (o.tool && o.tool !== tool) continue;
       attempt(lab.id, o.id);
+      pAttempt(lab.id, o.id);
       if (success) {
         const argText = args.toLowerCase();
         if (!o.argMatch || argText.includes(o.argMatch.toLowerCase())) {
           satisfy(lab.id, o.id);
+          pSat(lab.id, o.id, true);
         }
       }
     }

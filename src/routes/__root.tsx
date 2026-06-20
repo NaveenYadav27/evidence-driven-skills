@@ -14,6 +14,7 @@ import { reportLovableError } from "../lib/lovable-error-reporting";
 import { SiteHeader } from "@/components/SiteHeader";
 import { Footer } from "@/components/Footer";
 import { CloudSyncProvider } from "@/components/CloudSyncProvider";
+import { ProgressProvider } from "@/components/progress/ProgressProvider";
 
 function NotFoundComponent() {
   return (
@@ -87,6 +88,7 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <CloudSyncProvider />
+      <ProgressProvider />
       <div className="min-h-screen flex flex-col">
         <SiteHeader />
         <main className="flex-1">
