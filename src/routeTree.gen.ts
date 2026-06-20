@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as OpsRouteImport } from './routes/ops'
 import { Route as ModulesRouteImport } from './routes/modules'
 import { Route as Day1RouteImport } from './routes/day1'
 import { Route as DashboardRouteImport } from './routes/dashboard'
@@ -22,6 +23,11 @@ import { Route as ModulesSlugRouteImport } from './routes/modules.$slug'
 import { Route as LabsSlugRouteImport } from './routes/labs.$slug'
 import { Route as Day1HourRouteImport } from './routes/day1.$hour'
 
+const OpsRoute = OpsRouteImport.update({
+  id: '/ops',
+  path: '/ops',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ModulesRoute = ModulesRouteImport.update({
   id: '/modules',
   path: '/modules',
@@ -91,6 +97,7 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof DashboardRoute
   '/day1': typeof Day1RouteWithChildren
   '/modules': typeof ModulesRouteWithChildren
+  '/ops': typeof OpsRoute
   '/day1/$hour': typeof Day1HourRoute
   '/labs/$slug': typeof LabsSlugRoute
   '/modules/$slug': typeof ModulesSlugRoute
@@ -103,6 +110,7 @@ export interface FileRoutesByTo {
   '/admin': typeof AdminRoute
   '/auth': typeof AuthRoute
   '/dashboard': typeof DashboardRoute
+  '/ops': typeof OpsRoute
   '/day1/$hour': typeof Day1HourRoute
   '/labs/$slug': typeof LabsSlugRoute
   '/modules/$slug': typeof ModulesSlugRoute
@@ -118,6 +126,7 @@ export interface FileRoutesById {
   '/dashboard': typeof DashboardRoute
   '/day1': typeof Day1RouteWithChildren
   '/modules': typeof ModulesRouteWithChildren
+  '/ops': typeof OpsRoute
   '/day1/$hour': typeof Day1HourRoute
   '/labs/$slug': typeof LabsSlugRoute
   '/modules/$slug': typeof ModulesSlugRoute
@@ -134,6 +143,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/day1'
     | '/modules'
+    | '/ops'
     | '/day1/$hour'
     | '/labs/$slug'
     | '/modules/$slug'
@@ -146,6 +156,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/auth'
     | '/dashboard'
+    | '/ops'
     | '/day1/$hour'
     | '/labs/$slug'
     | '/modules/$slug'
@@ -160,6 +171,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/day1'
     | '/modules'
+    | '/ops'
     | '/day1/$hour'
     | '/labs/$slug'
     | '/modules/$slug'
@@ -175,11 +187,19 @@ export interface RootRouteChildren {
   DashboardRoute: typeof DashboardRoute
   Day1Route: typeof Day1RouteWithChildren
   ModulesRoute: typeof ModulesRouteWithChildren
+  OpsRoute: typeof OpsRoute
   LabsSlugRoute: typeof LabsSlugRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/ops': {
+      id: '/ops'
+      path: '/ops'
+      fullPath: '/ops'
+      preLoaderRoute: typeof OpsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/modules': {
       id: '/modules'
       path: '/modules'
@@ -300,6 +320,7 @@ const rootRouteChildren: RootRouteChildren = {
   DashboardRoute: DashboardRoute,
   Day1Route: Day1RouteWithChildren,
   ModulesRoute: ModulesRouteWithChildren,
+  OpsRoute: OpsRoute,
   LabsSlugRoute: LabsSlugRoute,
 }
 export const routeTree = rootRouteImport
