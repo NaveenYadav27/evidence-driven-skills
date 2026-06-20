@@ -319,7 +319,38 @@ function UserDetailSheet({ userId, onClose }: { userId: string; onClose: () => v
       <div className="flex items-start gap-4 mb-6">
         <div className="h-14 w-14 rounded-full bg-cyan-500/20 flex items-center justify-center text-2xl font-semibold text-cyan-300">{initial}</div>
         <div className="flex-1 min-w-0">
-          <h2 className="text-2xl font-bold truncate">{name}</h2>
+          {editingName ? (
+            <form
+              onSubmit={(e) => { e.preventDefault(); mRename.mutate({ data: { userId, fullName: nameDraft } }); }}
+              className="flex items-center gap-2"
+            >
+              <input
+                autoFocus
+                value={nameDraft}
+                onChange={(e) => setNameDraft(e.target.value)}
+                maxLength={100}
+                className="flex-1 min-w-0 rounded-md bg-secondary/40 border border-border px-3 py-1.5 text-lg font-bold focus:outline-none focus:border-primary/60"
+                placeholder="Full name"
+              />
+              <button type="submit" disabled={mRename.isPending} className="inline-flex items-center justify-center h-8 w-8 rounded-md bg-cyan-500/20 text-cyan-300 hover:bg-cyan-500/30 disabled:opacity-50" title="Save">
+                {mRename.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
+              </button>
+              <button type="button" onClick={() => setEditingName(false)} className="inline-flex items-center justify-center h-8 w-8 rounded-md hover:bg-secondary" title="Cancel">
+                <X className="h-4 w-4" />
+              </button>
+            </form>
+          ) : (
+            <div className="flex items-center gap-2">
+              <h2 className="text-2xl font-bold truncate">{name}</h2>
+              <button
+                onClick={() => { setNameDraft(p?.full_name ?? ""); setEditingName(true); }}
+                className="inline-flex items-center justify-center h-7 w-7 rounded-md text-muted-foreground hover:text-foreground hover:bg-secondary"
+                title="Edit name"
+              >
+                <Pencil className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          )}
           <div className="text-sm text-muted-foreground truncate">{d.auth?.email}</div>
           <div className="mt-2 flex items-center gap-2 flex-wrap">
             <span className="rounded-md border border-border px-2 py-0.5 text-xs font-mono">{p?.ssid ?? "—"}</span>
