@@ -6,7 +6,7 @@ import { Terminal } from "@/components/Terminal";
 import { LabObjectives } from "@/components/LabObjectives";
 import { useTelemetry } from "@/lib/telemetry";
 import { ArrowLeft, Target, Wrench, Clock } from "lucide-react";
-import { AdminGuard } from "@/components/AdminGuard";
+import { AccessGuard } from "@/components/AccessGuard";
 
 export const Route = createFileRoute("/labs/$slug")({
   loader: ({ params }) => {
@@ -27,7 +27,7 @@ export const Route = createFileRoute("/labs/$slug")({
       <Link to="/modules" className="text-[var(--cyan)] hover:underline mt-3 inline-block">← Modules</Link>
     </div>
   ),
-  component: () => <AdminGuard><LabPage /></AdminGuard>,
+  component: () => <AccessGuard><LabPage /></AccessGuard>,
 });
 
 function LabPage() {
