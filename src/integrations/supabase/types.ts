@@ -290,6 +290,171 @@ export type Database = {
         }
         Relationships: []
       }
+      ticket_deliverables: {
+        Row: {
+          body: string
+          created_at: string
+          id: string
+          kind: string
+          ticket_id: string
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          body?: string
+          created_at?: string
+          id?: string
+          kind: string
+          ticket_id: string
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          id?: string
+          kind?: string
+          ticket_id?: string
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      ticket_evidence: {
+        Row: {
+          content: Json
+          created_at: string
+          id: string
+          kind: string
+          label: string | null
+          step_id: string
+          ticket_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          content?: Json
+          created_at?: string
+          id?: string
+          kind: string
+          label?: string | null
+          step_id: string
+          ticket_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          content?: Json
+          created_at?: string
+          id?: string
+          kind?: string
+          label?: string | null
+          step_id?: string
+          ticket_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      ticket_progress: {
+        Row: {
+          auto_score: number | null
+          completed_at: string | null
+          completed_steps: number[]
+          created_at: string
+          current_step: number
+          decisions: Json
+          hour_slug: string | null
+          id: string
+          instructor_score: number | null
+          notes: Json
+          started_at: string
+          status: Database["public"]["Enums"]["ticket_status"]
+          submitted_at: string | null
+          ticket_id: string
+          updated_at: string
+          user_id: string
+          xp_earned: number
+        }
+        Insert: {
+          auto_score?: number | null
+          completed_at?: string | null
+          completed_steps?: number[]
+          created_at?: string
+          current_step?: number
+          decisions?: Json
+          hour_slug?: string | null
+          id?: string
+          instructor_score?: number | null
+          notes?: Json
+          started_at?: string
+          status?: Database["public"]["Enums"]["ticket_status"]
+          submitted_at?: string | null
+          ticket_id: string
+          updated_at?: string
+          user_id: string
+          xp_earned?: number
+        }
+        Update: {
+          auto_score?: number | null
+          completed_at?: string | null
+          completed_steps?: number[]
+          created_at?: string
+          current_step?: number
+          decisions?: Json
+          hour_slug?: string | null
+          id?: string
+          instructor_score?: number | null
+          notes?: Json
+          started_at?: string
+          status?: Database["public"]["Enums"]["ticket_status"]
+          submitted_at?: string | null
+          ticket_id?: string
+          updated_at?: string
+          user_id?: string
+          xp_earned?: number
+        }
+        Relationships: []
+      }
+      ticket_reviews: {
+        Row: {
+          created_at: string
+          feedback: string
+          id: string
+          reviewer_id: string
+          rubric: Json
+          score: number
+          ticket_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          feedback?: string
+          id?: string
+          reviewer_id: string
+          rubric?: Json
+          score: number
+          ticket_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          feedback?: string
+          id?: string
+          reviewer_id?: string
+          rubric?: Json
+          score?: number
+          ticket_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_assessments: {
         Row: {
           answers: Json
@@ -337,6 +502,30 @@ export type Database = {
           status?: string
           submitted_at?: string | null
           updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_badges: {
+        Row: {
+          awarded_for: string | null
+          badge_code: string
+          created_at: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          awarded_for?: string | null
+          badge_code: string
+          created_at?: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          awarded_for?: string | null
+          badge_code?: string
+          created_at?: string
+          id?: string
           user_id?: string
         }
         Relationships: []
@@ -593,6 +782,33 @@ export type Database = {
         }
         Relationships: []
       }
+      xp_ledger: {
+        Row: {
+          created_at: string
+          id: string
+          points: number
+          reason: string
+          ticket_id: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          points: number
+          reason: string
+          ticket_id?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          points?: number
+          reason?: string
+          ticket_id?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -612,6 +828,14 @@ export type Database = {
     Enums: {
       app_role: "super_admin" | "admin" | "instructor" | "student"
       enrollment_status: "full" | "demo" | "suspended" | "revoked"
+      ticket_priority: "low" | "medium" | "high" | "critical"
+      ticket_status:
+        | "open"
+        | "in_progress"
+        | "submitted"
+        | "reviewed"
+        | "resolved"
+        | "closed"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -741,6 +965,15 @@ export const Constants = {
     Enums: {
       app_role: ["super_admin", "admin", "instructor", "student"],
       enrollment_status: ["full", "demo", "suspended", "revoked"],
+      ticket_priority: ["low", "medium", "high", "critical"],
+      ticket_status: [
+        "open",
+        "in_progress",
+        "submitted",
+        "reviewed",
+        "resolved",
+        "closed",
+      ],
     },
   },
 } as const

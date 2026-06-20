@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as OpsRouteImport } from './routes/ops'
 import { Route as ModulesRouteImport } from './routes/modules'
 import { Route as Day1RouteImport } from './routes/day1'
 import { Route as DashboardRouteImport } from './routes/dashboard'
@@ -18,10 +19,17 @@ import { Route as AccessRestrictedRouteImport } from './routes/access-restricted
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ModulesIndexRouteImport } from './routes/modules.index'
 import { Route as Day1IndexRouteImport } from './routes/day1.index'
+import { Route as OpsTicketIdRouteImport } from './routes/ops.$ticketId'
 import { Route as ModulesSlugRouteImport } from './routes/modules.$slug'
 import { Route as LabsSlugRouteImport } from './routes/labs.$slug'
 import { Route as Day1HourRouteImport } from './routes/day1.$hour'
+import { Route as AdminReviewRouteImport } from './routes/admin.review'
 
+const OpsRoute = OpsRouteImport.update({
+  id: '/ops',
+  path: '/ops',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ModulesRoute = ModulesRouteImport.update({
   id: '/modules',
   path: '/modules',
@@ -67,6 +75,11 @@ const Day1IndexRoute = Day1IndexRouteImport.update({
   path: '/',
   getParentRoute: () => Day1Route,
 } as any)
+const OpsTicketIdRoute = OpsTicketIdRouteImport.update({
+  id: '/$ticketId',
+  path: '/$ticketId',
+  getParentRoute: () => OpsRoute,
+} as any)
 const ModulesSlugRoute = ModulesSlugRouteImport.update({
   id: '/$slug',
   path: '/$slug',
@@ -82,30 +95,41 @@ const Day1HourRoute = Day1HourRouteImport.update({
   path: '/$hour',
   getParentRoute: () => Day1Route,
 } as any)
+const AdminReviewRoute = AdminReviewRouteImport.update({
+  id: '/review',
+  path: '/review',
+  getParentRoute: () => AdminRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/access-restricted': typeof AccessRestrictedRoute
-  '/admin': typeof AdminRoute
+  '/admin': typeof AdminRouteWithChildren
   '/auth': typeof AuthRoute
   '/dashboard': typeof DashboardRoute
   '/day1': typeof Day1RouteWithChildren
   '/modules': typeof ModulesRouteWithChildren
+  '/ops': typeof OpsRouteWithChildren
+  '/admin/review': typeof AdminReviewRoute
   '/day1/$hour': typeof Day1HourRoute
   '/labs/$slug': typeof LabsSlugRoute
   '/modules/$slug': typeof ModulesSlugRoute
+  '/ops/$ticketId': typeof OpsTicketIdRoute
   '/day1/': typeof Day1IndexRoute
   '/modules/': typeof ModulesIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/access-restricted': typeof AccessRestrictedRoute
-  '/admin': typeof AdminRoute
+  '/admin': typeof AdminRouteWithChildren
   '/auth': typeof AuthRoute
   '/dashboard': typeof DashboardRoute
+  '/ops': typeof OpsRouteWithChildren
+  '/admin/review': typeof AdminReviewRoute
   '/day1/$hour': typeof Day1HourRoute
   '/labs/$slug': typeof LabsSlugRoute
   '/modules/$slug': typeof ModulesSlugRoute
+  '/ops/$ticketId': typeof OpsTicketIdRoute
   '/day1': typeof Day1IndexRoute
   '/modules': typeof ModulesIndexRoute
 }
@@ -113,14 +137,17 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/access-restricted': typeof AccessRestrictedRoute
-  '/admin': typeof AdminRoute
+  '/admin': typeof AdminRouteWithChildren
   '/auth': typeof AuthRoute
   '/dashboard': typeof DashboardRoute
   '/day1': typeof Day1RouteWithChildren
   '/modules': typeof ModulesRouteWithChildren
+  '/ops': typeof OpsRouteWithChildren
+  '/admin/review': typeof AdminReviewRoute
   '/day1/$hour': typeof Day1HourRoute
   '/labs/$slug': typeof LabsSlugRoute
   '/modules/$slug': typeof ModulesSlugRoute
+  '/ops/$ticketId': typeof OpsTicketIdRoute
   '/day1/': typeof Day1IndexRoute
   '/modules/': typeof ModulesIndexRoute
 }
@@ -134,9 +161,12 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/day1'
     | '/modules'
+    | '/ops'
+    | '/admin/review'
     | '/day1/$hour'
     | '/labs/$slug'
     | '/modules/$slug'
+    | '/ops/$ticketId'
     | '/day1/'
     | '/modules/'
   fileRoutesByTo: FileRoutesByTo
@@ -146,9 +176,12 @@ export interface FileRouteTypes {
     | '/admin'
     | '/auth'
     | '/dashboard'
+    | '/ops'
+    | '/admin/review'
     | '/day1/$hour'
     | '/labs/$slug'
     | '/modules/$slug'
+    | '/ops/$ticketId'
     | '/day1'
     | '/modules'
   id:
@@ -160,9 +193,12 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/day1'
     | '/modules'
+    | '/ops'
+    | '/admin/review'
     | '/day1/$hour'
     | '/labs/$slug'
     | '/modules/$slug'
+    | '/ops/$ticketId'
     | '/day1/'
     | '/modules/'
   fileRoutesById: FileRoutesById
@@ -170,16 +206,24 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AccessRestrictedRoute: typeof AccessRestrictedRoute
-  AdminRoute: typeof AdminRoute
+  AdminRoute: typeof AdminRouteWithChildren
   AuthRoute: typeof AuthRoute
   DashboardRoute: typeof DashboardRoute
   Day1Route: typeof Day1RouteWithChildren
   ModulesRoute: typeof ModulesRouteWithChildren
+  OpsRoute: typeof OpsRouteWithChildren
   LabsSlugRoute: typeof LabsSlugRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/ops': {
+      id: '/ops'
+      path: '/ops'
+      fullPath: '/ops'
+      preLoaderRoute: typeof OpsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/modules': {
       id: '/modules'
       path: '/modules'
@@ -243,6 +287,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof Day1IndexRouteImport
       parentRoute: typeof Day1Route
     }
+    '/ops/$ticketId': {
+      id: '/ops/$ticketId'
+      path: '/$ticketId'
+      fullPath: '/ops/$ticketId'
+      preLoaderRoute: typeof OpsTicketIdRouteImport
+      parentRoute: typeof OpsRoute
+    }
     '/modules/$slug': {
       id: '/modules/$slug'
       path: '/$slug'
@@ -264,8 +315,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof Day1HourRouteImport
       parentRoute: typeof Day1Route
     }
+    '/admin/review': {
+      id: '/admin/review'
+      path: '/review'
+      fullPath: '/admin/review'
+      preLoaderRoute: typeof AdminReviewRouteImport
+      parentRoute: typeof AdminRoute
+    }
   }
 }
+
+interface AdminRouteChildren {
+  AdminReviewRoute: typeof AdminReviewRoute
+}
+
+const AdminRouteChildren: AdminRouteChildren = {
+  AdminReviewRoute: AdminReviewRoute,
+}
+
+const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
 
 interface Day1RouteChildren {
   Day1HourRoute: typeof Day1HourRoute
@@ -292,26 +360,27 @@ const ModulesRouteChildren: ModulesRouteChildren = {
 const ModulesRouteWithChildren =
   ModulesRoute._addFileChildren(ModulesRouteChildren)
 
+interface OpsRouteChildren {
+  OpsTicketIdRoute: typeof OpsTicketIdRoute
+}
+
+const OpsRouteChildren: OpsRouteChildren = {
+  OpsTicketIdRoute: OpsTicketIdRoute,
+}
+
+const OpsRouteWithChildren = OpsRoute._addFileChildren(OpsRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AccessRestrictedRoute: AccessRestrictedRoute,
-  AdminRoute: AdminRoute,
+  AdminRoute: AdminRouteWithChildren,
   AuthRoute: AuthRoute,
   DashboardRoute: DashboardRoute,
   Day1Route: Day1RouteWithChildren,
   ModulesRoute: ModulesRouteWithChildren,
+  OpsRoute: OpsRouteWithChildren,
   LabsSlugRoute: LabsSlugRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

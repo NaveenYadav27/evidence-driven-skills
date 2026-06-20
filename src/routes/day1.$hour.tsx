@@ -5,10 +5,11 @@ import { MissionBrief, StoryPanel, TrainerExplain, KnowledgeMap, KnowledgeCheck,
 import { ClassifyLab, MatchLab, DecisionLab } from "@/components/day1/Labs";
 import { SimulatorLab } from "@/components/day1/SimulatorLab";
 import { LabVisual } from "@/components/day1/LabVisual";
-import { ArrowLeft, ArrowRight, Clock, Terminal, BookOpen } from "lucide-react";
+import { ArrowLeft, ArrowRight, Clock, Terminal, BookOpen, Ticket as TicketIcon } from "lucide-react";
 import { MODULES } from "@/data/modules";
 import { MODULE_TO_HOURS } from "@/data/day1";
 import { useProgress } from "@/lib/progress/engine";
+import { ticketsForHour } from "@/data/tickets";
 
 export const Route = createFileRoute("/day1/$hour")({
   loader: ({ params }) => {
@@ -142,6 +143,45 @@ function HourPage() {
           ))}
         </div>
       </section>
+
+      {/* CEH Operations Center — ticket queue for this hour */}
+      {(() => {
+        const tickets = ticketsForHour(h.slug);
+        if (tickets.length === 0) return null;
+        return (
+          <section className="panel panel-accent p-5">
+            <div className="flex items-center gap-2 mb-3">
+              <TicketIcon className="h-4 w-4 text-[var(--cyan)]" />
+              <h3 className="text-sm uppercase tracking-wider font-semibold">CEH Operations Center · Tickets</h3>
+            </div>
+            <p className="text-xs text-muted-foreground mb-4">
+              Apply this hour to real enterprise work. Each ticket is graded on evidence, analysis, framework mapping, and recommendations — then reviewed by an instructor.
+            </p>
+            <ul className="space-y-2">
+              {tickets.map((t) => (
+                <li key={t.id}>
+                  <Link
+                    to="/ops/$ticketId"
+                    params={{ ticketId: t.id }}
+                    className="block rounded border border-border p-3 hover:border-[var(--cyan)]/50"
+                  >
+                    <div className="flex flex-wrap items-center gap-2 text-[10px] font-mono uppercase tracking-wider text-muted-foreground">
+                      <span className="text-[var(--cyan)]">{t.id}</span>
+                      <span>·</span>
+                      <span>{t.category}</span>
+                      <span>·</span>
+                      <span>{t.priority.toUpperCase()}</span>
+                      <span>·</span>
+                      <span>{t.xp} XP</span>
+                    </div>
+                    <div className="font-semibold mt-1 text-sm">{t.title}</div>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </section>
+        );
+      })()}
 
       <KnowledgeCheck qs={h.knowledgeCheck} />
       {h.challenge && <ChallengeCard ch={h.challenge} />}

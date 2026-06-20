@@ -1,6 +1,6 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import { PlatformBadge } from "./Brand";
-import { Shield, LogOut, LogIn, Loader2, ShieldCheck, Cloud, CloudOff, CheckCircle2 } from "lucide-react";
+import { Shield, LogOut, LogIn, Loader2, ShieldCheck, Cloud, CloudOff, CheckCircle2, Ticket } from "lucide-react";
 import { useCloudSync } from "./CloudSyncProvider";
 import { useIsAdmin } from "@/hooks/useIsAdmin";
 import { supabase } from "@/integrations/supabase/client";
@@ -55,10 +55,18 @@ export function SiteHeader() {
           <Link to="/" className="group flex items-center gap-2 px-3 py-1.5 rounded-md text-sm text-muted-foreground hover:text-foreground hover:bg-secondary/60 transition" activeProps={{ className: "text-foreground bg-secondary/80" }}>
             <Shield className="h-3.5 w-3.5" /> Home
           </Link>
+          <Link to="/ops" className="group flex items-center gap-2 px-3 py-1.5 rounded-md text-sm text-muted-foreground hover:text-foreground hover:bg-secondary/60 transition" activeProps={{ className: "text-foreground bg-secondary/80" }}>
+            <Ticket className="h-3.5 w-3.5" /> Ops Center
+          </Link>
           {isAdmin && (
-            <Link to="/admin" className="group flex items-center gap-2 px-3 py-1.5 rounded-md text-sm text-amber-300 hover:text-amber-200 hover:bg-amber-500/10 transition border border-amber-500/40">
-              <ShieldCheck className="h-3.5 w-3.5" /> Admin
-            </Link>
+            <>
+              <Link to="/admin" className="group flex items-center gap-2 px-3 py-1.5 rounded-md text-sm text-amber-300 hover:text-amber-200 hover:bg-amber-500/10 transition border border-amber-500/40">
+                <ShieldCheck className="h-3.5 w-3.5" /> Admin
+              </Link>
+              <Link to="/admin/review" className="group flex items-center gap-2 px-3 py-1.5 rounded-md text-sm text-amber-300 hover:text-amber-200 hover:bg-amber-500/10 transition border border-amber-500/40">
+                Review
+              </Link>
+            </>
           )}
         </nav>
         <div className="flex items-center gap-2">
