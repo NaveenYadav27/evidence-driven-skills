@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as OpsRouteImport } from './routes/ops'
 import { Route as ModulesRouteImport } from './routes/modules'
 import { Route as Day1RouteImport } from './routes/day1'
@@ -26,6 +27,11 @@ import { Route as LabsSlugRouteImport } from './routes/labs.$slug'
 import { Route as Day1HourRouteImport } from './routes/day1.$hour'
 import { Route as AdminReviewRouteImport } from './routes/admin.review'
 
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const OpsRoute = OpsRouteImport.update({
   id: '/ops',
   path: '/ops',
@@ -116,6 +122,7 @@ export interface FileRoutesByFullPath {
   '/day1': typeof Day1RouteWithChildren
   '/modules': typeof ModulesRouteWithChildren
   '/ops': typeof OpsRouteWithChildren
+  '/reset-password': typeof ResetPasswordRoute
   '/admin/review': typeof AdminReviewRoute
   '/day1/$hour': typeof Day1HourRoute
   '/labs/$slug': typeof LabsSlugRoute
@@ -131,6 +138,7 @@ export interface FileRoutesByTo {
   '/admin': typeof AdminRouteWithChildren
   '/auth': typeof AuthRoute
   '/dashboard': typeof DashboardRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/admin/review': typeof AdminReviewRoute
   '/day1/$hour': typeof Day1HourRoute
   '/labs/$slug': typeof LabsSlugRoute
@@ -150,6 +158,7 @@ export interface FileRoutesById {
   '/day1': typeof Day1RouteWithChildren
   '/modules': typeof ModulesRouteWithChildren
   '/ops': typeof OpsRouteWithChildren
+  '/reset-password': typeof ResetPasswordRoute
   '/admin/review': typeof AdminReviewRoute
   '/day1/$hour': typeof Day1HourRoute
   '/labs/$slug': typeof LabsSlugRoute
@@ -170,6 +179,7 @@ export interface FileRouteTypes {
     | '/day1'
     | '/modules'
     | '/ops'
+    | '/reset-password'
     | '/admin/review'
     | '/day1/$hour'
     | '/labs/$slug'
@@ -185,6 +195,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/auth'
     | '/dashboard'
+    | '/reset-password'
     | '/admin/review'
     | '/day1/$hour'
     | '/labs/$slug'
@@ -203,6 +214,7 @@ export interface FileRouteTypes {
     | '/day1'
     | '/modules'
     | '/ops'
+    | '/reset-password'
     | '/admin/review'
     | '/day1/$hour'
     | '/labs/$slug'
@@ -222,11 +234,19 @@ export interface RootRouteChildren {
   Day1Route: typeof Day1RouteWithChildren
   ModulesRoute: typeof ModulesRouteWithChildren
   OpsRoute: typeof OpsRouteWithChildren
+  ResetPasswordRoute: typeof ResetPasswordRoute
   LabsSlugRoute: typeof LabsSlugRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/ops': {
       id: '/ops'
       path: '/ops'
@@ -398,6 +418,7 @@ const rootRouteChildren: RootRouteChildren = {
   Day1Route: Day1RouteWithChildren,
   ModulesRoute: ModulesRouteWithChildren,
   OpsRoute: OpsRouteWithChildren,
+  ResetPasswordRoute: ResetPasswordRoute,
   LabsSlugRoute: LabsSlugRoute,
 }
 export const routeTree = rootRouteImport

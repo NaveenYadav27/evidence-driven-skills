@@ -17,9 +17,27 @@ export const Route = createFileRoute("/auth")({
 
 function AuthPage() {
   const navigate = useNavigate();
-  const [mode, setMode] = useState<"sign-in" | "sign-up">("sign-in");
+  const [mode, setMode] = useState<"sign-in" | "sign-up" | "forgot">("sign-in");
   const [email, setEmail] = useState("");
   const [fullName, setFullName] = useState("");
+
+  async function handleForgot(e: React.FormEvent) {
+    e.preventDefault();
+    if (!email) return toast.error("Enter your email first");
+    setBusy(true);
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
+      if (error) throw error;
+      toast.success("Reset link sent", { description: "Check your inbox to set a new password." });
+      setMode("sign-in");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Could not send reset link");
+    } finally {
+      setBusy(false);
+    }
+  }
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
 
@@ -85,7 +103,7 @@ function AuthPage() {
           <Shield className="h-4 w-4 text-primary" />
           <span className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground">Operator Access</span>
         </div>
-        <h1 className="text-2xl font-bold mb-1">{mode === "sign-in" ? "Sign in" : "Create operator profile"}</h1>
+        <h1 className="text-2xl font-bold mb-1">{mode === "sign-in" ? "Sign in" : mode === "sign-up" ? "Create operator profile" : "Reset password"}</h1>
         <p className="text-sm text-muted-foreground mb-6">
           Sync your lab telemetry, streaks, and exam readiness across every device.
         </p>
@@ -106,6 +124,28 @@ function AuthPage() {
           <div className="h-px flex-1 bg-border" /> or email <div className="h-px flex-1 bg-border" />
         </div>
 
+        {mode === "forgot" ? (
+          <form onSubmit={handleForgot} className="space-y-3">
+            <label className="block">
+              <span className="text-xs text-muted-foreground">Email</span>
+              <div className="mt-1 relative">
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+                <input
+                  type="email" required value={email} onChange={(e) => setEmail(e.target.value)}
+                  className="w-full rounded-md bg-secondary/40 border border-border pl-9 pr-3 py-2 text-sm focus:outline-none focus:border-primary/60"
+                  placeholder="operator@shadowxlab.io"
+                />
+              </div>
+            </label>
+            <button
+              type="submit" disabled={busy}
+              className="w-full inline-flex items-center justify-center gap-2 rounded-md bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground hover:opacity-90 disabled:opacity-50"
+            >
+              {busy && <Loader2 className="h-4 w-4 animate-spin" />}
+              Send reset link
+            </button>
+          </form>
+        ) : (
         <form onSubmit={handleEmail} className="space-y-3">
           {mode === "sign-up" && (
             <label className="block">
@@ -134,7 +174,14 @@ function AuthPage() {
             </div>
           </label>
           <label className="block">
-            <span className="text-xs text-muted-foreground">Password</span>
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-muted-foreground">Password</span>
+              {mode === "sign-in" && (
+                <button type="button" onClick={() => setMode("forgot")} className="text-[10px] text-[var(--cyan)] hover:underline">
+                  Forgot password?
+                </button>
+              )}
+            </div>
             <div className="mt-1 relative">
               <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
               <input
@@ -152,12 +199,17 @@ function AuthPage() {
             {mode === "sign-in" ? "Sign in" : "Create account"}
           </button>
         </form>
+        )}
 
         <div className="mt-5 text-center text-xs text-muted-foreground">
-          {mode === "sign-in" ? (
+          {mode === "sign-in" && (
             <>New operator? <button onClick={() => setMode("sign-up")} className="text-[var(--cyan)] hover:underline">Create profile</button></>
-          ) : (
+          )}
+          {mode === "sign-up" && (
             <>Already enrolled? <button onClick={() => setMode("sign-in")} className="text-[var(--cyan)] hover:underline">Sign in</button></>
+          )}
+          {mode === "forgot" && (
+            <>Remembered it? <button onClick={() => setMode("sign-in")} className="text-[var(--cyan)] hover:underline">Back to sign in</button></>
           )}
         </div>
         <div className="mt-3 text-center text-[10px] text-muted-foreground">
