@@ -13,6 +13,8 @@ import { Route as ModulesRouteImport } from './routes/modules'
 import { Route as Day1RouteImport } from './routes/day1'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as AuthRouteImport } from './routes/auth'
+import { Route as AdminRouteImport } from './routes/admin'
+import { Route as AccessRestrictedRouteImport } from './routes/access-restricted'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ModulesIndexRouteImport } from './routes/modules.index'
 import { Route as Day1IndexRouteImport } from './routes/day1.index'
@@ -38,6 +40,16 @@ const DashboardRoute = DashboardRouteImport.update({
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminRoute = AdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AccessRestrictedRoute = AccessRestrictedRouteImport.update({
+  id: '/access-restricted',
+  path: '/access-restricted',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -73,6 +85,8 @@ const Day1HourRoute = Day1HourRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/access-restricted': typeof AccessRestrictedRoute
+  '/admin': typeof AdminRoute
   '/auth': typeof AuthRoute
   '/dashboard': typeof DashboardRoute
   '/day1': typeof Day1RouteWithChildren
@@ -85,6 +99,8 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/access-restricted': typeof AccessRestrictedRoute
+  '/admin': typeof AdminRoute
   '/auth': typeof AuthRoute
   '/dashboard': typeof DashboardRoute
   '/day1/$hour': typeof Day1HourRoute
@@ -96,6 +112,8 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/access-restricted': typeof AccessRestrictedRoute
+  '/admin': typeof AdminRoute
   '/auth': typeof AuthRoute
   '/dashboard': typeof DashboardRoute
   '/day1': typeof Day1RouteWithChildren
@@ -110,6 +128,8 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/access-restricted'
+    | '/admin'
     | '/auth'
     | '/dashboard'
     | '/day1'
@@ -122,6 +142,8 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/access-restricted'
+    | '/admin'
     | '/auth'
     | '/dashboard'
     | '/day1/$hour'
@@ -132,6 +154,8 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/access-restricted'
+    | '/admin'
     | '/auth'
     | '/dashboard'
     | '/day1'
@@ -145,6 +169,8 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AccessRestrictedRoute: typeof AccessRestrictedRoute
+  AdminRoute: typeof AdminRoute
   AuthRoute: typeof AuthRoute
   DashboardRoute: typeof DashboardRoute
   Day1Route: typeof Day1RouteWithChildren
@@ -180,6 +206,20 @@ declare module '@tanstack/react-router' {
       path: '/auth'
       fullPath: '/auth'
       preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin': {
+      id: '/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AdminRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/access-restricted': {
+      id: '/access-restricted'
+      path: '/access-restricted'
+      fullPath: '/access-restricted'
+      preLoaderRoute: typeof AccessRestrictedRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -254,6 +294,8 @@ const ModulesRouteWithChildren =
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AccessRestrictedRoute: AccessRestrictedRoute,
+  AdminRoute: AdminRoute,
   AuthRoute: AuthRoute,
   DashboardRoute: DashboardRoute,
   Day1Route: Day1RouteWithChildren,
@@ -263,13 +305,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

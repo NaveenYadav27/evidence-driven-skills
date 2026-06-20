@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { LiveDashboard } from "@/components/LiveDashboard";
 import { useTelemetry } from "@/lib/telemetry";
 import { Trash2 } from "lucide-react";
+import { AdminGuard } from "@/components/AdminGuard";
 
 export const Route = createFileRoute("/dashboard")({
   head: () => ({
@@ -10,7 +11,7 @@ export const Route = createFileRoute("/dashboard")({
       { name: "description", content: "Live telemetry of your CEH v13 lab activity, tool mastery, and exam readiness." },
     ],
   }),
-  component: DashboardPage,
+  component: () => <AdminGuard><DashboardPage /></AdminGuard>,
 });
 
 function DashboardPage() {
