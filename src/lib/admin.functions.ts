@@ -109,6 +109,29 @@ export const getUserDetail = createServerFn({ method: "GET" })
 
 /* ────────────── mutations ────────────── */
 
+export const setUserName = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { userId: string; fullName: string }) => d)
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context);
+    const name = (data.fullName ?? "").trim();
+    if (name.length < 2) throw new Error("Name must be at least 2 characters");
+    if (name.length > 100) throw new Error("Name must be under 100 characters");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    // Ensure a profile row exists, then update.
+    await supabaseAdmin.from("profiles").upsert(
+      { id: data.userId, full_name: name },
+      { onConflict: "id" },
+    );
+    // Mirror to auth user_metadata so it's consistent across the stack.
+    await supabaseAdmin.auth.admin.updateUserById(data.userId, {
+      user_metadata: { full_name: name },
+    });
+    await audit(context, "user.rename", data.userId, { full_name: name });
+    return { ok: true, fullName: name };
+  });
+
+
 export const setSuspended = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { userId: string; suspended: boolean }) => d)
