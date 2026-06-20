@@ -18,21 +18,34 @@ export const Route = createFileRoute("/dashboard")({
 
 function DashboardPage() {
   const reset = useTelemetry((s) => s.reset);
+  const progressReset = useProgress((s) => s.reset);
+  const agg = useProgress(selectAggregate);
   return (
     <div className="mx-auto max-w-7xl px-4 sm:px-6 py-12 space-y-8">
       <div className="flex items-end justify-between">
         <div>
           <div className="chip chip-live mb-2"><span className="dot-live" /> Telemetry Live</div>
           <h1 className="text-3xl font-bold tracking-tight">Student Dashboard</h1>
-          <p className="text-sm text-muted-foreground mt-1">Every number on this page is computed from your real, tracked actions.</p>
+          <p className="text-sm text-muted-foreground mt-1">
+            Every number on this page is computed from your real, tracked actions.
+            Course completion: <span className="text-foreground font-semibold">{agg.completionPercentage}%</span> ·
+            {" "}{agg.completedActivities}/{agg.totalActivities} activities ·
+            {" "}{agg.labsCompleted} labs · {agg.assessmentsPassed} assessments passed.
+          </p>
         </div>
         <button
-          onClick={() => { if (confirm("Reset all local telemetry? This cannot be undone.")) reset(); }}
+          onClick={() => {
+            if (confirm("Reset all local progress & telemetry? This cannot be undone.")) {
+              reset();
+              progressReset();
+            }
+          }}
           className="inline-flex items-center gap-2 rounded-md border border-border px-3 py-2 text-xs text-muted-foreground hover:text-primary hover:border-primary/50"
         >
-          <Trash2 className="h-3.5 w-3.5" /> Reset Telemetry
+          <Trash2 className="h-3.5 w-3.5" /> Reset Progress
         </button>
       </div>
+      <ContinueLearningCard />
       <LiveDashboard />
     </div>
   );
