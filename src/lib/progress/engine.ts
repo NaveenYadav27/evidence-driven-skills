@@ -303,7 +303,9 @@ export const useProgress = create<EngineState>()(
     {
       name: "shadowxlab-progress-v1",
       storage: createJSONStorage(() =>
-        typeof window !== "undefined" ? window.localStorage : ({ getItem: () => null, setItem: () => {}, removeItem: () => {} } as Storage),
+        typeof window !== "undefined"
+          ? window.localStorage
+          : ({ getItem: () => null, setItem: () => {}, removeItem: () => {} } as unknown as Storage),
       ),
       version: 1,
       partialize: (s) => ({
