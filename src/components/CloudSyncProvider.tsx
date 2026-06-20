@@ -46,9 +46,17 @@ export function CloudSyncProvider() {
   useEffect(() => {
     let mounted = true;
 
+    const LAST_USER_KEY = "shadowx-ceh-last-user";
     const apply = (session: { user: { id: string; email?: string | null } } | null) => {
       if (!mounted) return;
       if (session?.user) {
+        const prevUser = typeof window !== "undefined" ? localStorage.getItem(LAST_USER_KEY) : null;
+        if (prevUser !== session.user.id) {
+          // Different (or first) user on this browser — clear any stale local telemetry
+          // so stats start at zero until cloud data (if any) is hydrated.
+          useTelemetry.getState().reset();
+          if (typeof window !== "undefined") localStorage.setItem(LAST_USER_KEY, session.user.id);
+        }
         userIdRef.current = session.user.id;
         useCloudSync.getState().setUser(session.user.id, session.user.email ?? null);
         void hydrate();
@@ -56,6 +64,9 @@ export function CloudSyncProvider() {
         userIdRef.current = null;
         useCloudSync.getState().setUser(null, null);
         useCloudSync.getState().setStatus("offline");
+        // Wipe local telemetry on sign-out so the next account starts clean.
+        useTelemetry.getState().reset();
+        if (typeof window !== "undefined") localStorage.removeItem(LAST_USER_KEY);
       }
     };
 
