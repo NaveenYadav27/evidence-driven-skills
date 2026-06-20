@@ -287,6 +287,13 @@ function UserDetailSheet({ userId, onClose }: { userId: string; onClose: () => v
   const mDelete = useMutation({ mutationFn: deleteUser, onSuccess: () => { toast.success("User deleted"); onClose(); invalidate(); } });
   const mEnroll = useMutation({ mutationFn: setEnrollment, onSuccess: () => { toast.success("Enrollment updated"); invalidate(); } });
   const mTier = useMutation({ mutationFn: setSocTier, onSuccess: () => { toast.success("Tier updated"); invalidate(); } });
+  const mRename = useMutation({
+    mutationFn: setUserName,
+    onSuccess: () => { toast.success("Name updated"); setEditingName(false); invalidate(); },
+    onError: (e: any) => toast.error(e?.message ?? "Could not update name"),
+  });
+  const [editingName, setEditingName] = useState(false);
+  const [nameDraft, setNameDraft] = useState("");
 
   if (detail.isLoading) {
     return (
