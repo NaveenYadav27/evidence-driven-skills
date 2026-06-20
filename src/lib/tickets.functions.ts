@@ -263,20 +263,23 @@ export const submitTicket = createServerFn({ method: "POST" })
       .eq("ticket_id", data.ticketId);
     if (error) throw error;
 
-    if (xp > 0) {
-      await context.supabase.from("xp_ledger").insert({
-        user_id: context.userId,
-        ticket_id: data.ticketId,
-        points: xp,
-        reason: `Auto-score ${score} on ${data.ticketId}`,
-      });
-    }
-    if (passed && ticket.badge) {
-      await context.supabase.from("user_badges").insert({
-        user_id: context.userId,
-        badge_code: ticket.badge,
-        awarded_for: data.ticketId,
-      }).select().maybeSingle();   // ignore duplicate
+    if (xp > 0 || (passed && ticket.badge)) {
+      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+      if (xp > 0) {
+        await supabaseAdmin.from("xp_ledger").insert({
+          user_id: context.userId,
+          ticket_id: data.ticketId,
+          points: xp,
+          reason: `Auto-score ${score} on ${data.ticketId}`,
+        });
+      }
+      if (passed && ticket.badge) {
+        await supabaseAdmin.from("user_badges").insert({
+          user_id: context.userId,
+          badge_code: ticket.badge,
+          awarded_for: data.ticketId,
+        }).select().maybeSingle();   // ignore duplicate
+      }
     }
 
     return { ok: true, score, passed, xp };
