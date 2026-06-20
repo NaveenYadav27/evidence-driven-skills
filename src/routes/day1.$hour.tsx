@@ -5,10 +5,11 @@ import { MissionBrief, StoryPanel, TrainerExplain, KnowledgeMap, KnowledgeCheck,
 import { ClassifyLab, MatchLab, DecisionLab } from "@/components/day1/Labs";
 import { SimulatorLab } from "@/components/day1/SimulatorLab";
 import { LabVisual } from "@/components/day1/LabVisual";
-import { ArrowLeft, ArrowRight, Clock, Terminal, BookOpen } from "lucide-react";
+import { ArrowLeft, ArrowRight, Clock, Terminal, BookOpen, Ticket as TicketIcon } from "lucide-react";
 import { MODULES } from "@/data/modules";
 import { MODULE_TO_HOURS } from "@/data/day1";
 import { useProgress } from "@/lib/progress/engine";
+import { ticketsForHour } from "@/data/tickets";
 
 export const Route = createFileRoute("/day1/$hour")({
   loader: ({ params }) => {
