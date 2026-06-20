@@ -1,11 +1,10 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { useQuery, useMutation, useQueryClient, useServerFn } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Users, BarChart3, UserPlus, LifeBuoy, Activity, Eye, History,
-  RefreshCw, Search, X, KeyRound, Trash2, UserMinus, UserCheck, ShieldCheck, Loader2, Copy,
+  RefreshCw, Search, X, KeyRound, Trash2, UserMinus, UserCheck, ShieldCheck, Loader2,
 } from "lucide-react";
-import { useServerFn as useServerFnRouter } from "@tanstack/react-router";
 import {
   checkAmIAdmin, listUsers, getUserDetail, setSuspended, resetPassword,
   deleteUser, setEnrollment, setSocTier, listCatalog, inviteUser,
