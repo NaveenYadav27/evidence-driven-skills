@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useShallow } from "zustand/react/shallow";
 import { LiveDashboard } from "@/components/LiveDashboard";
 import { useTelemetry } from "@/lib/telemetry";
 import { useProgress, selectAggregate } from "@/lib/progress/engine";
