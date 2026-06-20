@@ -290,6 +290,192 @@ export type Database = {
         }
         Relationships: []
       }
+      user_assessments: {
+        Row: {
+          answers: Json
+          assessment_id: string
+          attempts: number
+          created_at: string
+          current_question: number
+          id: string
+          module_id: string | null
+          pass_threshold: number
+          remaining_time_sec: number | null
+          score: number | null
+          status: string
+          submitted_at: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          answers?: Json
+          assessment_id: string
+          attempts?: number
+          created_at?: string
+          current_question?: number
+          id?: string
+          module_id?: string | null
+          pass_threshold?: number
+          remaining_time_sec?: number | null
+          score?: number | null
+          status?: string
+          submitted_at?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          answers?: Json
+          assessment_id?: string
+          attempts?: number
+          created_at?: string
+          current_question?: number
+          id?: string
+          module_id?: string | null
+          pass_threshold?: number
+          remaining_time_sec?: number | null
+          score?: number | null
+          status?: string
+          submitted_at?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_bookmarks: {
+        Row: {
+          course_id: string
+          created_at: string
+          id: string
+          label: string | null
+          lesson_id: string
+          user_id: string
+        }
+        Insert: {
+          course_id?: string
+          created_at?: string
+          id?: string
+          label?: string | null
+          lesson_id: string
+          user_id: string
+        }
+        Update: {
+          course_id?: string
+          created_at?: string
+          id?: string
+          label?: string | null
+          lesson_id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_labs: {
+        Row: {
+          commands: Json
+          completed_steps: Json
+          created_at: string
+          current_step: number
+          flags: Json
+          id: string
+          lab_id: string
+          module_id: string | null
+          notes: string | null
+          objectives: Json
+          score: number | null
+          status: string
+          time_spent_ms: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          commands?: Json
+          completed_steps?: Json
+          created_at?: string
+          current_step?: number
+          flags?: Json
+          id?: string
+          lab_id: string
+          module_id?: string | null
+          notes?: string | null
+          objectives?: Json
+          score?: number | null
+          status?: string
+          time_spent_ms?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          commands?: Json
+          completed_steps?: Json
+          created_at?: string
+          current_step?: number
+          flags?: Json
+          id?: string
+          lab_id?: string
+          module_id?: string | null
+          notes?: string | null
+          objectives?: Json
+          score?: number | null
+          status?: string
+          time_spent_ms?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_progress: {
+        Row: {
+          completion_percentage: number
+          course_id: string
+          created_at: string
+          current_route: string | null
+          id: string
+          last_activity: string
+          lesson_id: string
+          module_id: string | null
+          scroll_y: number
+          slide_id: string | null
+          status: string
+          time_spent_ms: number
+          updated_at: string
+          user_id: string
+          viewed_ratio: number
+        }
+        Insert: {
+          completion_percentage?: number
+          course_id?: string
+          created_at?: string
+          current_route?: string | null
+          id?: string
+          last_activity?: string
+          lesson_id: string
+          module_id?: string | null
+          scroll_y?: number
+          slide_id?: string | null
+          status?: string
+          time_spent_ms?: number
+          updated_at?: string
+          user_id: string
+          viewed_ratio?: number
+        }
+        Update: {
+          completion_percentage?: number
+          course_id?: string
+          created_at?: string
+          current_route?: string | null
+          id?: string
+          last_activity?: string
+          lesson_id?: string
+          module_id?: string | null
+          scroll_y?: number
+          slide_id?: string | null
+          status?: string
+          time_spent_ms?: number
+          updated_at?: string
+          user_id?: string
+          viewed_ratio?: number
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -307,6 +493,42 @@ export type Database = {
           created_at?: string
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_session_state: {
+        Row: {
+          last_course_id: string | null
+          last_lesson_id: string | null
+          last_module_id: string | null
+          last_route: string | null
+          last_slide_id: string | null
+          payload: Json
+          scroll_y: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          last_course_id?: string | null
+          last_lesson_id?: string | null
+          last_module_id?: string | null
+          last_route?: string | null
+          last_slide_id?: string | null
+          payload?: Json
+          scroll_y?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          last_course_id?: string | null
+          last_lesson_id?: string | null
+          last_module_id?: string | null
+          last_route?: string | null
+          last_slide_id?: string | null
+          payload?: Json
+          scroll_y?: number
+          updated_at?: string
           user_id?: string
         }
         Relationships: []
@@ -329,6 +551,48 @@ export type Database = {
         }
         Relationships: []
       }
+      user_videos: {
+        Row: {
+          completion: number
+          created_at: string
+          duration_sec: number
+          finished: boolean
+          id: string
+          playback_speed: number
+          position_sec: number
+          updated_at: string
+          user_id: string
+          video_id: string
+          watched_sec: number
+        }
+        Insert: {
+          completion?: number
+          created_at?: string
+          duration_sec?: number
+          finished?: boolean
+          id?: string
+          playback_speed?: number
+          position_sec?: number
+          updated_at?: string
+          user_id: string
+          video_id: string
+          watched_sec?: number
+        }
+        Update: {
+          completion?: number
+          created_at?: string
+          duration_sec?: number
+          finished?: boolean
+          id?: string
+          playback_speed?: number
+          position_sec?: number
+          updated_at?: string
+          user_id?: string
+          video_id?: string
+          watched_sec?: number
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -343,6 +607,7 @@ export type Database = {
         Returns: boolean
       }
       is_admin: { Args: { _user: string }; Returns: boolean }
+      recalculate_user_progress: { Args: { _user: string }; Returns: number }
     }
     Enums: {
       app_role: "super_admin" | "admin" | "instructor" | "student"

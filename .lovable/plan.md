@@ -1,91 +1,85 @@
-# Admin-Only LMS Console
+## ShadowXLab LMS — Enterprise Reliability & Progress Engine
 
-Build a fully admin-controlled LMS that mirrors the attached ShadowXLab screens. Only `admin` / `superadmin` see the LMS routes; everyone else is blocked. `nkyadav@shadowxlab.com` is seeded as `superadmin`.
+Scope: Add a centralized Progress Engine + multi-layer persistence on top of the existing app without redesigning UI, branding, content, or navigation. Wire all existing learning surfaces (Day1/Week1 hours, Modules, Labs, Assessments, Dashboard, Admin analytics) into it.
 
-## 1. Roles & Security (Lovable Cloud)
+---
 
-Migration:
-- Extend `app_role` enum with `superadmin`, `admin`, `mentor`, `student` (keep existing values).
-- `user_roles` already exists — reuse it, plus `has_role()` SECURITY DEFINER.
-- Add `is_admin(uuid)` helper = `has_role(_, 'admin') OR has_role(_, 'superadmin')`.
-- Seed: on first run, INSERT `superadmin` row for the auth user whose email = `nkyadav@shadowxlab.com` (lookup via `auth.users`, idempotent).
-- All new LMS tables: RLS on, SELECT/INSERT/UPDATE/DELETE restricted to `is_admin(auth.uid())`; students may SELECT only their own enrollment/progress rows.
+### 1. Database (Supabase migration)
 
-## 2. LMS Schema
+New / validated tables, all with RLS scoped to `auth.uid()` + service_role grants:
 
-```
-courses(id, slug, title, description, tier, created_at)
-modules(id, course_id, slug, title, order_index, hours, created_at)
-enrollments(id, user_id, course_id, status[full|demo|suspended|none], started_at, expires_at)
-module_assignments(id, user_id, module_id, assigned_at, assigned_by)
-mentor_assignments(id, student_id, mentor_id, assigned_at)
-soc_tiers(id, user_id, tier[analyst|senior|lead|null], updated_by, updated_at)
-profiles(id→auth.users, full_name, ssid, country, demo_used_at, last_active_at, suspended)
-audit_log(id, actor_id, action, target_user_id, payload jsonb, created_at)
-```
+- `user_progress` — per (user, course, module, lesson, slide): completion %, time_spent_ms, scroll_y, current_route, last_activity, updated_at
+- `user_videos` — per (user, video_id): position_sec, duration_sec, watched_sec, completion %, finished
+- `user_assessments` — per (user, assessment_id): answers jsonb, current_question, remaining_time_sec, score, status (in_progress|submitted|passed|failed), submitted_at
+- `user_labs` — per (user, lab_id): current_step, completed_steps jsonb, objectives jsonb, score, commands jsonb, flags jsonb, notes, status
+- `user_bookmarks` — per (user, course, lesson)
+- `user_session_state` — single row per user: last_route, last_course, last_module, last_lesson, last_slide, scroll_y, updated_at (drives "Welcome Back / Continue Learning")
 
-SSID format `SX-XXXXXX` generated on profile creation (trigger or server fn).
+Plus `recalculate_user_progress(_user uuid)` SQL function used by reconciliation and nightly pg_cron.
 
-## 3. Server Functions (`createServerFn` + `requireSupabaseAuth` + admin check)
+### 2. Progress Engine (client core)
 
-All admin fns guard with `is_admin` via `has_role` query; throw 403 otherwise.
+`src/lib/progress/` modules:
 
-- `listUsers({search, courseFilter, statusFilter})` → segmented (Subscribed / Demo / Registered)
-- `getUserDetail(userId)` → profile + stats (courses, modules, hours, % complete) + verification + last active
-- `suspendUser(userId)` / `unsuspendUser`
-- `resetUserPassword(userId)` → `supabaseAdmin.auth.admin.generateLink('recovery', email)`
-- `deleteUser(userId)` → `supabaseAdmin.auth.admin.deleteUser`
-- `assignCourse / revokeCourse / setEnrollmentStatus`
-- `assignModule / revokeModule / bulkAssignModules`
-- `assignMentor / removeMentor`
-- `setSocTier(userId, tier)`
-- `listInvites / sendInvite(email, role, courses)` → `supabaseAdmin.auth.admin.inviteUserByEmail`
-- `listAuditLog`, `listTraffic`, `listVisitors`, `listReports` (aggregations on existing telemetry tables)
+- `engine.ts` — Zustand store; single source of truth for lesson/video/lab/assessment/session state. Selectors compute completion % dynamically (never stored statically).
+- `persistence.ts` — three-layer writer/reader: LocalStorage → IndexedDB (`idb-keyval`) → Supabase. Read order on boot: Local → IDB → Cloud → defaults; last-write-wins by `updated_at`.
+- `autosave.ts` — debounced flush every 5s + on: route change, slide change, answer change, lab action, video tick, scroll (throttled), visibilitychange=hidden, `beforeunload`, `pagehide`, online/offline transitions.
+- `sync.ts` — server fns `pullState`, `pushState`, `pushDelta` with conflict resolution by timestamp; queues writes while offline and drains on `online` event.
+- `recovery.ts` — on login/module entry/course entry/assessment finish + nightly cron: reconcile, repair orphan records, recompute completion.
+- `validators.ts` — engagement rules:
+  - lesson complete: `viewedRatio ≥ 0.9 && timeSpent ≥ requiredMs`
+  - video complete: `watchedRatio ≥ 0.9 || finished`
+  - lab complete: `allObjectivesCompleted`
+  - quiz/assessment complete: `submitted === true`
+  Prevents instant-completion / skip-to-end inflation.
 
-Every mutation writes to `audit_log`.
+### 3. Session & route resilience
 
-## 4. Routing & Access Gate
+- `SessionGuard` provider: silent token refresh via `supabase.auth.onAuthStateChange` + scheduled `refreshSession()` 60s before expiry; saves state → refreshes → restores; never forces logout.
+- `RouteMemory`: writes `pathname + searchParams` to `user_session_state` on every navigation; on login, if `last_route` exists and current route is `/` or `/dashboard`, show "Continue Learning" card (existing UI styles) and route back.
+- Tab switch: `document.visibilityState` listener pauses assessment timer + video tracking, flushes state; resumes on visible.
+- Offline: `navigator.onLine` → toast "Offline Mode Active — Progress Saved Locally"; queue ops in IDB; drain on reconnect.
+- Global `ErrorBoundary` wraps RootShell: on crash, flush state, show recovery card, never redirect home.
 
-```
-src/routes/_authenticated/admin/route.tsx   ← admin-only gate (beforeLoad calls isAdmin server fn; redirect to /)
-src/routes/_authenticated/admin/index.tsx   ← dashboard tab
-src/routes/_authenticated/admin/users.tsx   ← Users tab (default landing)
-src/routes/_authenticated/admin/users.$userId.tsx ← user detail modal-style page
-src/routes/_authenticated/admin/reports.tsx
-src/routes/_authenticated/admin/invite.tsx
-src/routes/_authenticated/admin/support.tsx
-src/routes/_authenticated/admin/traffic.tsx
-src/routes/_authenticated/admin/visitors.tsx
-src/routes/_authenticated/admin/audit.tsx
-```
+### 4. Wire existing surfaces
 
-`SiteHeader`: show **Admin** pill (gold) only when `useIsAdmin()` returns true; link to `/admin/users`. Hide all course/lab nav items from non-admin sessions per request ("non-admins should not have access") — non-admins land on a "Access restricted — contact admin" page after sign-in. Public marketing routes (`/`, `/auth`) stay open.
+No visual redesign — only data binding:
 
-## 5. UI (mirror screenshots)
+- `src/routes/day1.$hour.tsx`, `src/components/day1/Lesson.tsx`, `Labs.tsx`, `SimulatorLab.tsx`: register lesson view, scroll, time-on-page, slide index via engine hooks.
+- `src/routes/labs.$slug.tsx` + `Terminal.tsx`: replace local telemetry-only writes with engine `lab.recordCommand / completeObjective / setStep`.
+- `src/routes/modules.$slug.tsx`: compute module % from engine selector.
+- `src/routes/dashboard.tsx` + `LiveDashboard.tsx`: read from engine selectors (completion, time spent, streak, last activity).
+- `src/routes/admin.tsx` Reports/Traffic tabs: pull aggregates from new tables via admin server fns.
+- Add `<ContinueLearningCard />` to existing dashboard and homepage hero (uses existing card styles).
 
-- Header: dark gradient, ShadowXLab logo left, top nav (Dashboard, Curriculum, University, Enterprise OPS, SIEM, Interview Ecology, Labs, Assessment, Support, More), gold **Admin** badge + Profile button right.
-- Users page: subtitle "Click on any user to manage…"; tab bar (Users · Reports · Invite · Support · Traffic · Visitors · Audit) with cyan underline on active.
-- "All Users (N)" header with `N subscribed · N demo · N registered` chip line; Refresh button; search box + Course/Status filters.
-- Sectioned tables: Subscribed Users (green dot), Demo Users (amber), Registered Users (gray). Columns: User, SSID, Courses (chips), Progress (bar + %), Status (pill), Hours, Manage (eye icon).
-- User detail (Sheet / route page): avatar circle initial, name, email, SSID pill, Full Access pill, Joined date right-aligned; 4 stat tiles (Courses / Modules / Learning hours / Complete %); tabs Overview · Courses · Modules · Access · Assignment · Mentor; Quick Actions row (Suspend / Reset Password / Delete-red); CyberOPS Analyst Tier select.
-- Tokens reuse current dark cyan theme; status pills use semantic colors.
+### 5. Server functions
 
-## 6. Seed
+`src/lib/progress.functions.ts` (auth-required):
+- `pullUserState`, `pushUserState(delta)`, `saveLessonProgress`, `saveVideoProgress`, `saveLabProgress`, `saveAssessmentProgress`, `submitAssessment`, `recalculateProgress`, `getResumePoint`.
 
-After migration, server-side bootstrap fn `ensureSuperadmin()` runs on first admin route load: looks up `nkyadav@shadowxlab.com` in `auth.users`, inserts `superadmin` role if missing. Idempotent.
+`src/lib/admin-analytics.functions.ts` (admin-only): real engagement aggregates from new tables.
 
-## Technical notes
+`src/routes/api/public/cron-reconcile.ts` — pg_cron nightly trigger; `apikey` auth pattern.
 
-- `supabaseAdmin` for auth admin calls (invite, delete, reset link), loaded inside handlers via `await import`.
-- React Query for all admin lists (cached, invalidate on mutation).
-- Audit writes inside the same handler as the mutation, never client-side.
-- No edge functions — all logic via `createServerFn`.
-- Non-admin gate at `_authenticated/route.tsx` stays as-is; admin sub-gate adds the role check.
+### 6. Certificate validation
 
-## Out of scope (ask before adding)
+`isCertificateEligible(userId, courseId)` server fn: requires every mandatory module completed + every mandatory lab completed + final assessment passed, validated against `user_progress` / `user_labs` / `user_assessments` rows — not displayed %.
 
-- Real-time presence / "last active" pings (will show profile column; we won't wire a heartbeat unless asked).
-- Stripe/Paddle billing UI for course tiers.
-- Email template customization for invites beyond Supabase default.
+### 7. QA verification
 
-Confirm and I'll ship it in one pass: migration → server fns → routes → UI.
+Playwright script `/tmp/browser/lms-reliability/` runs against `localhost:8080`:
+- refresh mid-lesson / mid-assessment / mid-lab
+- offline → online sync
+- tab switch pause/resume
+- exact resume of slide, video timestamp, lab step, assessment question
+- accuracy of dashboard completion %
+
+---
+
+### Out of scope (per user)
+- No UI redesign, no branding changes, no content rewrites, no new course material, no navigation overhaul beyond fixing redirect bugs.
+
+### Estimated migration + code surface
+~1 migration, ~12 new files (progress engine + server fns + cron route + 2 components), ~8 edited files (existing learning surfaces wired to engine). No removals.
+
+Confirm and I'll implement in that order: migration → engine core → persistence/sync → wire surfaces → admin analytics → cron → Playwright verification.
