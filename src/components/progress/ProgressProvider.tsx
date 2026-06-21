@@ -48,7 +48,22 @@ export function ProgressProvider() {
   useEffect(() => {
     let mounted = true;
 
+    // Wait for zustand `persist` to rehydrate from localStorage before any
+    // cloud comparison — otherwise lastUpdated is 0 and stale cloud data
+    // overwrites the user's real local progress on refresh.
+    async function waitForRehydration() {
+      const p = (useProgress as any).persist;
+      if (p?.hasHydrated && !p.hasHydrated()) {
+        await new Promise<void>((resolve) => {
+          const unsub = p.onFinishHydration?.(() => { unsub?.(); resolve(); });
+          // Safety timeout in case onFinishHydration isn't available
+          setTimeout(resolve, 1500);
+        });
+      }
+    }
+
     async function hydrateFor(uid: string) {
+      await waitForRehydration();
       const prev = typeof window !== "undefined" ? localStorage.getItem(LAST_UID_KEY) : null;
       if (prev !== uid) {
         // Different user on this device — clear local stores
@@ -56,6 +71,7 @@ export function ProgressProvider() {
         if (typeof window !== "undefined") localStorage.setItem(LAST_UID_KEY, uid);
         if (prev) await idbClear(prev);
       }
+
 
       // Layer 2: IndexedDB
       const idb = await idbLoad(uid);
