@@ -113,11 +113,21 @@ export function LabAIPanel({ lab, compact = false }: { lab: Lab; compact?: boole
           <h3 className="text-sm font-semibold tracking-tight">AI Lab Agent</h3>
           <span className="chip chip-live !py-0 !px-1.5 text-[10px]">{entries.length} {entries.length === 1 ? "cmd" : "cmds"}</span>
         </div>
-        {hasData && (
-          <button onClick={() => clear(lab.id)} className="text-[11px] text-muted-foreground hover:text-foreground inline-flex items-center gap-1">
-            <Trash2 className="h-3 w-3" /> reset
-          </button>
-        )}
+        <button
+          onClick={() => {
+            clear(lab.id);
+            setAnalysis("");
+            setReportMd("");
+            setAnswer("");
+            setQuestion("");
+            setGradeResult(null);
+            toast.success("AI agent reset for this lab");
+          }}
+          title="Clears transcript & AI output for this lab only (local)"
+          className="text-[11px] text-muted-foreground hover:text-foreground inline-flex items-center gap-1 rounded border border-border px-2 py-1"
+        >
+          <Trash2 className="h-3 w-3" /> Reset
+        </button>
       </div>
 
       <div className="flex flex-wrap gap-1.5">
