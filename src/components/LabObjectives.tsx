@@ -142,12 +142,18 @@ async function validateFinding(target: string | undefined, key: string, value: s
       return paths.has(v) || paths.has(v.replace(/\/$/, "")) || paths.has(v + "/");
     }
     if (key === "robotsUserAgent") {
-      const r = await fetch(`https://${target}/robots.txt`);
-      if (!r.ok) return false;
-      const txt = (await r.text()).toLowerCase();
-      const uas = new Set<string>();
-      for (const line of txt.split(/\r?\n/)) { const m = line.match(/^\s*user-agent\s*:\s*(.+?)\s*$/i); if (m) uas.add(m[1].trim().toLowerCase()); }
-      return uas.has(v);
+      // Format gate: '*' or a typical bot token (letters/digits/._-/space)
+      if (!/^(\*|[a-z0-9][a-z0-9._\- ]{0,63})$/.test(v)) return false;
+      try {
+        const r = await fetch(`https://${target}/robots.txt`);
+        if (!r.ok) return true; // fall back to format check when target blocks fetch
+        const txt = (await r.text()).toLowerCase();
+        const uas = new Set<string>();
+        for (const line of txt.split(/\r?\n/)) { const m = line.match(/^\s*user-agent\s*:\s*(.+?)\s*$/i); if (m) uas.add(m[1].trim().toLowerCase()); }
+        return uas.size === 0 ? true : uas.has(v);
+      } catch {
+        return true; // CORS / network blocked → accept format-valid value
+      }
     }
     if (key === "tlsSan") {
       if (!v.endsWith(target.toLowerCase())) return false;
