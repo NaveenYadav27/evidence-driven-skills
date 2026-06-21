@@ -14,7 +14,9 @@ import { createServerFn } from "@tanstack/react-start";
  *   METHODS→ HTTP OPTIONS Allow probe
  */
 
-const ALLOWED_DOMAIN = /^[a-z0-9.-]+\.[a-z]{2,}$/i;
+// Allow underscore-prefixed labels (e.g. _dmarc, _spf, _domainkey) and
+// numeric labels (e.g. in-addr.arpa for reverse DNS PTR queries).
+const ALLOWED_DOMAIN = /^[a-z0-9._-]+\.[a-z0-9]{2,}$/i;
 const sanitize = (d: string) => d.trim().toLowerCase().replace(/^https?:\/\//, "").split("/")[0];
 
 const RDAP_BASE = "https://rdap.org/domain/";
