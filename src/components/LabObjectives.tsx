@@ -1,8 +1,41 @@
 import { useEffect, useMemo, useState } from "react";
 import type { Lab } from "@/data/labs";
 import { useTelemetry } from "@/lib/telemetry";
-import { CheckCircle2, Circle, Loader2, Trophy } from "lucide-react";
+import { CheckCircle2, Circle, Loader2, Trophy, Lightbulb, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
+
+/** Per-field guided hints shown when validation fails. */
+const FINDING_HINTS: Record<string, { hint: string; link?: { label: string; url: string } }> = {
+  robotsUserAgent: { hint: "Use a token from a `User-agent:` line in /robots.txt — typically `*` or a bot name like `Googlebot`.", link: { label: "robots.txt spec", url: "https://developers.google.com/search/docs/crawling-indexing/robots/robots_txt" } },
+  robotsDisallow: { hint: "Submit an exact `Disallow:` path from /robots.txt, beginning with `/`.", link: { label: "robots.txt spec", url: "https://developers.google.com/search/docs/crawling-indexing/robots/robots_txt" } },
+  disallowPath: { hint: "Copy the path verbatim from a `Disallow:` line, including the leading `/`." },
+  subdomain: { hint: "Must be a real subdomain of the target seen in CT logs (crt.sh).", link: { label: "crt.sh", url: "https://crt.sh" } },
+  tlsSan: { hint: "Must be a Subject Alternative Name on the target's cert (crt.sh).", link: { label: "crt.sh", url: "https://crt.sh" } },
+  mx: { hint: "Submit a single MX hostname (no priority number, no trailing dot).", link: { label: "DNS MX lookup", url: "https://toolbox.googleapps.com/apps/dig/" } },
+  ns: { hint: "Submit one authoritative nameserver hostname for the target." },
+  registrar: { hint: "Use the registrar name from RDAP/WHOIS (e.g. `markmonitor`, `godaddy`).", link: { label: "RDAP lookup", url: "https://rdap.org" } },
+  serverHeader: { hint: "Read the `Server:` HTTP response header (e.g. `nginx`, `cloudflare`)." },
+  hstsPresent: { hint: "Answer `present` or `missing` based on the `Strict-Transport-Security` header." },
+  cspPresent: { hint: "Answer `present` or `missing` based on the `Content-Security-Policy` header." },
+  xfoPresent: { hint: "Answer `present` or `missing` based on the `X-Frame-Options` header." },
+  hstsMaxAge: { hint: "Enter the integer `max-age` from the HSTS header (in seconds; 0 is valid)." },
+  spfQualifier: { hint: "Use one of `~all`, `-all`, `?all`, `+all` from the SPF record.", link: { label: "SPF qualifiers", url: "https://datatracker.ietf.org/doc/html/rfc7208#section-4.6.2" } },
+  spfInclude: { hint: "A domain from an `include:` mechanism in the SPF TXT record." },
+  dmarcPolicy: { hint: "Use `none`, `quarantine`, or `reject` from the `p=` tag in the DMARC record." },
+  caaIssuer: { hint: "A domain from a `CAA` `issue` record (e.g. `letsencrypt.org`)." },
+  cveId: { hint: "Format: `CVE-YYYY-NNNN` (4–7 digits).", link: { label: "CVE search", url: "https://www.cve.org/" } },
+  cvssScore: { hint: "A numeric base score between 0.0 and 10.0." },
+  cvssVector: { hint: "Full CVSS 3.x vector string starting with `CVSS:3.1/`.", link: { label: "CVSS calculator", url: "https://www.first.org/cvss/calculator/3.1" } },
+  attackTechniqueId: { hint: "MITRE ATT&CK technique ID like `T1059` or `T1059.001`.", link: { label: "ATT&CK techniques", url: "https://attack.mitre.org/techniques/enterprise/" } },
+  attackTactic: { hint: "An ATT&CK tactic name in kebab-case (e.g. `initial-access`).", link: { label: "ATT&CK tactics", url: "https://attack.mitre.org/tactics/enterprise/" } },
+  killChainPhase: { hint: "Lockheed Cyber Kill Chain phase (e.g. `recon`, `exploitation`, `c2`)." },
+  ipAddress: { hint: "Submit a valid IPv4 address (e.g. `93.184.216.34`)." },
+  ipCountry: { hint: "Two-letter ISO country code (e.g. `us`, `de`)." },
+  asn: { hint: "AS number prefixed with `AS` (e.g. `AS13335`)." },
+  ptrHost: { hint: "Submit the PTR/reverse-DNS hostname (FQDN)." },
+};
+
+
 
 /** Validators for finding-type objectives. Cross-check live data when possible;
  *  otherwise apply strict format/value rules so guessing is hard. */
@@ -180,6 +213,7 @@ export function LabObjectives({ lab }: { lab: Lab }) {
   const setFinding = useTelemetry((s) => s.setFinding);
 
   const [validating, setValidating] = useState<string | null>(null);
+  const [rejected, setRejected] = useState<Record<string, boolean>>({});
 
   useEffect(() => { ensureLab(lab.id); }, [lab.id, ensureLab]);
 
@@ -205,9 +239,14 @@ export function LabObjectives({ lab }: { lab: Lab }) {
     setValidating(null);
     if (ok && obj) {
       satisfy(lab.id, obj.id);
+      setRejected((r) => ({ ...r, [key]: false }));
       toast.success(`✓ ${obj.label}`);
     } else {
-      toast.error("Finding rejected", { description: "Value did not validate against the live target." });
+      setRejected((r) => ({ ...r, [key]: true }));
+      const h = FINDING_HINTS[key];
+      toast.error("Finding rejected", {
+        description: h?.hint ?? "Value did not validate. Re-check format and source.",
+      });
     }
   };
 
@@ -272,6 +311,25 @@ export function LabObjectives({ lab }: { lab: Lab }) {
                   </button>
                 </div>
                 {f.help && <p className="text-[11px] text-muted-foreground/80">{f.help}</p>}
+                {!done && rejected[f.key] && FINDING_HINTS[f.key] && (
+                  <div className="flex items-start gap-1.5 rounded-md border border-[var(--danger)]/30 bg-[var(--danger)]/5 px-2 py-1.5 text-[11px] text-foreground/90">
+                    <Lightbulb className="h-3 w-3 mt-0.5 text-[var(--danger)] shrink-0" />
+                    <div className="flex-1">
+                      <span>{FINDING_HINTS[f.key].hint}</span>
+                      {FINDING_HINTS[f.key].link && (
+                        <a
+                          href={FINDING_HINTS[f.key].link!.url}
+                          target="_blank"
+                          rel="noreferrer noopener"
+                          className="ml-1.5 inline-flex items-center gap-0.5 text-[var(--cyan)] hover:underline"
+                        >
+                          {FINDING_HINTS[f.key].link!.label}
+                          <ExternalLink className="h-2.5 w-2.5" />
+                        </a>
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
             );
           })}
