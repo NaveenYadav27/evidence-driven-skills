@@ -70,12 +70,29 @@ export function SimulatorLab({ labId, data }: { labId: string; data: SimulatorDa
       }
       setOut(raw);
       recordCmd({ tool: data.tool, args: target, success, durationMs: Date.now() - t0, labId });
+      pushTranscript(labId, { tool: data.tool, args: data.tool === "dns" ? `${target} ${type}` : target, success, output: raw });
       const containsOk = !data.successContains?.length || data.successContains.every((s) => raw.toLowerCase().includes(s.toLowerCase()));
       const countOk = data.minCount == null || count >= data.minCount;
       if (success && containsOk && countOk) { satisfy(labId, labId); setOk(true); }
     } catch (e: any) {
       setOut(`[error] ${e?.message ?? "failed"}`);
+      pushTranscript(labId, { tool: data.tool, args: target, success: false, output: `[error] ${e?.message ?? "failed"}` });
     } finally { setBusy(false); }
+  };
+
+  // Synthesize a minimal Lab shape so the shared AI panel can operate.
+  const simLab: Lab = {
+    id: labId,
+    moduleId: "m02",
+    slug: labId,
+    title: `${TOOL_LABEL[data.tool]} — ${target}`,
+    kind: "terminal",
+    difficulty: "beginner",
+    estMinutes: 5,
+    scenario: data.prompt,
+    target,
+    tools: [data.tool],
+    objectives: [{ id: labId, label: data.prompt, type: "command", tool: data.tool }],
   };
 
   return (
@@ -121,6 +138,8 @@ export function SimulatorLab({ labId, data }: { labId: string; data: SimulatorDa
           </motion.div>
         )}
       </AnimatePresence>
+
+      <LabAIPanel lab={simLab} compact />
     </div>
   );
 }
