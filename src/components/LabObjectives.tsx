@@ -79,7 +79,13 @@ async function validateFinding(target: string | undefined, key: string, value: s
     case "s3Suffix": return /^s3([.-][a-z0-9-]+)?\.amazonaws\.com$/.test(v);
     case "imdsIp": return v === "169.254.169.254";
     case "xorPlaintext": return v === "xlab is fun";
-    case "certIssuer": return v.length >= 3;
+    case "certIssuer":
+    case "tlsIssuer":
+    case "asnOrg": return v.length >= 2;
+    case "spfQualifier": return ["~all","-all","?all","+all"].includes(v);
+    case "ptrHost": return /^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$/.test(v);
+    case "robotsUserAgent": return /^[a-z0-9*_./+\- ]{1,80}$/.test(v);
+    case "robotsDisallow": return v.startsWith("/") && v.length <= 200;
   }
 
   // ── live cross-checks (need target) ─────────────────────────────────
