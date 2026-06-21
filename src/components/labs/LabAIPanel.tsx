@@ -11,7 +11,8 @@ import { analyzeLabOutput, generateLabReport, gradeLabFinding } from "@/lib/lab-
 type Tab = "analyst" | "report" | "grader";
 
 export function LabAIPanel({ lab, compact = false }: { lab: Lab; compact?: boolean }) {
-  const entries = useLabTranscript((s) => s.byLab[lab.id] ?? []);
+  const entriesMap = useLabTranscript((s) => s.byLab);
+  const entries = useMemo(() => entriesMap[lab.id] ?? EMPTY_ENTRIES, [entriesMap, lab.id]);
   const clear = useLabTranscript((s) => s.clear);
   const labState = useTelemetry((s) => s.labs[lab.id]);
 
