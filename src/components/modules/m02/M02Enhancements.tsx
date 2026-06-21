@@ -258,7 +258,7 @@ export function AiActions() {
           animate={{ opacity: 1, y: 0 }}
           className="border-l-2 border-[var(--cyan)] pl-3 text-sm leading-relaxed text-foreground"
         >
-          {M02_AI_ACTIONS.find((a) => a.id === open)?.output}
+          <TermText>{M02_AI_ACTIONS.find((a) => a.id === open)?.output ?? ""}</TermText>
         </motion.div>
       )}
     </section>
