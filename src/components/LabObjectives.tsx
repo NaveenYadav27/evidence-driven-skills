@@ -3,7 +3,7 @@ import type { Lab } from "@/data/labs";
 import { useTelemetry } from "@/lib/telemetry";
 import { CheckCircle2, Circle, Loader2, Trophy, Lightbulb, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
-import { robotsScan, httpHeaders } from "@/lib/recon.functions";
+import { robotsScan, httpHeaders, dnsLookup, whoisLookup, subdomainEnum, tlsInspect } from "@/lib/recon.functions";
 
 /** Per-field guided hints shown when validation fails. */
 const FINDING_HINTS: Record<string, { hint: string; link?: { label: string; url: string } }> = {
