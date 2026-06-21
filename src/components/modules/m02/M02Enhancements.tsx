@@ -138,7 +138,7 @@ function Row({ label, value, accent }: { label: string; value: string; accent?: 
   return (
     <div className="grid grid-cols-[120px_1fr] gap-2 text-xs py-1 border-t border-border/40 first:border-0">
       <div className="font-mono uppercase tracking-wider text-[10px] text-muted-foreground pt-0.5">{label}</div>
-      <div className={accent ?? "text-muted-foreground"}>{value}</div>
+      <div className={accent ?? "text-muted-foreground"}><TermText>{value}</TermText></div>
     </div>
   );
 }
