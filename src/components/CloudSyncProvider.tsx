@@ -46,10 +46,24 @@ export function CloudSyncProvider() {
   useEffect(() => {
     let mounted = true;
 
+    // Wait for zustand `persist` to finish rehydrating from localStorage
+    // before any cloud comparison — otherwise lastUpdated is 0 and stale
+    // cloud data overwrites the user's real local telemetry on refresh.
+    async function waitForRehydration() {
+      const p = (useTelemetry as any).persist;
+      if (p?.hasHydrated && !p.hasHydrated()) {
+        await new Promise<void>((resolve) => {
+          const unsub = p.onFinishHydration?.(() => { unsub?.(); resolve(); });
+          setTimeout(resolve, 1500);
+        });
+      }
+    }
+
     const LAST_USER_KEY = "shadowx-ceh-last-user";
-    const apply = (session: { user: { id: string; email?: string | null } } | null) => {
+    const apply = async (session: { user: { id: string; email?: string | null } } | null) => {
       if (!mounted) return;
       if (session?.user) {
+        await waitForRehydration();
         const prevUser = typeof window !== "undefined" ? localStorage.getItem(LAST_USER_KEY) : null;
         if (prevUser !== session.user.id) {
           // Different (or first) user on this browser — clear any stale local telemetry
@@ -69,6 +83,7 @@ export function CloudSyncProvider() {
         if (typeof window !== "undefined") localStorage.removeItem(LAST_USER_KEY);
       }
     };
+
 
     supabase.auth.getSession().then(({ data }) => apply(data.session));
     const { data: sub } = supabase.auth.onAuthStateChange((event, session) => {
