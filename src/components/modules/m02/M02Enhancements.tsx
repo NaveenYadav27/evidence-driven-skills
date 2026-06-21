@@ -100,7 +100,7 @@ export function AnalystThinking() {
             ].map(([k, v, cls]) => (
               <div key={k} className="grid grid-cols-[140px_1fr] gap-2">
                 <div className="font-mono uppercase tracking-wider text-[10px] text-muted-foreground pt-0.5">{k}</div>
-                <div className={cls as string}>{v}</div>
+                <div className={cls as string}><TermText>{v as string}</TermText></div>
               </div>
             ))}
           </div>
