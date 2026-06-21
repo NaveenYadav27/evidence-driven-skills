@@ -9,6 +9,7 @@ import { useProgress } from "@/lib/progress/engine";
 import { ArrowLeft, ArrowRight, Target, Wrench, Clock } from "lucide-react";
 import { AccessGuard } from "@/components/AccessGuard";
 import { M02LabCoach } from "@/components/modules/m02/LabCoach";
+import { LabAIPanel } from "@/components/labs/LabAIPanel";
 
 export const Route = createFileRoute("/labs/$slug")({
   loader: ({ params }) => {
@@ -172,6 +173,7 @@ function LabPage() {
 
         <aside className="space-y-4">
           <LabObjectives lab={lab} />
+          <LabAIPanel lab={lab} />
           {lab.moduleId === "m02" && <M02LabCoach labId={lab.id} />}
         </aside>
       </div>

@@ -6,6 +6,7 @@ import {
   cveSearch, ipIntel, tlsInspect, httpMethods,
 } from "@/lib/recon.functions";
 import { useTelemetry } from "@/lib/telemetry";
+import { useLabTranscript } from "@/lib/lab-transcript";
 import type { Lab } from "@/data/labs";
 
 interface Line { kind: "in" | "out" | "sys" | "err"; text: string; }
@@ -153,6 +154,7 @@ export function Terminal({ lab, onCommand }: {
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const recordCommand = useTelemetry((s) => s.recordCommand);
+  const pushTranscript = useLabTranscript((s) => s.push);
   const whois = useServerFn(whoisLookup);
   const dns = useServerFn(dnsLookup);
   const subs = useServerFn(subdomainEnum);
@@ -167,7 +169,11 @@ export function Terminal({ lab, onCommand }: {
   useEffect(() => { scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight }); }, [lines]);
   useEffect(() => { inputRef.current?.focus(); }, []);
 
-  const append = (...l: Line[]) => setLines((prev) => [...prev, ...l]);
+  const capturedRef = useRef<string[]>([]);
+  const append = (...l: Line[]) => {
+    for (const x of l) if (x.kind === "out" || x.kind === "err") capturedRef.current.push(x.text);
+    setLines((prev) => [...prev, ...l]);
+  };
 
   const run = async (raw: string) => {
     const cmd = raw.trim();
@@ -184,6 +190,7 @@ export function Terminal({ lab, onCommand }: {
     if (lower === "clear") { setLines([{ kind: "sys", text: banner }]); return; }
 
     setBusy(true);
+    capturedRef.current = [];
     const t0 = performance.now();
     let success = false;
     try {
@@ -330,6 +337,7 @@ export function Terminal({ lab, onCommand }: {
     } finally {
       const dt = Math.round(performance.now() - t0);
       recordCommand({ tool: lower, args, success, durationMs: dt, labId: lab.id, moduleId: lab.moduleId });
+      pushTranscript(lab.id, { tool: lower, args, success, output: capturedRef.current.join("\n") });
       onCommand(lower, args, success);
       setBusy(false);
       setInput("");
