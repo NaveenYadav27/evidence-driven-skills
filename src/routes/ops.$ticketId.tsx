@@ -18,6 +18,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
+import { M02LabEnhancements } from "@/components/modules/m02/M02Enhancements";
+import { M02_HOUR_SLUGS } from "@/data/modules/m02";
 
 export const Route = createFileRoute("/ops/$ticketId")({
   loader: ({ params }) => {
@@ -106,6 +108,10 @@ function Workspace() {
       </Link>
 
       <TicketHeader ticket={ticket} progress={progress.data} />
+
+      {M02_HOUR_SLUGS.includes(ticket.hourSlug) && <M02LabEnhancements ticketId={ticketId} />}
+
+
 
       <div className="grid grid-cols-12 gap-6">
         {/* LEFT — step stepper */}

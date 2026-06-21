@@ -10,6 +10,8 @@ import { MODULES } from "@/data/modules";
 import { MODULE_TO_HOURS } from "@/data/day1";
 import { useProgress } from "@/lib/progress/engine";
 import { ticketsForHour } from "@/data/tickets";
+import { M02LessonEnhancements } from "@/components/modules/m02/M02Enhancements";
+import { M02_HOUR_SLUGS } from "@/data/modules/m02";
 
 export const Route = createFileRoute("/day1/$hour")({
   loader: ({ params }) => {
@@ -115,6 +117,7 @@ function HourPage() {
         })()}
       </header>
 
+      {M02_HOUR_SLUGS.includes(h.slug) && <M02LessonEnhancements />}
       <MissionBrief mission={h.mission} />
       <StoryPanel story={h.story} />
       <TrainerExplain sections={h.trainer.sections} />
