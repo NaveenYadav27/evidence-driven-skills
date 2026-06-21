@@ -132,13 +132,32 @@ async function validateFinding(target: string | undefined, key: string, value: s
       if (["no","false","missing"].includes(v)) return !present;
       return false;
     }
-    if (key === "disallowPath") {
+    if (key === "disallowPath" || key === "robotsDisallow") {
+      if (!v.startsWith("/")) return false;
       const r = await fetch(`https://${target}/robots.txt`);
       if (!r.ok) return false;
       const txt = (await r.text()).toLowerCase();
       const paths = new Set<string>();
       for (const line of txt.split(/\r?\n/)) { const m = line.match(/^\s*disallow\s*:\s*(\S+)/i); if (m) paths.add(m[1].trim().toLowerCase()); }
       return paths.has(v) || paths.has(v.replace(/\/$/, "")) || paths.has(v + "/");
+    }
+    if (key === "robotsUserAgent") {
+      const r = await fetch(`https://${target}/robots.txt`);
+      if (!r.ok) return false;
+      const txt = (await r.text()).toLowerCase();
+      const uas = new Set<string>();
+      for (const line of txt.split(/\r?\n/)) { const m = line.match(/^\s*user-agent\s*:\s*(.+?)\s*$/i); if (m) uas.add(m[1].trim().toLowerCase()); }
+      return uas.has(v);
+    }
+    if (key === "tlsSan") {
+      if (!v.endsWith(target.toLowerCase())) return false;
+      const r = await fetch(`https://crt.sh/?output=json&q=${encodeURIComponent("%." + target)}`);
+      const j: any[] = await r.json().catch(() => []);
+      const set = new Set<string>();
+      for (const row of j) for (const n of String(row.name_value || "").split("\n")) {
+        set.add(n.trim().toLowerCase().replace(/^\*\./, ""));
+      }
+      return set.has(v);
     }
   } catch {
     return false;
