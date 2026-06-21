@@ -53,11 +53,9 @@ const TLD_RDAP: Record<string, string> = {
 async function fetchRdap(domain: string): Promise<Response> {
   const tld = domain.split(".").pop()!;
   const headers = { Accept: "application/rdap+json", "User-Agent": RDAP_UA };
-  // Reserved TLDs (example.com, example.org, example.net) are served by IANA.
-  if (domain === "example.com" || domain === "example.net" || domain === "example.org") {
-    const r = await fetch(`https://rdap.iana.org/domain/${domain}`, { headers });
-    if (r.ok) return r;
-  }
+  // Prefer the authoritative TLD registry over IANA's stub record (which omits
+  // registrar + true registration date for example.com).
+
   const tldUrl = TLD_RDAP[tld];
   if (tldUrl) {
     const r = await fetch(tldUrl + domain, { headers, redirect: "follow" });
