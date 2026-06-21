@@ -4,6 +4,9 @@ import { useServerFn } from "@tanstack/react-start";
 import { motion, AnimatePresence } from "framer-motion";
 import { Play, RotateCcw, Trophy, Loader2, Terminal as TerminalIcon } from "lucide-react";
 import { useTelemetry } from "@/lib/telemetry";
+import { useLabTranscript } from "@/lib/lab-transcript";
+import { LabAIPanel } from "@/components/labs/LabAIPanel";
+import type { Lab } from "@/data/labs";
 import {
   whoisLookup, dnsLookup, subdomainEnum, waybackHistory, httpHeaders, robotsScan,
 } from "@/lib/recon.functions";
@@ -41,6 +44,7 @@ export function SimulatorLab({ labId, data }: { labId: string; data: SimulatorDa
   const satisfy = useTelemetry((s) => s.satisfyObjective);
   const attempt = useTelemetry((s) => s.attemptObjective);
   const recordCmd = useTelemetry((s) => s.recordCommand);
+  const pushTranscript = useLabTranscript((s) => s.push);
   useEffect(() => { ensureLab(labId); }, [labId, ensureLab]);
 
   const whois = useServerFn(whoisLookup);
