@@ -113,6 +113,9 @@ function ModuleDetail() {
       </div>
 
       <div className="mt-8">
+        {tab === "learn" && m.slug === "footprinting-and-reconnaissance" && (
+          <div className="mb-8"><M02ModuleEnhancements /></div>
+        )}
         {tab === "learn" && <LearnTab moduleTitle={m.title} moduleId={m.id} />}
         {tab === "labs" && <LabsTab labs={labs} status={m.status} />}
         {tab === "challenges" && <ChallengesTab labs={labs.filter(l => l.kind === "challenge")} status={m.status} />}
