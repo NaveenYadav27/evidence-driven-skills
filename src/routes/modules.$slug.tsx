@@ -4,6 +4,7 @@ import { getModule, MODULES } from "@/data/modules";
 import { getModuleLabs } from "@/data/labs";
 import { hoursForModule } from "@/data/day1";
 import { BookOpen, Terminal, Trophy, ClipboardCheck, GraduationCap, ArrowRight, Lock, AlertTriangle, Lightbulb, Eye, BookMarked, Calendar } from "lucide-react";
+import { M02ModuleEnhancements } from "@/components/modules/m02/M02Enhancements";
 
 export const Route = createFileRoute("/modules/$slug")({
   loader: ({ params }) => {
