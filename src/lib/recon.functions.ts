@@ -304,16 +304,54 @@ export const waybackHistory = createServerFn({ method: "POST" })
   .handler(async ({ data }): Promise<WaybackResult> => {
     const host = sanitize(data.target || "");
     if (!SAFE_TARGET.test(host)) return { ok: false, target: host, totalSnapshots: 0, raw: "", error: "Invalid host" };
+    const headers = {
+      "User-Agent": "Mozilla/5.0 (compatible; ShadowXLab-Recon/1.0; +https://ceh.shadowxlab.com)",
+      Accept: "application/json,text/plain,*/*",
+    };
+    const fmt = (ts?: string) => ts ? `${ts.slice(0, 4)}-${ts.slice(4, 6)}-${ts.slice(6, 8)}` : undefined;
+
+    const tryCdx = async (h: string) => {
+      const url = `${WAYBACK_CDX}?url=${encodeURIComponent(h)}&output=json&limit=200&fl=timestamp,original,statuscode&collapse=timestamp:6`;
+      const res = await fetch(url, { headers });
+      return res;
+    };
+
     try {
-      const url = `${WAYBACK_CDX}?url=${encodeURIComponent(host)}&output=json&limit=500&fl=timestamp,original,statuscode&collapse=timestamp:6`;
-      const res = await fetch(url);
-      if (!res.ok) return { ok: false, target: host, totalSnapshots: 0, raw: "", error: `Wayback ${res.status}` };
-      const rows: any[][] = await res.json().catch(() => []);
+      // First try host, then *.host as fallback if 400
+      let res = await tryCdx(host);
+      if (res.status === 400) res = await tryCdx(`*.${host}`);
+
+      if (!res.ok) {
+        // Fallback to Availability API so the lab still returns useful data
+        try {
+          const aRes = await fetch(`https://archive.org/wayback/available?url=${encodeURIComponent(host)}`, { headers });
+          if (aRes.ok) {
+            const aJson: any = await aRes.json().catch(() => ({}));
+            const snap = aJson?.archived_snapshots?.closest;
+            if (snap?.timestamp) {
+              const ts = snap.timestamp;
+              const raw = [
+                `;; Internet Archive — Availability API (CDX returned ${res.status})`,
+                `;; Target: ${host}`,
+                `;; Closest snapshot: ${fmt(ts)}`,
+                `;; URL: ${snap.url}`,
+                ``,
+                `Note: CDX search rejected this query (HTTP ${res.status}). Showing closest snapshot instead.`,
+              ].join("\n");
+              return { ok: true, target: host, totalSnapshots: 1, firstSnapshot: fmt(ts), lastSnapshot: fmt(ts), firstYear: ts.slice(0, 4), raw };
+            }
+          }
+        } catch { /* ignore */ }
+        return { ok: false, target: host, totalSnapshots: 0, raw: "", error: `Wayback ${res.status} — the Internet Archive may be rate-limiting or temporarily unavailable. Try again in a minute.` };
+      }
+
+      const text = await res.text();
+      let rows: any[][] = [];
+      try { rows = JSON.parse(text); } catch { rows = []; }
       const data2 = rows.slice(1);
       const total = data2.length;
       const first = data2[0]?.[0];
       const last = data2[data2.length - 1]?.[0];
-      const fmt = (ts?: string) => ts ? `${ts.slice(0, 4)}-${ts.slice(4, 6)}-${ts.slice(6, 8)}` : undefined;
       const raw = [
         `;; Internet Archive Wayback Machine — CDX API`,
         `;; Target: ${host}`,
