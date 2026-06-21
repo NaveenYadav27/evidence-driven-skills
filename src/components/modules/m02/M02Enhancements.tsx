@@ -8,6 +8,7 @@ import {
   M02_SCENARIO, M02_WORKFLOW, M02_ANALYST_FRAMEWORK, M02_GUIDED,
   M02_INCIDENTS, M02_DELIVERABLES, M02_AI_ACTIONS,
 } from "@/data/modules/m02";
+import { TermText, Term } from "./Term";
 
 /* ---------- Professional Scenario ---------- */
 export function ProfessionalScenario() {
