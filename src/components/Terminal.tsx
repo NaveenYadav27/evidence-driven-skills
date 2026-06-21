@@ -6,6 +6,7 @@ import {
   cveSearch, ipIntel, tlsInspect, httpMethods,
 } from "@/lib/recon.functions";
 import { useTelemetry } from "@/lib/telemetry";
+import { useLabTranscript } from "@/lib/lab-transcript";
 import type { Lab } from "@/data/labs";
 
 interface Line { kind: "in" | "out" | "sys" | "err"; text: string; }
@@ -153,6 +154,7 @@ export function Terminal({ lab, onCommand }: {
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const recordCommand = useTelemetry((s) => s.recordCommand);
+  const pushTranscript = useLabTranscript((s) => s.push);
   const whois = useServerFn(whoisLookup);
   const dns = useServerFn(dnsLookup);
   const subs = useServerFn(subdomainEnum);
