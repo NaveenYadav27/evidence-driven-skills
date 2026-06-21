@@ -28,6 +28,7 @@ async function validateFinding(target: string | undefined, key: string, value: s
     }
     case "subdomainCount":
     case "snapshotCount":
+    case "hstsMaxAge":
     case "handshakeMessages":
     case "mqttPort":
     case "mqttTlsPort":
