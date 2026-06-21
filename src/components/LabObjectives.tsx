@@ -84,8 +84,6 @@ async function validateFinding(target: string | undefined, key: string, value: s
     case "asnOrg": return v.length >= 2;
     case "spfQualifier": return ["~all","-all","?all","+all"].includes(v);
     case "ptrHost": return /^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$/.test(v);
-    case "robotsUserAgent": return /^[a-z0-9*_./+\- ]{1,80}$/.test(v);
-    case "robotsDisallow": return v.startsWith("/") && v.length <= 200;
   }
 
   // ── live cross-checks (need target) ─────────────────────────────────
