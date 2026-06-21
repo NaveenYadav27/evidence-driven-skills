@@ -1,12 +1,12 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { useEffect, useRef } from "react";
-import { getLab } from "@/data/labs";
+import { getLab, getModuleLabs } from "@/data/labs";
 import { MODULES } from "@/data/modules";
 import { Terminal } from "@/components/Terminal";
 import { LabObjectives } from "@/components/LabObjectives";
 import { useTelemetry } from "@/lib/telemetry";
 import { useProgress } from "@/lib/progress/engine";
-import { ArrowLeft, Target, Wrench, Clock } from "lucide-react";
+import { ArrowLeft, ArrowRight, Target, Wrench, Clock } from "lucide-react";
 import { AccessGuard } from "@/components/AccessGuard";
 import { M02LabCoach } from "@/components/modules/m02/LabCoach";
 
@@ -15,7 +15,11 @@ export const Route = createFileRoute("/labs/$slug")({
     const lab = getLab(params.slug);
     if (!lab) throw notFound();
     const mod = MODULES.find((m) => m.id === lab.moduleId);
-    return { lab, moduleSlug: mod?.slug ?? "footprinting-and-reconnaissance" };
+    const siblings = getModuleLabs(lab.moduleId);
+    const idx = siblings.findIndex((l) => l.id === lab.id);
+    const next = idx >= 0 && idx < siblings.length - 1 ? siblings[idx + 1] : null;
+    const prev = idx > 0 ? siblings[idx - 1] : null;
+    return { lab, moduleSlug: mod?.slug ?? "footprinting-and-reconnaissance", next, prev };
   },
   head: ({ loaderData }) => ({
     meta: [
