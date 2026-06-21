@@ -443,10 +443,59 @@ export const ipIntel = createServerFn({ method: "POST" })
         if (!a) return { ok: false, query: t, raw: "", error: "No A record" };
         ip = a;
       }
-      const res = await fetch(`${IPAPI_BASE}/${ip}/json/`, { headers: { Accept: "application/json", "User-Agent": "ShadowXLab-Range/1.0" } });
-      if (!res.ok) return { ok: false, query: t, ip, raw: "", error: `ipapi ${res.status}` };
-      const j: any = await res.json();
-      if (j.error) return { ok: false, query: t, ip, raw: "", error: j.reason ?? "ipapi error" };
+      // Try ipapi.co, fall back to ipwho.is then ip-api.com if rate-limited / blocked.
+      let j: any = null;
+      let lastErr = "";
+      try {
+        const res = await fetch(`${IPAPI_BASE}/${ip}/json/`, { headers: { Accept: "application/json", "User-Agent": "ShadowXLab-Range/1.0" } });
+        if (res.ok) {
+          const tmp: any = await res.json();
+          if (!tmp.error) j = tmp;
+          else lastErr = tmp.reason ?? "ipapi error";
+        } else {
+          lastErr = `ipapi ${res.status}`;
+        }
+      } catch (e: any) { lastErr = e?.message ?? "ipapi network"; }
+
+      if (!j) {
+        try {
+          const res = await fetch(`https://ipwho.is/${ip}`, { headers: { Accept: "application/json" } });
+          if (res.ok) {
+            const tmp: any = await res.json();
+            if (tmp.success !== false) {
+              j = {
+                country_name: tmp.country, country: tmp.country_code,
+                region: tmp.region, city: tmp.city,
+                org: tmp.connection?.org ?? tmp.connection?.isp,
+                asn: tmp.connection?.asn ? `AS${tmp.connection.asn}` : undefined,
+                timezone: tmp.timezone?.id, latitude: tmp.latitude, longitude: tmp.longitude,
+              };
+            } else { lastErr = tmp.message ?? lastErr; }
+          }
+        } catch (e: any) { lastErr = e?.message ?? lastErr; }
+      }
+
+      if (!j) {
+        try {
+          const res = await fetch(`https://ip-api.com/json/${ip}?fields=status,message,country,countryCode,regionName,city,isp,org,as,timezone,lat,lon`);
+          if (res.ok) {
+            const tmp: any = await res.json();
+            if (tmp.status === "success") {
+              const asnMatch = String(tmp.as || "").match(/^(AS\d+)\s*(.*)$/i);
+              j = {
+                country_name: tmp.country, country: tmp.countryCode,
+                region: tmp.regionName, city: tmp.city,
+                org: tmp.org || tmp.isp || (asnMatch?.[2] ?? ""),
+                asn: asnMatch?.[1],
+                timezone: tmp.timezone, latitude: tmp.lat, longitude: tmp.lon,
+              };
+            } else { lastErr = tmp.message ?? lastErr; }
+          }
+        } catch (e: any) { lastErr = e?.message ?? lastErr; }
+      }
+
+      if (!j) return { ok: false, query: t, ip, raw: "", error: lastErr || "ip intel unavailable" };
+
       const out = {
         ok: true,
         query: t, ip,
@@ -468,6 +517,7 @@ export const ipIntel = createServerFn({ method: "POST" })
     } catch (e: any) {
       return { ok: false, query: t, raw: "", error: e?.message ?? "Network error" };
     }
+
   });
 
 /* ──────────────────────────  TLS INSPECT  ────────────────────────────── */
