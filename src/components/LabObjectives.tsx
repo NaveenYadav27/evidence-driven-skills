@@ -41,6 +41,7 @@ async function validateFinding(target: string | undefined, key: string, value: s
       if (key === "mqttTlsPort") return n === 8883;
       if (key === "arpOpcode") return n === 1 || n === 2;
       if (key === "ampFactor") return n >= 20 && n <= 80;
+      if (key === "hstsMaxAge") return n >= 0;
       return n >= 1;
     }
     case "cveId": return CVE_RX.test(v);
