@@ -311,6 +311,25 @@ export function LabObjectives({ lab }: { lab: Lab }) {
                   </button>
                 </div>
                 {f.help && <p className="text-[11px] text-muted-foreground/80">{f.help}</p>}
+                {!done && rejected[f.key] && FINDING_HINTS[f.key] && (
+                  <div className="flex items-start gap-1.5 rounded-md border border-[var(--danger)]/30 bg-[var(--danger)]/5 px-2 py-1.5 text-[11px] text-foreground/90">
+                    <Lightbulb className="h-3 w-3 mt-0.5 text-[var(--danger)] shrink-0" />
+                    <div className="flex-1">
+                      <span>{FINDING_HINTS[f.key].hint}</span>
+                      {FINDING_HINTS[f.key].link && (
+                        <a
+                          href={FINDING_HINTS[f.key].link!.url}
+                          target="_blank"
+                          rel="noreferrer noopener"
+                          className="ml-1.5 inline-flex items-center gap-0.5 text-[var(--cyan)] hover:underline"
+                        >
+                          {FINDING_HINTS[f.key].link!.label}
+                          <ExternalLink className="h-2.5 w-2.5" />
+                        </a>
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
             );
           })}
