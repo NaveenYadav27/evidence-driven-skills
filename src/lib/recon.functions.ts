@@ -40,13 +40,39 @@ export interface WhoisResult {
   raw: string; error?: string;
 }
 
+const RDAP_UA = "ShadowXLab-CyberRange/1.6 (+https://ceh.shadowxlab.com)";
+const TLD_RDAP: Record<string, string> = {
+  com: "https://rdap.verisign.com/com/v1/domain/",
+  net: "https://rdap.verisign.com/net/v1/domain/",
+  org: "https://rdap.publicinterestregistry.org/rdap/domain/",
+  io: "https://rdap.identitydigital.services/rdap/domain/",
+  dev: "https://rdap.nic.google/domain/",
+  app: "https://rdap.nic.google/domain/",
+};
+
+async function fetchRdap(domain: string): Promise<Response> {
+  const tld = domain.split(".").pop()!;
+  const headers = { Accept: "application/rdap+json", "User-Agent": RDAP_UA };
+  // Reserved TLDs (example.com, example.org, example.net) are served by IANA.
+  if (domain === "example.com" || domain === "example.net" || domain === "example.org") {
+    const r = await fetch(`https://rdap.iana.org/domain/${domain}`, { headers });
+    if (r.ok) return r;
+  }
+  const tldUrl = TLD_RDAP[tld];
+  if (tldUrl) {
+    const r = await fetch(tldUrl + domain, { headers, redirect: "follow" });
+    if (r.ok) return r;
+  }
+  return fetch(RDAP_BASE + domain, { headers, redirect: "follow" });
+}
+
 export const whoisLookup = createServerFn({ method: "POST" })
   .inputValidator((input: { domain: string }) => input)
   .handler(async ({ data }): Promise<WhoisResult> => {
     const domain = sanitize(data.domain || "");
     if (!ALLOWED_DOMAIN.test(domain)) return { ok: false, domain, raw: "", error: "Invalid domain format" };
     try {
-      const res = await fetch(RDAP_BASE + domain, { headers: { Accept: "application/rdap+json" } });
+      const res = await fetchRdap(domain);
       if (!res.ok) return { ok: false, domain, raw: (await res.text()).slice(0, 2000), error: `RDAP ${res.status}` };
       const json: any = await res.json();
       const events: Array<{ eventAction: string; eventDate: string }> = json.events ?? [];
