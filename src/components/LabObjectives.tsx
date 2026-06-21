@@ -213,6 +213,7 @@ export function LabObjectives({ lab }: { lab: Lab }) {
   const setFinding = useTelemetry((s) => s.setFinding);
 
   const [validating, setValidating] = useState<string | null>(null);
+  const [rejected, setRejected] = useState<Record<string, boolean>>({});
 
   useEffect(() => { ensureLab(lab.id); }, [lab.id, ensureLab]);
 
@@ -238,9 +239,14 @@ export function LabObjectives({ lab }: { lab: Lab }) {
     setValidating(null);
     if (ok && obj) {
       satisfy(lab.id, obj.id);
+      setRejected((r) => ({ ...r, [key]: false }));
       toast.success(`✓ ${obj.label}`);
     } else {
-      toast.error("Finding rejected", { description: "Value did not validate against the live target." });
+      setRejected((r) => ({ ...r, [key]: true }));
+      const h = FINDING_HINTS[key];
+      toast.error("Finding rejected", {
+        description: h?.hint ?? "Value did not validate. Re-check format and source.",
+      });
     }
   };
 
