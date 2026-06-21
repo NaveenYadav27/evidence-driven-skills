@@ -3,7 +3,7 @@ import type { Lab } from "@/data/labs";
 import { useTelemetry } from "@/lib/telemetry";
 import { CheckCircle2, Circle, Loader2, Trophy, Lightbulb, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
-import { robotsScan, httpHeaders } from "@/lib/recon.functions";
+import { robotsScan, httpHeaders, dnsLookup, whoisLookup, subdomainEnum, tlsInspect } from "@/lib/recon.functions";
 
 /** Per-field guided hints shown when validation fails. */
 const FINDING_HINTS: Record<string, { hint: string; link?: { label: string; url: string } }> = {
@@ -124,38 +124,36 @@ async function validateFinding(target: string | undefined, key: string, value: s
   if (!target) return false;
   try {
     if (key === "mx") {
-      const r = await fetch(`https://cloudflare-dns.com/dns-query?name=${target}&type=MX`, { headers: { Accept: "application/dns-json" } });
-      const j: any = await r.json();
-      const hosts: string[] = (j.Answer ?? []).map((a: any) => String(a.data).trim().toLowerCase().replace(/\.$/, "").split(/\s+/).pop() ?? "");
-      return hosts.some((h) => h === v.replace(/\.$/, ""));
+      const r = await dnsLookup({ data: { domain: target, type: "MX" } });
+      if (!r.ok) return false;
+      const hosts = r.answers.map(a => {
+        const parts = String(a.data).trim().toLowerCase().replace(/\.$/, "").split(/\s+/);
+        return parts[parts.length - 1] ?? "";
+      });
+      return hosts.includes(v.replace(/\.$/, ""));
     }
     if (key === "ns") {
-      const r = await fetch(`https://cloudflare-dns.com/dns-query?name=${target}&type=NS`, { headers: { Accept: "application/dns-json" } });
-      const j: any = await r.json();
-      const hosts: string[] = (j.Answer ?? []).map((a: any) => String(a.data).trim().toLowerCase().replace(/\.$/, ""));
+      const r = await dnsLookup({ data: { domain: target, type: "NS" } });
+      if (!r.ok) return false;
+      const hosts = r.answers.map(a => String(a.data).trim().toLowerCase().replace(/\.$/, ""));
       return hosts.includes(v.replace(/\.$/, ""));
     }
     if (key === "registrar") {
-      const r = await fetch(`https://rdap.org/domain/${target}`, { headers: { Accept: "application/rdap+json" } });
-      const j: any = await r.json();
-      const entity = (j.entities ?? []).find((e: any) => (e.roles ?? []).includes("registrar"));
-      const fn = entity?.vcardArray?.[1]?.find((x: any) => x[0] === "fn")?.[3] ?? entity?.handle ?? "";
-      const f = String(fn).trim().toLowerCase();
+      const r = await whoisLookup({ data: { domain: target } });
+      if (!r.ok || !r.registrar) return false;
+      const f = r.registrar.trim().toLowerCase();
       return !!f && (f.includes(v) || v.includes(f));
     }
     if (key === "subdomain") {
       if (!v.endsWith(target.toLowerCase())) return false;
-      const r = await fetch(`https://crt.sh/?output=json&q=${encodeURIComponent("%." + target)}`);
-      const j: any[] = await r.json().catch(() => []);
-      const set = new Set<string>();
-      for (const row of j) for (const n of String(row.name_value || "").split("\n")) {
-        set.add(n.trim().toLowerCase().replace(/^\*\./, ""));
-      }
-      return set.has(v);
+      const r = await subdomainEnum({ data: { domain: target } });
+      if (!r.ok) return false;
+      return r.unique.includes(v);
     }
     if (key === "serverHeader") {
-      const r = await fetch(`https://${target}/`, { method: "GET", redirect: "follow" });
-      const s = (r.headers.get("server") || "").trim().toLowerCase();
+      const r = await httpHeaders({ data: { target } });
+      if (!r.ok) return false;
+      const s = (r.server || r.headers?.["server"] || "").trim().toLowerCase();
       return !!s && (s.includes(v) || v.includes(s));
     }
     if (key === "hstsPresent" || key === "cspPresent" || key === "xfoPresent") {
@@ -179,26 +177,27 @@ async function validateFinding(target: string | undefined, key: string, value: s
       } catch { return false; }
     }
     if (key === "robotsUserAgent") {
-      // Format gate: '*' or a typical bot token (letters/digits/._-/space)
       if (!/^(\*|[a-z0-9][a-z0-9._\- ]{0,63})$/.test(v)) return false;
       try {
         const r = await robotsScan({ data: { target } });
-        if (!r.ok) return true; // accept format-valid value if fetch failed
+        if (!r.ok) return true;
         const uas = new Set(r.userAgents.map(u => u.trim().toLowerCase()));
         return uas.size === 0 ? true : uas.has(v);
       } catch {
         return true;
       }
     }
-    if (key === "tlsSan") {
+    if (key === "tlsSan" || key === "certSan") {
       if (!v.endsWith(target.toLowerCase())) return false;
-      const r = await fetch(`https://crt.sh/?output=json&q=${encodeURIComponent("%." + target)}`);
-      const j: any[] = await r.json().catch(() => []);
-      const set = new Set<string>();
-      for (const row of j) for (const n of String(row.name_value || "").split("\n")) {
-        set.add(n.trim().toLowerCase().replace(/^\*\./, ""));
-      }
-      return set.has(v);
+      const r = await tlsInspect({ data: { target } });
+      if (!r.ok) return false;
+      return (r.sans ?? []).includes(v);
+    }
+    if (key === "tlsIssuer" || key === "certIssuer") {
+      const r = await tlsInspect({ data: { target } });
+      if (!r.ok) return v.length >= 2; // fall back to format
+      const iss = (r.issuer || "").toLowerCase();
+      return !!iss && (iss.includes(v) || v.includes(iss));
     }
   } catch {
     return false;
