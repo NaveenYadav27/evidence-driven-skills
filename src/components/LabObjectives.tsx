@@ -28,6 +28,7 @@ async function validateFinding(target: string | undefined, key: string, value: s
     }
     case "subdomainCount":
     case "snapshotCount":
+    case "hstsMaxAge":
     case "handshakeMessages":
     case "mqttPort":
     case "mqttTlsPort":
@@ -40,6 +41,7 @@ async function validateFinding(target: string | undefined, key: string, value: s
       if (key === "mqttTlsPort") return n === 8883;
       if (key === "arpOpcode") return n === 1 || n === 2;
       if (key === "ampFactor") return n >= 20 && n <= 80;
+      if (key === "hstsMaxAge") return n >= 0;
       return n >= 1;
     }
     case "cveId": return CVE_RX.test(v);
@@ -77,7 +79,11 @@ async function validateFinding(target: string | undefined, key: string, value: s
     case "s3Suffix": return /^s3([.-][a-z0-9-]+)?\.amazonaws\.com$/.test(v);
     case "imdsIp": return v === "169.254.169.254";
     case "xorPlaintext": return v === "xlab is fun";
-    case "certIssuer": return v.length >= 3;
+    case "certIssuer":
+    case "tlsIssuer":
+    case "asnOrg": return v.length >= 2;
+    case "spfQualifier": return ["~all","-all","?all","+all"].includes(v);
+    case "ptrHost": return /^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$/.test(v);
   }
 
   // ── live cross-checks (need target) ─────────────────────────────────
@@ -126,13 +132,32 @@ async function validateFinding(target: string | undefined, key: string, value: s
       if (["no","false","missing"].includes(v)) return !present;
       return false;
     }
-    if (key === "disallowPath") {
+    if (key === "disallowPath" || key === "robotsDisallow") {
+      if (!v.startsWith("/")) return false;
       const r = await fetch(`https://${target}/robots.txt`);
       if (!r.ok) return false;
       const txt = (await r.text()).toLowerCase();
       const paths = new Set<string>();
       for (const line of txt.split(/\r?\n/)) { const m = line.match(/^\s*disallow\s*:\s*(\S+)/i); if (m) paths.add(m[1].trim().toLowerCase()); }
       return paths.has(v) || paths.has(v.replace(/\/$/, "")) || paths.has(v + "/");
+    }
+    if (key === "robotsUserAgent") {
+      const r = await fetch(`https://${target}/robots.txt`);
+      if (!r.ok) return false;
+      const txt = (await r.text()).toLowerCase();
+      const uas = new Set<string>();
+      for (const line of txt.split(/\r?\n/)) { const m = line.match(/^\s*user-agent\s*:\s*(.+?)\s*$/i); if (m) uas.add(m[1].trim().toLowerCase()); }
+      return uas.has(v);
+    }
+    if (key === "tlsSan") {
+      if (!v.endsWith(target.toLowerCase())) return false;
+      const r = await fetch(`https://crt.sh/?output=json&q=${encodeURIComponent("%." + target)}`);
+      const j: any[] = await r.json().catch(() => []);
+      const set = new Set<string>();
+      for (const row of j) for (const n of String(row.name_value || "").split("\n")) {
+        set.add(n.trim().toLowerCase().replace(/^\*\./, ""));
+      }
+      return set.has(v);
     }
   } catch {
     return false;
