@@ -159,34 +159,35 @@ async function validateFinding(target: string | undefined, key: string, value: s
       return !!s && (s.includes(v) || v.includes(s));
     }
     if (key === "hstsPresent" || key === "cspPresent" || key === "xfoPresent") {
-      const r = await fetch(`https://${target}/`, { method: "GET", redirect: "follow" });
-      const map: Record<string, string> = { hstsPresent: "strict-transport-security", cspPresent: "content-security-policy", xfoPresent: "x-frame-options" };
-      const present = !!r.headers.get(map[key]);
-      if (["yes","true","present"].includes(v)) return present;
-      if (["no","false","missing"].includes(v)) return !present;
-      return false;
+      try {
+        const r = await httpHeaders({ data: { target } });
+        if (!r.ok) return false;
+        const map: Record<string, string> = { hstsPresent: "strict-transport-security", cspPresent: "content-security-policy", xfoPresent: "x-frame-options" };
+        const present = !!r.headers?.[map[key]];
+        if (["yes","true","present"].includes(v)) return present;
+        if (["no","false","missing"].includes(v)) return !present;
+        return false;
+      } catch { return false; }
     }
     if (key === "disallowPath" || key === "robotsDisallow") {
       if (!v.startsWith("/")) return false;
-      const r = await fetch(`https://${target}/robots.txt`);
-      if (!r.ok) return false;
-      const txt = (await r.text()).toLowerCase();
-      const paths = new Set<string>();
-      for (const line of txt.split(/\r?\n/)) { const m = line.match(/^\s*disallow\s*:\s*(\S+)/i); if (m) paths.add(m[1].trim().toLowerCase()); }
-      return paths.has(v) || paths.has(v.replace(/\/$/, "")) || paths.has(v + "/");
+      try {
+        const r = await robotsScan({ data: { target } });
+        if (!r.ok) return false;
+        const paths = new Set(r.disallow.map(p => p.trim().toLowerCase()));
+        return paths.has(v) || paths.has(v.replace(/\/$/, "")) || paths.has(v + "/");
+      } catch { return false; }
     }
     if (key === "robotsUserAgent") {
       // Format gate: '*' or a typical bot token (letters/digits/._-/space)
       if (!/^(\*|[a-z0-9][a-z0-9._\- ]{0,63})$/.test(v)) return false;
       try {
-        const r = await fetch(`https://${target}/robots.txt`);
-        if (!r.ok) return true; // fall back to format check when target blocks fetch
-        const txt = (await r.text()).toLowerCase();
-        const uas = new Set<string>();
-        for (const line of txt.split(/\r?\n/)) { const m = line.match(/^\s*user-agent\s*:\s*(.+?)\s*$/i); if (m) uas.add(m[1].trim().toLowerCase()); }
+        const r = await robotsScan({ data: { target } });
+        if (!r.ok) return true; // accept format-valid value if fetch failed
+        const uas = new Set(r.userAgents.map(u => u.trim().toLowerCase()));
         return uas.size === 0 ? true : uas.has(v);
       } catch {
-        return true; // CORS / network blocked → accept format-valid value
+        return true;
       }
     }
     if (key === "tlsSan") {
