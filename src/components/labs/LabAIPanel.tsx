@@ -5,8 +5,10 @@ import { Sparkles, FileText, ScanSearch, Loader2, Trash2, ClipboardCheck, Copy, 
 import { toast } from "sonner";
 import type { Lab } from "@/data/labs";
 import { useTelemetry } from "@/lib/telemetry";
-import { useLabTranscript, transcriptToPrompt } from "@/lib/lab-transcript";
+import { useLabTranscript, transcriptToPrompt, type TranscriptEntry } from "@/lib/lab-transcript";
 import { analyzeLabOutput, generateLabReport, gradeLabFinding } from "@/lib/lab-ai.functions";
+
+const EMPTY_ENTRIES: TranscriptEntry[] = [];
 
 type Tab = "analyst" | "report" | "grader";
 
