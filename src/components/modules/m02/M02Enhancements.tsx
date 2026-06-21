@@ -29,12 +29,12 @@ export function ProfessionalScenario() {
         {rows.map(([k, v]) => (
           <div key={k} className="contents">
             <div className="text-[11px] font-mono uppercase tracking-wider text-muted-foreground pt-0.5">{k}</div>
-            <div className="text-foreground">{v}</div>
+            <div className="text-foreground"><TermText>{v}</TermText></div>
           </div>
         ))}
       </div>
       <div className="mt-4 border-l-2 border-[var(--cyan)]/40 pl-3 text-xs text-muted-foreground leading-relaxed">
-        <span className="text-[var(--cyan)] font-semibold">Why this matters · </span>{M02_SCENARIO.why}
+        <span className="text-[var(--cyan)] font-semibold">Why this matters · </span><TermText>{M02_SCENARIO.why}</TermText>
       </div>
     </section>
   );
