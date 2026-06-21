@@ -4,6 +4,7 @@ import { getModule, MODULES } from "@/data/modules";
 import { getModuleLabs } from "@/data/labs";
 import { hoursForModule } from "@/data/day1";
 import { BookOpen, Terminal, Trophy, ClipboardCheck, GraduationCap, ArrowRight, Lock, AlertTriangle, Lightbulb, Eye, BookMarked, Calendar } from "lucide-react";
+import { M02ModuleEnhancements } from "@/components/modules/m02/M02Enhancements";
 
 export const Route = createFileRoute("/modules/$slug")({
   loader: ({ params }) => {
@@ -113,6 +114,9 @@ function ModuleDetail() {
       </div>
 
       <div className="mt-8">
+        {tab === "learn" && m.slug === "footprinting-and-reconnaissance" && (
+          <div className="mb-8"><M02ModuleEnhancements /></div>
+        )}
         {tab === "learn" && <LearnTab moduleTitle={m.title} moduleId={m.id} />}
         {tab === "labs" && <LabsTab labs={labs} status={m.status} />}
         {tab === "challenges" && <ChallengesTab labs={labs.filter(l => l.kind === "challenge")} status={m.status} />}
