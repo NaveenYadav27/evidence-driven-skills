@@ -3,7 +3,10 @@ import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/h
 
 // Module 02 glossary. Keys are matched case-insensitively as whole tokens.
 // Use the longest, most specific phrase as the key — matcher prefers longer matches first.
-export const M02_GLOSSARY: Record<string, { title: string; def: string; why?: string }> = {
+// Optional `attackerValue` (what an attacker gains) and `impact` (Low/Medium/High/Critical)
+// are rendered as a "How attackers value this" block in the hover card.
+export type ImpactLevel = "Low" | "Medium" | "High" | "Critical" | "Info";
+export const M02_GLOSSARY: Record<string, { title: string; def: string; why?: string; attackerValue?: string; impact?: ImpactLevel }> = {
   "WHOIS": {
     title: "WHOIS",
     def: "Public registration lookup for a domain — registrar, registrant org/contact, name servers, creation & expiry dates.",
