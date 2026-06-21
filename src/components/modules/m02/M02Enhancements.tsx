@@ -8,6 +8,7 @@ import {
   M02_SCENARIO, M02_WORKFLOW, M02_ANALYST_FRAMEWORK, M02_GUIDED,
   M02_INCIDENTS, M02_DELIVERABLES, M02_AI_ACTIONS,
 } from "@/data/modules/m02";
+import { TermText, Term } from "./Term";
 
 /* ---------- Professional Scenario ---------- */
 export function ProfessionalScenario() {
@@ -28,12 +29,12 @@ export function ProfessionalScenario() {
         {rows.map(([k, v]) => (
           <div key={k} className="contents">
             <div className="text-[11px] font-mono uppercase tracking-wider text-muted-foreground pt-0.5">{k}</div>
-            <div className="text-foreground">{v}</div>
+            <div className="text-foreground"><TermText>{v}</TermText></div>
           </div>
         ))}
       </div>
       <div className="mt-4 border-l-2 border-[var(--cyan)]/40 pl-3 text-xs text-muted-foreground leading-relaxed">
-        <span className="text-[var(--cyan)] font-semibold">Why this matters · </span>{M02_SCENARIO.why}
+        <span className="text-[var(--cyan)] font-semibold">Why this matters · </span><TermText>{M02_SCENARIO.why}</TermText>
       </div>
     </section>
   );
@@ -61,12 +62,12 @@ export function InvestigationWorkflow() {
               transition={{ delay: i * 0.04 }}
               className="grid grid-cols-6 gap-2 text-xs items-start border border-border/60 rounded p-2 bg-secondary/20"
             >
-              <div className="font-semibold text-[var(--cyan)]">{r.tool}</div>
-              <div className="text-foreground">{r.finding}</div>
-              <div className="text-muted-foreground">{r.exposure}</div>
-              <div className="text-muted-foreground">{r.opportunity}</div>
-              <div className="text-amber-400/90">{r.risk}</div>
-              <div className="text-emerald-400/90">{r.recommendation}</div>
+              <div className="font-semibold text-[var(--cyan)]"><Term>{r.tool}</Term></div>
+              <div className="text-foreground"><TermText>{r.finding}</TermText></div>
+              <div className="text-muted-foreground"><TermText>{r.exposure}</TermText></div>
+              <div className="text-muted-foreground"><TermText>{r.opportunity}</TermText></div>
+              <div className="text-amber-400/90"><TermText>{r.risk}</TermText></div>
+              <div className="text-emerald-400/90"><TermText>{r.recommendation}</TermText></div>
             </motion.div>
           ))}
         </div>
@@ -99,7 +100,7 @@ export function AnalystThinking() {
             ].map(([k, v, cls]) => (
               <div key={k} className="grid grid-cols-[140px_1fr] gap-2">
                 <div className="font-mono uppercase tracking-wider text-[10px] text-muted-foreground pt-0.5">{k}</div>
-                <div className={cls as string}>{v}</div>
+                <div className={cls as string}><TermText>{v as string}</TermText></div>
               </div>
             ))}
           </div>
@@ -137,7 +138,7 @@ function Row({ label, value, accent }: { label: string; value: string; accent?: 
   return (
     <div className="grid grid-cols-[120px_1fr] gap-2 text-xs py-1 border-t border-border/40 first:border-0">
       <div className="font-mono uppercase tracking-wider text-[10px] text-muted-foreground pt-0.5">{label}</div>
-      <div className={accent ?? "text-muted-foreground"}>{value}</div>
+      <div className={accent ?? "text-muted-foreground"}><TermText>{value}</TermText></div>
     </div>
   );
 }
@@ -257,7 +258,7 @@ export function AiActions() {
           animate={{ opacity: 1, y: 0 }}
           className="border-l-2 border-[var(--cyan)] pl-3 text-sm leading-relaxed text-foreground"
         >
-          {M02_AI_ACTIONS.find((a) => a.id === open)?.output}
+          <TermText>{M02_AI_ACTIONS.find((a) => a.id === open)?.output ?? ""}</TermText>
         </motion.div>
       )}
     </section>
