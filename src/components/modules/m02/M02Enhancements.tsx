@@ -62,12 +62,12 @@ export function InvestigationWorkflow() {
               transition={{ delay: i * 0.04 }}
               className="grid grid-cols-6 gap-2 text-xs items-start border border-border/60 rounded p-2 bg-secondary/20"
             >
-              <div className="font-semibold text-[var(--cyan)]">{r.tool}</div>
-              <div className="text-foreground">{r.finding}</div>
-              <div className="text-muted-foreground">{r.exposure}</div>
-              <div className="text-muted-foreground">{r.opportunity}</div>
-              <div className="text-amber-400/90">{r.risk}</div>
-              <div className="text-emerald-400/90">{r.recommendation}</div>
+              <div className="font-semibold text-[var(--cyan)]"><Term>{r.tool}</Term></div>
+              <div className="text-foreground"><TermText>{r.finding}</TermText></div>
+              <div className="text-muted-foreground"><TermText>{r.exposure}</TermText></div>
+              <div className="text-muted-foreground"><TermText>{r.opportunity}</TermText></div>
+              <div className="text-amber-400/90"><TermText>{r.risk}</TermText></div>
+              <div className="text-emerald-400/90"><TermText>{r.recommendation}</TermText></div>
             </motion.div>
           ))}
         </div>
