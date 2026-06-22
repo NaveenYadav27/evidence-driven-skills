@@ -195,15 +195,21 @@ export function ProgressProvider() {
     if (!uid || !dirtyRef.current) return;
     dirtyRef.current = false;
     const snap = snapshot();
+    useSaveStatus.getState().set("saving");
     // Layer 2 always
     await idbSave(uid, snap);
     // Layer 3 only if online
-    if (!onlineRef.current) return;
+    if (!onlineRef.current) {
+      useSaveStatus.getState().set("failed", { error: "offline" });
+      return;
+    }
     try {
       await push({ data: snap });
-    } catch (err) {
+      useSaveStatus.getState().set("saved", { at: Date.now() });
+    } catch (err: any) {
       console.warn("[progress] push failed — will retry", err);
       dirtyRef.current = true;
+      useSaveStatus.getState().set("retrying", { error: err?.message ?? String(err) });
     }
   }
 
