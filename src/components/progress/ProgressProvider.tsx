@@ -88,6 +88,7 @@ export function ProgressProvider() {
         const cloudSnap = remoteToSnapshot(remote);
         if (cloudSnap.lastUpdated > useProgress.getState().lastUpdated) {
           useProgress.getState().replaceFromCloud(cloudSnap);
+          useSaveStatus.getState().set("restored");
           toast.success("Resumed from cloud", { description: "Your progress was restored from this account." });
         } else if (useProgress.getState().lastUpdated > 0) {
           // Local newer → push
