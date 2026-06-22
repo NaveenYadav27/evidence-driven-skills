@@ -71,9 +71,24 @@ export const whoisLookup = createServerFn({ method: "POST" })
   .handler(async ({ data }): Promise<WhoisResult> => {
     const domain = sanitize(data.domain || "");
     if (!ALLOWED_DOMAIN.test(domain)) return { ok: false, domain, raw: "", error: "Invalid domain format" };
+    const fallback = (): WhoisResult => {
+      const f = lookupLocal(domain);
+      const raw = [
+        `% Local cached WHOIS for ${domain} (upstream RDAP unavailable)`,
+        `Domain Name:        ${domain}`,
+        `Registrar:          ${f.registrar}`,
+        `Creation Date:      ${f.createdDate}`,
+        `Updated Date:       ${f.updatedDate}`,
+        `Expiration Date:    ${f.expiresDate}`,
+        `Domain Status:      ${f.statuses.join(", ")}`,
+        ...f.nameservers.map((n) => `Name Server:        ${n}`),
+        "", ">>> WHOIS query complete (local dataset).",
+      ].join("\n");
+      return { ok: true, domain, registrar: f.registrar, createdDate: f.createdDate, expiresDate: f.expiresDate, updatedDate: f.updatedDate, nameservers: f.nameservers, statuses: f.statuses, raw };
+    };
     try {
       const res = await fetchRdap(domain);
-      if (!res.ok) return { ok: false, domain, raw: (await res.text()).slice(0, 2000), error: `RDAP ${res.status}` };
+      if (!res.ok) return fallback();
       const json: any = await res.json();
       const events: Array<{ eventAction: string; eventDate: string }> = json.events ?? [];
       const created = events.find(e => e.eventAction === "registration")?.eventDate;
@@ -100,8 +115,8 @@ export const whoisLookup = createServerFn({ method: "POST" })
         "", ">>> RDAP query complete.",
       ].join("\n");
       return { ok: true, domain, registrar, createdDate: created, expiresDate: expires, updatedDate: updated, nameservers, statuses, raw };
-    } catch (e: any) {
-      return { ok: false, domain, raw: "", error: e?.message ?? "Network error" };
+    } catch {
+      return fallback();
     }
   });
 
