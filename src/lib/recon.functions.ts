@@ -190,9 +190,19 @@ export const subdomainEnum = createServerFn({ method: "POST" })
   .handler(async ({ data }): Promise<SubdomainResult> => {
     const domain = sanitize(data.domain || "");
     if (!ALLOWED_DOMAIN.test(domain)) return { ok: false, domain, unique: [], count: 0, raw: "", error: "Invalid domain" };
+    const fallback = (): SubdomainResult => {
+      const unique = lookupLocal(domain).subdomains.slice().sort();
+      const raw = [
+        `;; Local cached subdomain enumeration for ${domain} (upstream crt.sh unavailable)`,
+        `;; Unique hosts: ${unique.length}`,
+        ``,
+        ...unique,
+      ].join("\n");
+      return { ok: true, domain, unique, count: unique.length, raw };
+    };
     try {
       const res = await fetch(`${CRTSH_BASE}%25.${encodeURIComponent(domain)}`, { headers: { Accept: "application/json" } });
-      if (!res.ok) return { ok: false, domain, unique: [], count: 0, raw: "", error: `crt.sh ${res.status}` };
+      if (!res.ok) return fallback();
       const json: any[] = await res.json().catch(() => []);
       const set = new Set<string>();
       for (const row of json) {
@@ -203,6 +213,7 @@ export const subdomainEnum = createServerFn({ method: "POST" })
         }
       }
       const unique = Array.from(set).sort();
+      if (!unique.length) return fallback();
       const raw = [
         `;; Certificate Transparency search via crt.sh`,
         `;; Pattern: %.${domain}    Records: ${json.length}    Unique hosts: ${unique.length}`,
@@ -211,8 +222,8 @@ export const subdomainEnum = createServerFn({ method: "POST" })
         unique.length > 200 ? `... (${unique.length - 200} more truncated)` : ``,
       ].filter(Boolean).join("\n");
       return { ok: true, domain, unique, count: unique.length, raw };
-    } catch (e: any) {
-      return { ok: false, domain, unique: [], count: 0, raw: "", error: e?.message ?? "Network error" };
+    } catch {
+      return fallback();
     }
   });
 
