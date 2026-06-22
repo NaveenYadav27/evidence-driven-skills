@@ -1,17 +1,17 @@
 import { createServerFn } from "@tanstack/react-start";
+import { lookupLocal } from "@/lib/recon/dataset";
 
 /**
- * Recon & web-server server functions — all real public APIs, no mocks.
- *   WHOIS  → RDAP via rdap.org
- *   DNS    → DoH (Cloudflare, RFC 8484 JSON)
- *   SUBS   → crt.sh Certificate Transparency
- *   HTTP   → fetch with header introspection
- *   ROBOTS → /robots.txt + /sitemap.xml
- *   WAYBACK→ Internet Archive CDX API
- *   CVE    → NIST NVD 2.0 API
- *   IP     → ipapi.co geolocation/ASN
- *   TLS    → crt.sh latest cert metadata
- *   METHODS→ HTTP OPTIONS Allow probe
+ * Recon & web-server server functions.
+ *
+ * Each function tries a real public API first (RDAP, DoH, crt.sh, NVD,
+ * ipapi, etc.) and falls back to a deterministic LOCAL dataset
+ * (src/lib/recon/dataset.ts) when the upstream is rate-limited, blocked,
+ * times out, or returns an error. The fallback preserves the same return
+ * shape so lab objectives validate identically.
+ *
+ * Result: every accepted command produces output. No lab is ever stuck
+ * because of third-party failure or rate limit.
  */
 
 // Allow underscore-prefixed labels (e.g. _dmarc, _spf, _domainkey) and
