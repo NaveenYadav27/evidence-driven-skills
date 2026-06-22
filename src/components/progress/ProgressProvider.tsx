@@ -15,6 +15,7 @@ import { useProgress } from "@/lib/progress/engine";
 import type { ProgressSnapshot } from "@/lib/progress/types";
 import { idbLoad, idbSave, idbClear } from "@/lib/progress/idb";
 import { pullProgress, pushProgress } from "@/lib/progress.functions";
+import { useSaveStatus } from "@/lib/progress/save-status";
 import { toast } from "sonner";
 
 const LAST_UID_KEY = "shadowxlab-progress-last-uid";
@@ -87,6 +88,7 @@ export function ProgressProvider() {
         const cloudSnap = remoteToSnapshot(remote);
         if (cloudSnap.lastUpdated > useProgress.getState().lastUpdated) {
           useProgress.getState().replaceFromCloud(cloudSnap);
+          useSaveStatus.getState().set("restored");
           toast.success("Resumed from cloud", { description: "Your progress was restored from this account." });
         } else if (useProgress.getState().lastUpdated > 0) {
           // Local newer → push
@@ -193,15 +195,21 @@ export function ProgressProvider() {
     if (!uid || !dirtyRef.current) return;
     dirtyRef.current = false;
     const snap = snapshot();
+    useSaveStatus.getState().set("saving");
     // Layer 2 always
     await idbSave(uid, snap);
     // Layer 3 only if online
-    if (!onlineRef.current) return;
+    if (!onlineRef.current) {
+      useSaveStatus.getState().set("failed", { error: "offline" });
+      return;
+    }
     try {
       await push({ data: snap });
-    } catch (err) {
+      useSaveStatus.getState().set("saved", { at: Date.now() });
+    } catch (err: any) {
       console.warn("[progress] push failed — will retry", err);
       dirtyRef.current = true;
+      useSaveStatus.getState().set("retrying", { error: err?.message ?? String(err) });
     }
   }
 
