@@ -242,13 +242,7 @@ export const httpHeaders = createServerFn({ method: "POST" })
     const host = sanitize(data.target || "");
     if (!SAFE_TARGET.test(host)) return { ok: false, url: host, headers: {}, security: emptySec(), raw: "", error: "Invalid host" };
     const url = `https://${host}/`;
-    try {
-      const ctrl = new AbortController();
-      const t = setTimeout(() => ctrl.abort(), 8000);
-      const res = await fetch(url, { method: "GET", redirect: "follow", signal: ctrl.signal, headers: { "User-Agent": "ShadowXLab-Range/1.0" } });
-      clearTimeout(t);
-      const headers: Record<string, string> = {};
-      res.headers.forEach((v, k) => { headers[k.toLowerCase()] = v; });
+    const summarize = (status: number, statusText: string, headers: Record<string, string>, note?: string): HeadersResult => {
       const security = {
         hsts: !!headers["strict-transport-security"],
         csp: !!headers["content-security-policy"],
@@ -260,8 +254,8 @@ export const httpHeaders = createServerFn({ method: "POST" })
       };
       security.score = Object.values(security).filter(v => v === true).length;
       const raw = [
-        `GET ${url}`,
-        `HTTP/${res.status} ${res.statusText}`,
+        note ?? `GET ${url}`,
+        `HTTP/${status} ${statusText}`,
         ``,
         ...Object.entries(headers).map(([k, v]) => `${k}: ${v}`),
         ``,
@@ -274,9 +268,22 @@ export const httpHeaders = createServerFn({ method: "POST" })
         ` permissions-policy         ${security.permissions ? "✓" : "✗ missing"}`,
         ` score: ${security.score}/6`,
       ].join("\n");
-      return { ok: true, url, status: res.status, server: headers["server"], headers, security, raw };
-    } catch (e: any) {
-      return { ok: false, url, headers: {}, security: emptySec(), raw: "", error: e?.message ?? "Network error" };
+      return { ok: true, url, status, server: headers["server"], headers, security, raw };
+    };
+    const fallback = (): HeadersResult => {
+      const f = lookupLocal(host).http;
+      return summarize(200, "OK (cached)", { server: f.server, ...f.headers }, `;; Local cached headers for ${url} (upstream unreachable)`);
+    };
+    try {
+      const ctrl = new AbortController();
+      const t = setTimeout(() => ctrl.abort(), 8000);
+      const res = await fetch(url, { method: "GET", redirect: "follow", signal: ctrl.signal, headers: { "User-Agent": "ShadowXLab-Range/1.0" } });
+      clearTimeout(t);
+      const headers: Record<string, string> = {};
+      res.headers.forEach((v, k) => { headers[k.toLowerCase()] = v; });
+      return summarize(res.status, res.statusText, headers);
+    } catch {
+      return fallback();
     }
   });
 
