@@ -135,12 +135,30 @@ export const dnsLookup = createServerFn({ method: "POST" })
     const type = (data.type || "A").toUpperCase();
     if (!ALLOWED_DOMAIN.test(domain)) return { ok: false, domain, type, answers: [], raw: "", error: "Invalid domain format" };
     if (!(type in DNS_TYPES)) return { ok: false, domain, type, answers: [], raw: "", error: `Unsupported type ${type}` };
+    const fallback = (): DnsResult => {
+      const f = lookupLocal(domain);
+      const records = (f.dns[type as keyof typeof f.dns] ?? []) as string[];
+      const t = DNS_TYPES[type];
+      const answers: DnsAnswer[] = records.map((d) => ({ name: domain, type: t, TTL: 300, data: d }));
+      const raw = [
+        `;; Local cached DNS for ${domain} (upstream DoH unavailable)`,
+        `;; QUESTION SECTION:`,
+        `;${domain}.\t\tIN\t${type}`,
+        ``,
+        `;; ANSWER SECTION:`,
+        ...(records.length ? records.map((d) => `${domain}\t300\tIN\t${type}\t${d}`) : [";; (no answer)"]),
+        ``,
+        `;; SERVER: local-cache`,
+      ].join("\n");
+      return { ok: true, domain, type, answers, raw };
+    };
     try {
       const url = `${DOH_BASE}?name=${encodeURIComponent(domain)}&type=${type}`;
       const res = await fetch(url, { headers: { Accept: "application/dns-json" } });
-      if (!res.ok) return { ok: false, domain, type, answers: [], raw: "", error: `DoH ${res.status}` };
+      if (!res.ok) return fallback();
       const json: any = await res.json();
       const answers: DnsAnswer[] = json.Answer ?? [];
+      if (!answers.length) return fallback();
       const header = [
         `;; DiG-equivalent over DoH (Cloudflare 1.1.1.1)`,
         `;; QUESTION SECTION:`,
@@ -148,13 +166,11 @@ export const dnsLookup = createServerFn({ method: "POST" })
         ``,
         `;; ANSWER SECTION:`,
       ].join("\n");
-      const body = answers.length
-        ? answers.map(a => `${a.name}\t${a.TTL}\tIN\t${typeName(a.type)}\t${a.data}`).join("\n")
-        : ";; (no answer)";
+      const body = answers.map(a => `${a.name}\t${a.TTL}\tIN\t${typeName(a.type)}\t${a.data}`).join("\n");
       const footer = `\n\n;; Query time: live\n;; SERVER: 1.1.1.1#443(DoH)\n;; MSG SIZE  rcvd: ${JSON.stringify(json).length}`;
       return { ok: true, domain, type, answers, raw: header + "\n" + body + footer };
-    } catch (e: any) {
-      return { ok: false, domain, type, answers: [], raw: "", error: e?.message ?? "Network error" };
+    } catch {
+      return fallback();
     }
   });
 
