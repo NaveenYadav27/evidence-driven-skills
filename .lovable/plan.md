@@ -1,85 +1,80 @@
-## ShadowXLab LMS — Enterprise Reliability & Progress Engine
+## CEH v13 Cyber Range — Platform Stabilization Sprint
 
-Scope: Add a centralized Progress Engine + multi-layer persistence on top of the existing app without redesigning UI, branding, content, or navigation. Wire all existing learning surfaces (Day1/Week1 hours, Modules, Labs, Assessments, Dashboard, Admin analytics) into it.
+Goal: zero data loss across refresh, logout, crash. Database is the single source of truth. No new features, no UI redesign.
 
----
-
-### 1. Database (Supabase migration)
-
-New / validated tables, all with RLS scoped to `auth.uid()` + service_role grants:
-
-- `user_progress` — per (user, course, module, lesson, slide): completion %, time_spent_ms, scroll_y, current_route, last_activity, updated_at
-- `user_videos` — per (user, video_id): position_sec, duration_sec, watched_sec, completion %, finished
-- `user_assessments` — per (user, assessment_id): answers jsonb, current_question, remaining_time_sec, score, status (in_progress|submitted|passed|failed), submitted_at
-- `user_labs` — per (user, lab_id): current_step, completed_steps jsonb, objectives jsonb, score, commands jsonb, flags jsonb, notes, status
-- `user_bookmarks` — per (user, course, lesson)
-- `user_session_state` — single row per user: last_route, last_course, last_module, last_lesson, last_slide, scroll_y, updated_at (drives "Welcome Back / Continue Learning")
-
-Plus `recalculate_user_progress(_user uuid)` SQL function used by reconciliation and nightly pg_cron.
-
-### 2. Progress Engine (client core)
-
-`src/lib/progress/` modules:
-
-- `engine.ts` — Zustand store; single source of truth for lesson/video/lab/assessment/session state. Selectors compute completion % dynamically (never stored statically).
-- `persistence.ts` — three-layer writer/reader: LocalStorage → IndexedDB (`idb-keyval`) → Supabase. Read order on boot: Local → IDB → Cloud → defaults; last-write-wins by `updated_at`.
-- `autosave.ts` — debounced flush every 5s + on: route change, slide change, answer change, lab action, video tick, scroll (throttled), visibilitychange=hidden, `beforeunload`, `pagehide`, online/offline transitions.
-- `sync.ts` — server fns `pullState`, `pushState`, `pushDelta` with conflict resolution by timestamp; queues writes while offline and drains on `online` event.
-- `recovery.ts` — on login/module entry/course entry/assessment finish + nightly cron: reconcile, repair orphan records, recompute completion.
-- `validators.ts` — engagement rules:
-  - lesson complete: `viewedRatio ≥ 0.9 && timeSpent ≥ requiredMs`
-  - video complete: `watchedRatio ≥ 0.9 || finished`
-  - lab complete: `allObjectivesCompleted`
-  - quiz/assessment complete: `submitted === true`
-  Prevents instant-completion / skip-to-end inflation.
-
-### 3. Session & route resilience
-
-- `SessionGuard` provider: silent token refresh via `supabase.auth.onAuthStateChange` + scheduled `refreshSession()` 60s before expiry; saves state → refreshes → restores; never forces logout.
-- `RouteMemory`: writes `pathname + searchParams` to `user_session_state` on every navigation; on login, if `last_route` exists and current route is `/` or `/dashboard`, show "Continue Learning" card (existing UI styles) and route back.
-- Tab switch: `document.visibilityState` listener pauses assessment timer + video tracking, flushes state; resumes on visible.
-- Offline: `navigator.onLine` → toast "Offline Mode Active — Progress Saved Locally"; queue ops in IDB; drain on reconnect.
-- Global `ErrorBoundary` wraps RootShell: on crash, flush state, show recovery card, never redirect home.
-
-### 4. Wire existing surfaces
-
-No visual redesign — only data binding:
-
-- `src/routes/day1.$hour.tsx`, `src/components/day1/Lesson.tsx`, `Labs.tsx`, `SimulatorLab.tsx`: register lesson view, scroll, time-on-page, slide index via engine hooks.
-- `src/routes/labs.$slug.tsx` + `Terminal.tsx`: replace local telemetry-only writes with engine `lab.recordCommand / completeObjective / setStep`.
-- `src/routes/modules.$slug.tsx`: compute module % from engine selector.
-- `src/routes/dashboard.tsx` + `LiveDashboard.tsx`: read from engine selectors (completion, time spent, streak, last activity).
-- `src/routes/admin.tsx` Reports/Traffic tabs: pull aggregates from new tables via admin server fns.
-- Add `<ContinueLearningCard />` to existing dashboard and homepage hero (uses existing card styles).
-
-### 5. Server functions
-
-`src/lib/progress.functions.ts` (auth-required):
-- `pullUserState`, `pushUserState(delta)`, `saveLessonProgress`, `saveVideoProgress`, `saveLabProgress`, `saveAssessmentProgress`, `submitAssessment`, `recalculateProgress`, `getResumePoint`.
-
-`src/lib/admin-analytics.functions.ts` (admin-only): real engagement aggregates from new tables.
-
-`src/routes/api/public/cron-reconcile.ts` — pg_cron nightly trigger; `apikey` auth pattern.
-
-### 6. Certificate validation
-
-`isCertificateEligible(userId, courseId)` server fn: requires every mandatory module completed + every mandatory lab completed + final assessment passed, validated against `user_progress` / `user_labs` / `user_assessments` rows — not displayed %.
-
-### 7. QA verification
-
-Playwright script `/tmp/browser/lms-reliability/` runs against `localhost:8080`:
-- refresh mid-lesson / mid-assessment / mid-lab
-- offline → online sync
-- tab switch pause/resume
-- exact resume of slide, video timestamp, lab step, assessment question
-- accuracy of dashboard completion %
+Existing tables already present: `user_progress`, `user_labs`, `user_assessments`, `user_videos`, `user_session_state`, `user_bookmarks`, `xp_ledger`, `ticket_progress`, `ticket_evidence`, `ticket_deliverables`, `ticket_reviews`. We extend instead of replacing — schema gaps are small, the real work is wiring components to persist through them and reading dashboards back from them.
 
 ---
 
-### Out of scope (per user)
-- No UI redesign, no branding changes, no content rewrites, no new course material, no navigation overhaul beyond fixing redirect bugs.
+### Phase 1 — Audit & inventory (no code changes)
+- Grep every `localStorage`, `sessionStorage`, `useState` holding learner data across `src/components/**`, `src/routes/**`, `src/lib/**`.
+- Produce a one-page inventory table per surface (lesson, lab, assessment, challenge, evidence, report) mapping current store → target DB table.
+- Deliverable: `.lovable/stabilization-inventory.md` checked in for traceability.
 
-### Estimated migration + code surface
-~1 migration, ~12 new files (progress engine + server fns + cron route + 2 components), ~8 edited files (existing learning surfaces wired to engine). No removals.
+### Phase 2 — Schema gap migration (single migration)
+Add only what's missing; keep existing column names.
+- `user_labs`: add `collected_evidence jsonb default '[]'`, `submitted_findings jsonb default '[]'`, `generated_reports jsonb default '[]'`, `started_at timestamptz`, ensure `updated_at` trigger.
+- `user_assessments`: ensure `attempts int`, `last_answered_at timestamptz`, autosave trigger.
+- New `user_challenges` table: `user_id, challenge_id, module_id, flag_status, completion_status, attempts, solved_at, updated_at` + GRANTs + RLS + `auth.uid()` policies.
+- New `lab_command_log` table: `user_id, lab_id, command, normalized, accepted, objective_id, ts` for command-execution history (drives "Commands Executed" metric and admin debug).
+- Update `recalculate_user_progress` to include challenges.
 
-Confirm and I'll implement in that order: migration → engine core → persistence/sync → wire surfaces → admin analytics → cron → Playwright verification.
+### Phase 3 — Persistence layer (engine + autosave)
+The `src/lib/progress/` engine already exists; finish wiring it.
+- `progress/engine.ts`: add `challenges`, `evidence`, `reports` slices and selectors.
+- `progress/autosave.ts`: debounced flush (5s) + flush on route change, visibilitychange=hidden, pagehide, beforeunload, online transition. Status states: `idle | saving | saved | restored | retrying | failed`. Never emit `synced` without a DB ack.
+- `progress.functions.ts`: extend `pushProgress` to upsert evidence/findings/reports/challenges/command-log; add `pullProgress` to hydrate all slices.
+- Boot order: pull from DB → hydrate engine → render. LocalStorage is cache only, never authoritative; on conflict, DB `updated_at` wins.
+
+### Phase 4 — Session recovery
+- `RouteMemory`: write `pathname+search` to `user_session_state` on every nav.
+- On login or root visit, if `last_route` exists, redirect once with a "Resume where you left off" toast (uses existing toast styles, no new UI).
+- Restores: module, lesson, lab step, assessment question, evidence, reports, challenges — all from DB pull.
+
+### Phase 5 — Local lab engine (remove third-party deps)
+- Replace `ipapi.co / ipwho.is / ip-api.com / whois / dns / shodan` calls in `src/lib/recon.functions.ts` with a local dataset module `src/lib/recon/dataset.ts` containing curated fixtures for the domains used in CEH labs (paypal.com, google.com, microsoft.com, example.com, etc.) plus a deterministic synthetic generator for anything else.
+- Functions still return the same shape so `LabObjectives.tsx` cross-checks keep working; just sourced locally. No network egress from lab tools.
+
+### Phase 6 — Command validation normalization
+- New `src/lib/labs/normalize.ts`: lowercases, collapses whitespace, strips trailing flags noise (`+short`, `-t`, etc. allowlisted), tokenizes.
+- `LabObjectives.tsx` matcher: switch from exact string match to `normalize(input) ∈ acceptedNormalizedSet` plus objective predicate. Accept synonyms registered per-objective.
+- Every accepted command: writes to `lab_command_log`, advances `current_step` if predicate passes, produces evidence row, returns deterministic output from the local engine. No accepted command leaves the learner stuck.
+
+### Phase 7 — Dashboard from DB only
+- `LiveDashboard.tsx` + `dashboard.tsx`: replace telemetry-store reads with a `useDashboardStats()` hook backed by a new server fn `getDashboardStats` that aggregates from `user_progress / user_labs / user_assessments / user_challenges / lab_command_log`.
+- Metrics: Modules Started, Labs Completed, Challenges Solved, Commands Executed, Time Spent, Evidence Generated, Exam Readiness (derived).
+
+### Phase 8 — Autosave UI
+- Single `<SaveStatusPill />` in `SiteHeader.tsx` reading the engine status. States exactly: Saving… / Saved / Restored / Sync Failed / Retrying. No `Synced` label without DB ack.
+
+### Phase 9 — Admin debug panel
+- New route `src/routes/admin.debug.tsx` (admin-only via existing `AdminGuard`).
+- Shows: current user, module, lesson, lab, step, last save ts, last DB write status, last restore status, last 20 failed ops (from an in-engine ring buffer mirrored to `lms_audit_log`).
+
+### Phase 10 — QA verification (Playwright, headless against localhost:8080)
+Script `/tmp/browser/stabilization/`:
+1. Start lesson → refresh → same slide + scroll.
+2. Run 5 lab commands → logout → login → same step + command history.
+3. Answer 3 assessment questions → refresh → answers + remaining time intact.
+4. Solve challenge → logout → login → still solved.
+5. Offline toggle → run command → reconnect → DB has the row.
+6. Dashboard counts match raw DB counts (`select count(*) ...`).
+Captures screenshots + DB diffs into `/tmp/browser/stabilization/report.md`.
+
+---
+
+### Out of scope (explicit)
+- No new courses, lessons, labs, modules.
+- No visual redesign, no navigation changes, no new AI features.
+- No edits to auto-generated files (`supabase/types.ts`, `client.ts`, `auth-*`).
+
+### File surface estimate
+- 1 migration (Phase 2).
+- ~6 new files: `recon/dataset.ts`, `labs/normalize.ts`, `lab_command_log` server fns, `getDashboardStats` server fn, `SaveStatusPill.tsx`, `admin.debug.tsx`.
+- ~10 edited: `progress/engine.ts`, `autosave.ts`, `progress.functions.ts`, `recon.functions.ts`, `LabObjectives.tsx`, `LiveDashboard.tsx`, `dashboard.tsx`, `SiteHeader.tsx`, `ProgressProvider.tsx`, `CloudSyncProvider.tsx`.
+- 0 deletions of existing learner-visible code.
+
+### Execution order
+Phase 2 migration → Phase 3 engine/sync → Phase 4 route memory → Phase 5 local engine → Phase 6 normalization → Phase 7 dashboard → Phase 8 status pill → Phase 9 admin debug → Phase 10 Playwright sweep.
+
+Confirm and I'll start with the Phase 2 migration.

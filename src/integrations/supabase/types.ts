@@ -14,6 +14,45 @@ export type Database = {
   }
   public: {
     Tables: {
+      lab_command_log: {
+        Row: {
+          accepted: boolean
+          command: string
+          id: string
+          lab_id: string
+          module_id: string | null
+          normalized: string
+          objective_id: string | null
+          output_summary: string | null
+          ts: string
+          user_id: string
+        }
+        Insert: {
+          accepted?: boolean
+          command: string
+          id?: string
+          lab_id: string
+          module_id?: string | null
+          normalized: string
+          objective_id?: string | null
+          output_summary?: string | null
+          ts?: string
+          user_id: string
+        }
+        Update: {
+          accepted?: boolean
+          command?: string
+          id?: string
+          lab_id?: string
+          module_id?: string | null
+          normalized?: string
+          objective_id?: string | null
+          output_summary?: string | null
+          ts?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       lms_audit_log: {
         Row: {
           action: string
@@ -463,6 +502,7 @@ export type Database = {
           created_at: string
           current_question: number
           id: string
+          last_answered_at: string | null
           module_id: string | null
           pass_threshold: number
           remaining_time_sec: number | null
@@ -479,6 +519,7 @@ export type Database = {
           created_at?: string
           current_question?: number
           id?: string
+          last_answered_at?: string | null
           module_id?: string | null
           pass_threshold?: number
           remaining_time_sec?: number | null
@@ -495,6 +536,7 @@ export type Database = {
           created_at?: string
           current_question?: number
           id?: string
+          last_answered_at?: string | null
           module_id?: string | null
           pass_threshold?: number
           remaining_time_sec?: number | null
@@ -557,54 +599,108 @@ export type Database = {
         }
         Relationships: []
       }
+      user_challenges: {
+        Row: {
+          attempts: number
+          challenge_id: string
+          completion_status: string
+          created_at: string
+          flag_status: string
+          id: string
+          module_id: string | null
+          payload: Json
+          solved_at: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          attempts?: number
+          challenge_id: string
+          completion_status?: string
+          created_at?: string
+          flag_status?: string
+          id?: string
+          module_id?: string | null
+          payload?: Json
+          solved_at?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          attempts?: number
+          challenge_id?: string
+          completion_status?: string
+          created_at?: string
+          flag_status?: string
+          id?: string
+          module_id?: string | null
+          payload?: Json
+          solved_at?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_labs: {
         Row: {
+          collected_evidence: Json
           commands: Json
           completed_steps: Json
           created_at: string
           current_step: number
           flags: Json
+          generated_reports: Json
           id: string
           lab_id: string
           module_id: string | null
           notes: string | null
           objectives: Json
           score: number | null
+          started_at: string | null
           status: string
+          submitted_findings: Json
           time_spent_ms: number
           updated_at: string
           user_id: string
         }
         Insert: {
+          collected_evidence?: Json
           commands?: Json
           completed_steps?: Json
           created_at?: string
           current_step?: number
           flags?: Json
+          generated_reports?: Json
           id?: string
           lab_id: string
           module_id?: string | null
           notes?: string | null
           objectives?: Json
           score?: number | null
+          started_at?: string | null
           status?: string
+          submitted_findings?: Json
           time_spent_ms?: number
           updated_at?: string
           user_id: string
         }
         Update: {
+          collected_evidence?: Json
           commands?: Json
           completed_steps?: Json
           created_at?: string
           current_step?: number
           flags?: Json
+          generated_reports?: Json
           id?: string
           lab_id?: string
           module_id?: string | null
           notes?: string | null
           objectives?: Json
           score?: number | null
+          started_at?: string | null
           status?: string
+          submitted_findings?: Json
           time_spent_ms?: number
           updated_at?: string
           user_id?: string
