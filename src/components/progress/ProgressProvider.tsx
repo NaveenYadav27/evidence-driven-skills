@@ -15,6 +15,7 @@ import { useProgress } from "@/lib/progress/engine";
 import type { ProgressSnapshot } from "@/lib/progress/types";
 import { idbLoad, idbSave, idbClear } from "@/lib/progress/idb";
 import { pullProgress, pushProgress } from "@/lib/progress.functions";
+import { useSaveStatus } from "@/lib/progress/save-status";
 import { toast } from "sonner";
 
 const LAST_UID_KEY = "shadowxlab-progress-last-uid";
