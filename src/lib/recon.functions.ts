@@ -303,12 +303,30 @@ export const robotsScan = createServerFn({ method: "POST" })
     const host = sanitize(data.target || "");
     if (!SAFE_TARGET.test(host)) return { ok: false, url: host, disallow: [], allow: [], sitemaps: [], userAgents: [], raw: "", error: "Invalid host" };
     const url = `https://${host}/robots.txt`;
+    const fallback = (): RobotsResult => {
+      const groups = lookupLocal(host).robots;
+      const disallow = groups.flatMap((g) => g.disallow);
+      const sitemaps = groups.map((g) => g.sitemap).filter(Boolean) as string[];
+      const userAgents = groups.map((g) => g.userAgent);
+      const raw = [
+        `;; Local cached robots.txt for ${host} (upstream unreachable)`,
+        `── Parsed ──`,
+        `User-agents: ${userAgents.length}    Disallow: ${disallow.length}    Sitemaps: ${sitemaps.length}`,
+        ``,
+        `── Disallow entries ──`,
+        ...disallow.map((d) => `  ✗ ${d}`),
+        ``,
+        `── Sitemaps ──`,
+        ...sitemaps.map((s) => `  → ${s}`),
+      ].join("\n");
+      return { ok: true, url, disallow, allow: [], sitemaps, userAgents, raw };
+    };
     try {
       const ctrl = new AbortController();
       const t = setTimeout(() => ctrl.abort(), 8000);
       const res = await fetch(url, { signal: ctrl.signal, headers: { "User-Agent": "ShadowXLab-Range/1.0" } });
       clearTimeout(t);
-      if (!res.ok) return { ok: false, url, disallow: [], allow: [], sitemaps: [], userAgents: [], raw: "", error: `HTTP ${res.status}` };
+      if (!res.ok) return fallback();
       const text = (await res.text()).slice(0, 64000);
       const disallow: string[] = [], allow: string[] = [], sitemaps: string[] = [], userAgents: string[] = [];
       for (const line of text.split(/\r?\n/)) {
@@ -337,8 +355,8 @@ export const robotsScan = createServerFn({ method: "POST" })
         text.slice(0, 2048),
       ].filter(Boolean).join("\n");
       return { ok: true, url, disallow, allow, sitemaps, userAgents, raw };
-    } catch (e: any) {
-      return { ok: false, url, disallow: [], allow: [], sitemaps: [], userAgents: [], raw: "", error: e?.message ?? "Network error" };
+    } catch {
+      return fallback();
     }
   });
 
