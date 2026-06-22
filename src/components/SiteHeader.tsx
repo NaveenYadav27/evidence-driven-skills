@@ -74,6 +74,7 @@ export function SiteHeader() {
           )}
         </nav>
         <div className="flex items-center gap-2">
+          <SaveStatusPill />
           <SyncBadge />
           <AuthButton />
         </div>
