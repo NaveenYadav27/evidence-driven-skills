@@ -586,11 +586,25 @@ export const tlsInspect = createServerFn({ method: "POST" })
   .handler(async ({ data }): Promise<TlsInspectResult> => {
     const host = sanitize(data.target || "");
     if (!SAFE_TARGET.test(host)) return { ok: false, host, raw: "", error: "Invalid host" };
+    const fallback = (): TlsInspectResult => {
+      const f = lookupLocal(host).tls;
+      const raw = [
+        `;; Local cached TLS certificate for ${host} (upstream crt.sh unavailable)`,
+        `Issuer:        ${f.issuer}`,
+        `Common Name:   ${host}`,
+        `Not Before:    ${f.notBefore}`,
+        `Not After:     ${f.notAfter}`,
+        `Serial:        ${f.serial}`,
+        `SANs (${f.san.length}):`,
+        ...f.san.map((s) => `  • ${s}`),
+      ].join("\n");
+      return { ok: true, host, issuer: f.issuer, commonName: host, sans: f.san, notBefore: f.notBefore, notAfter: f.notAfter, serial: f.serial, raw };
+    };
     try {
       const res = await fetch(`${CRTSH_BASE}${encodeURIComponent(host)}&exclude=expired`, { headers: { Accept: "application/json" } });
-      if (!res.ok) return { ok: false, host, raw: "", error: `crt.sh ${res.status}` };
+      if (!res.ok) return fallback();
       const json: any[] = await res.json().catch(() => []);
-      if (!json.length) return { ok: false, host, raw: "", error: "No certificates found" };
+      if (!json.length) return fallback();
       json.sort((a, b) => String(b.not_before).localeCompare(String(a.not_before)));
       const top = json[0];
       const sans = String(top.name_value || "").split("\n").map(s => s.trim().toLowerCase().replace(/^\*\./, "")).filter(Boolean);
@@ -611,8 +625,8 @@ export const tlsInspect = createServerFn({ method: "POST" })
         notBefore: top.not_before, notAfter: top.not_after, serial: top.serial_number,
         raw,
       };
-    } catch (e: any) {
-      return { ok: false, host, raw: "", error: e?.message ?? "Network error" };
+    } catch {
+      return fallback();
     }
   });
 
