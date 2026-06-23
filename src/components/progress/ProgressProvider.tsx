@@ -67,12 +67,13 @@ export function ProgressProvider() {
       await waitForRehydration();
       const prev = typeof window !== "undefined" ? localStorage.getItem(LAST_UID_KEY) : null;
       if (prev !== uid) {
-        // Different user on this device — clear local stores
+        // Different user on this device — clear local stores. Note: reset()
+        // sets lastUpdated:0 so cloud data always wins on the first pull below.
         useProgress.getState().reset();
+        dirtyRef.current = false;
         if (typeof window !== "undefined") localStorage.setItem(LAST_UID_KEY, uid);
         if (prev) await idbClear(prev);
       }
-
 
       // Layer 2: IndexedDB
       const idb = await idbLoad(uid);
@@ -86,12 +87,18 @@ export function ProgressProvider() {
         const remote = await pull();
         if (!remote) return;
         const cloudSnap = remoteToSnapshot(remote);
-        if (cloudSnap.lastUpdated > useProgress.getState().lastUpdated) {
+        const localTs = useProgress.getState().lastUpdated;
+        const cloudHasContent =
+          Object.keys(cloudSnap.lessons).length +
+            Object.keys(cloudSnap.videos).length +
+            Object.keys(cloudSnap.assessments).length +
+            Object.keys(cloudSnap.labs).length > 0;
+        if (cloudSnap.lastUpdated > localTs && cloudHasContent) {
           useProgress.getState().replaceFromCloud(cloudSnap);
           useSaveStatus.getState().set("restored");
           toast.success("Resumed from cloud", { description: "Your progress was restored from this account." });
-        } else if (useProgress.getState().lastUpdated > 0) {
-          // Local newer → push
+        } else if (localTs > 0 && localHasContent()) {
+          // Local newer AND has actual content → push. Never push an empty snapshot.
           dirtyRef.current = true;
           void flush();
         }
@@ -106,7 +113,6 @@ export function ProgressProvider() {
       const ms = Math.max(5_000, expiresAtSec * 1000 - Date.now() - REFRESH_LEAD_MS);
       refreshTimerRef.current = setTimeout(async () => {
         try {
-          // Save first → refresh → restore (state is already in store)
           await flush();
           await supabase.auth.refreshSession();
         } catch (err) {
@@ -115,24 +121,36 @@ export function ProgressProvider() {
       }, ms);
     }
 
-    const apply = (session: { user: { id: string }; expires_at?: number | null } | null) => {
+    const apply = (session: { user: { id: string }; expires_at?: number | null } | null, event?: string) => {
       if (!mounted) return;
       if (session?.user) {
+        const sameUser = userIdRef.current === session.user.id;
         userIdRef.current = session.user.id;
         scheduleRefresh(session.expires_at ?? null);
-        void hydrateFor(session.user.id);
+        // Only hydrate on real identity transitions — TOKEN_REFRESHED keeps the
+        // same user and must NOT re-pull (it can clobber unsaved local state).
+        if (!sameUser || event === "SIGNED_IN" || event === "INITIAL_SESSION") {
+          void hydrateFor(session.user.id);
+        }
       } else {
         if (refreshTimerRef.current) clearTimeout(refreshTimerRef.current);
+        // Flush any pending writes for the previous user BEFORE clearing.
+        const prevUid = userIdRef.current;
+        if (prevUid && dirtyRef.current) {
+          // best-effort; ignore errors on sign-out
+          void flush().catch(() => {});
+        }
         userIdRef.current = null;
         useProgress.getState().reset();
+        dirtyRef.current = false;
         if (typeof window !== "undefined") localStorage.removeItem(LAST_UID_KEY);
       }
     };
 
-    supabase.auth.getSession().then(({ data }) => apply(data.session));
+    supabase.auth.getSession().then(({ data }) => apply(data.session, "INITIAL_SESSION"));
     const { data: sub } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === "SIGNED_IN" || event === "SIGNED_OUT" || event === "USER_UPDATED" || event === "INITIAL_SESSION" || event === "TOKEN_REFRESHED") {
-        apply(session ?? null);
+        apply(session ?? null, event);
       }
     });
 
@@ -190,15 +208,26 @@ export function ProgressProvider() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  function localHasContent(): boolean {
+    const s = useProgress.getState();
+    return (
+      Object.keys(s.lessons).length +
+        Object.keys(s.videos).length +
+        Object.keys(s.assessments).length +
+        Object.keys(s.labs).length > 0
+    );
+  }
+
   async function flush() {
     const uid = userIdRef.current;
     if (!uid || !dirtyRef.current) return;
+    // Refuse to persist an empty snapshot for a real user — that's how progress
+    // gets wiped after a sign-out/sign-in race. If there's nothing to save, skip.
+    if (!localHasContent()) { dirtyRef.current = false; return; }
     dirtyRef.current = false;
     const snap = snapshot();
     useSaveStatus.getState().set("saving");
-    // Layer 2 always
     await idbSave(uid, snap);
-    // Layer 3 only if online
     if (!onlineRef.current) {
       useSaveStatus.getState().set("failed", { error: "offline" });
       return;
