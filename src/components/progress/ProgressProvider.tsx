@@ -208,15 +208,26 @@ export function ProgressProvider() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  function localHasContent(): boolean {
+    const s = useProgress.getState();
+    return (
+      Object.keys(s.lessons).length +
+        Object.keys(s.videos).length +
+        Object.keys(s.assessments).length +
+        Object.keys(s.labs).length > 0
+    );
+  }
+
   async function flush() {
     const uid = userIdRef.current;
     if (!uid || !dirtyRef.current) return;
+    // Refuse to persist an empty snapshot for a real user — that's how progress
+    // gets wiped after a sign-out/sign-in race. If there's nothing to save, skip.
+    if (!localHasContent()) { dirtyRef.current = false; return; }
     dirtyRef.current = false;
     const snap = snapshot();
     useSaveStatus.getState().set("saving");
-    // Layer 2 always
     await idbSave(uid, snap);
-    // Layer 3 only if online
     if (!onlineRef.current) {
       useSaveStatus.getState().set("failed", { error: "offline" });
       return;
