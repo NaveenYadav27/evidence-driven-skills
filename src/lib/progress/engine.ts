@@ -298,7 +298,10 @@ export const useProgress = create<EngineState>()(
       replaceFromCloud: (snap) =>
         set(() => ({ ...snap, lastUpdated: snap.lastUpdated ?? now() })),
 
-      reset: () => set(() => ({ ...emptySnapshot(), lastUpdated: now() })),
+      // IMPORTANT: lastUpdated MUST be 0 after reset. If we used now(), the next
+      // sign-in would see local-newer-than-cloud and push the empty snapshot,
+      // wiping the user's real progress in Supabase.
+      reset: () => set(() => ({ ...emptySnapshot(), lastUpdated: 0 })),
     }),
     {
       name: "shadowxlab-progress-v1",
