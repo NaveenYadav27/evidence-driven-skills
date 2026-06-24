@@ -237,21 +237,32 @@ export function ProgressProvider() {
     // Refuse to persist an empty snapshot for a real user — that's how progress
     // gets wiped after a sign-out/sign-in race. If there's nothing to save, skip.
     if (!localHasContent()) { dirtyRef.current = false; return; }
+    // Serialize: if a flush is already in flight, mark dirty and bail so the
+    // in-flight one (or the next tick) picks up the new state. Prevents
+    // duplicate concurrent pushes from interval + visibility + pagehide
+    // racing each other and clobbering with a stale snapshot.
+    if (flushInFlightRef.current) { dirtyRef.current = true; return; }
+    flushInFlightRef.current = true;
     dirtyRef.current = false;
     const snap = snapshot();
     useSaveStatus.getState().set("saving");
-    await idbSave(uid, snap);
-    if (!onlineRef.current) {
-      useSaveStatus.getState().set("failed", { error: "offline" });
-      return;
-    }
     try {
-      await push({ data: snap });
-      useSaveStatus.getState().set("saved", { at: Date.now() });
-    } catch (err: any) {
-      console.warn("[progress] push failed — will retry", err);
-      dirtyRef.current = true;
-      useSaveStatus.getState().set("retrying", { error: err?.message ?? String(err) });
+      await idbSave(uid, snap);
+      if (!onlineRef.current) {
+        useSaveStatus.getState().set("failed", { error: "offline" });
+        dirtyRef.current = true;
+        return;
+      }
+      try {
+        await push({ data: snap });
+        useSaveStatus.getState().set("saved", { at: Date.now() });
+      } catch (err: any) {
+        console.warn("[progress] push failed — will retry", err);
+        dirtyRef.current = true;
+        useSaveStatus.getState().set("retrying", { error: err?.message ?? String(err) });
+      }
+    } finally {
+      flushInFlightRef.current = false;
     }
   }
 
