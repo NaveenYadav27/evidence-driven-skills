@@ -44,6 +44,13 @@ export function ProgressProvider() {
   const dirtyRef = useRef(false);
   const onlineRef = useRef<boolean>(typeof navigator === "undefined" ? true : navigator.onLine);
   const refreshTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Prevent concurrent flush() from interval + visibility + pagehide +
+  // beforeunload + navigation autosaves clobbering each other with stale
+  // snapshots / duplicate pushes.
+  const flushInFlightRef = useRef(false);
+  // Prevent overlapping hydrations (getSession() + INITIAL_SESSION event
+  // both fire on mount → previously caused double-pull / lost-write race).
+  const hydratingForRef = useRef<string | null>(null);
 
   // ---- Auth & multi-layer hydration ----
   useEffect(() => {
