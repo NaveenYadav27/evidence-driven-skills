@@ -44,6 +44,13 @@ export function ProgressProvider() {
   const dirtyRef = useRef(false);
   const onlineRef = useRef<boolean>(typeof navigator === "undefined" ? true : navigator.onLine);
   const refreshTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Prevent concurrent flush() from interval + visibility + pagehide +
+  // beforeunload + navigation autosaves clobbering each other with stale
+  // snapshots / duplicate pushes.
+  const flushInFlightRef = useRef(false);
+  // Prevent overlapping hydrations (getSession() + INITIAL_SESSION event
+  // both fire on mount → previously caused double-pull / lost-write race).
+  const hydratingForRef = useRef<string | null>(null);
 
   // ---- Auth & multi-layer hydration ----
   useEffect(() => {
@@ -64,6 +71,9 @@ export function ProgressProvider() {
     }
 
     async function hydrateFor(uid: string) {
+      if (hydratingForRef.current === uid) return; // already in progress
+      hydratingForRef.current = uid;
+      try {
       await waitForRehydration();
       const prev = typeof window !== "undefined" ? localStorage.getItem(LAST_UID_KEY) : null;
       if (prev !== uid) {
@@ -104,6 +114,9 @@ export function ProgressProvider() {
         }
       } catch (err) {
         console.warn("[progress] pull failed", err);
+      }
+      } finally {
+        hydratingForRef.current = null;
       }
     }
 
@@ -224,21 +237,32 @@ export function ProgressProvider() {
     // Refuse to persist an empty snapshot for a real user — that's how progress
     // gets wiped after a sign-out/sign-in race. If there's nothing to save, skip.
     if (!localHasContent()) { dirtyRef.current = false; return; }
+    // Serialize: if a flush is already in flight, mark dirty and bail so the
+    // in-flight one (or the next tick) picks up the new state. Prevents
+    // duplicate concurrent pushes from interval + visibility + pagehide
+    // racing each other and clobbering with a stale snapshot.
+    if (flushInFlightRef.current) { dirtyRef.current = true; return; }
+    flushInFlightRef.current = true;
     dirtyRef.current = false;
     const snap = snapshot();
     useSaveStatus.getState().set("saving");
-    await idbSave(uid, snap);
-    if (!onlineRef.current) {
-      useSaveStatus.getState().set("failed", { error: "offline" });
-      return;
-    }
     try {
-      await push({ data: snap });
-      useSaveStatus.getState().set("saved", { at: Date.now() });
-    } catch (err: any) {
-      console.warn("[progress] push failed — will retry", err);
-      dirtyRef.current = true;
-      useSaveStatus.getState().set("retrying", { error: err?.message ?? String(err) });
+      await idbSave(uid, snap);
+      if (!onlineRef.current) {
+        useSaveStatus.getState().set("failed", { error: "offline" });
+        dirtyRef.current = true;
+        return;
+      }
+      try {
+        await push({ data: snap });
+        useSaveStatus.getState().set("saved", { at: Date.now() });
+      } catch (err: any) {
+        console.warn("[progress] push failed — will retry", err);
+        dirtyRef.current = true;
+        useSaveStatus.getState().set("retrying", { error: err?.message ?? String(err) });
+      }
+    } finally {
+      flushInFlightRef.current = false;
     }
   }
 
