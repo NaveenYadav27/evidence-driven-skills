@@ -71,8 +71,10 @@ export function ProgressProvider() {
     }
 
     async function hydrateFor(uid: string) {
+      if (hydratingForRef.current === uid) return; // already in progress
+      hydratingForRef.current = uid;
+      try {
       await waitForRehydration();
-      const prev = typeof window !== "undefined" ? localStorage.getItem(LAST_UID_KEY) : null;
       if (prev !== uid) {
         // Different user on this device — clear local stores. Note: reset()
         // sets lastUpdated:0 so cloud data always wins on the first pull below.
