@@ -42,13 +42,16 @@ export function LabGuide({ lab }: { lab: Lab }) {
     ? undefined
     : commandFor(primaryTool, lab);
 
-  const steps = lab.objectives.map((o) => {
+  const objectiveSteps = lab.objectives.map((o) => {
     if (o.type === "command") {
       const cmd = `${o.tool ?? primaryTool}${o.argMatch ? ` ${o.argMatch}` : lab.target ? ` ${lab.target}` : ""}`;
       return { kind: "cmd" as const, label: o.label, cmd, hint: o.hint };
     }
     return { kind: "find" as const, label: o.label, hint: o.hint };
   });
+  const steps = primaryCommand
+    ? [{ kind: "cmd" as const, label: "Open the lab reference for this target", cmd: primaryCommand, hint: "Use this when the lab has no external host to scan." }, ...objectiveSteps]
+    : objectiveSteps;
 
   const w = [
     { k: "What", v: lab.title },
