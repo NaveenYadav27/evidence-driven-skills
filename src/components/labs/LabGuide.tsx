@@ -2,7 +2,7 @@ import { Fragment } from "react";
 import { ListChecks, Terminal as TerminalIcon, Flag, Crosshair, Wrench } from "lucide-react";
 import type { Lab } from "@/data/labs";
 
-const TOOL_GUIDE: Record<string, { label: string; purpose: string; usage: string }> = {
+export const TOOL_GUIDE: Record<string, { label: string; purpose: string; usage: string }> = {
   whois: { label: "WHOIS/RDAP", purpose: "registrar, ownership, dates", usage: "whois <domain>" },
   dig: { label: "DNS lookup", purpose: "DNS records", usage: "dig <domain> [type]" },
   nslookup: { label: "DNS lookup", purpose: "DNS records", usage: "nslookup <domain> [type]" },
@@ -23,7 +23,7 @@ const TOOL_GUIDE: Record<string, { label: string; purpose: string; usage: string
   reference: { label: "Reference", purpose: "built-in answer guide for concept labs", usage: "reference <topic>" },
 };
 
-function commandFor(tool: string, lab: Lab) {
+export function commandFor(tool: string, lab: Lab) {
   const objective = lab.objectives.find((o) => o.type === "command" && o.tool === tool);
   if (objective?.argMatch) return `${tool} ${objective.argMatch}`;
   if (tool === "reference") return `reference ${lab.target ?? lab.title}`;
