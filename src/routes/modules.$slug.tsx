@@ -234,55 +234,41 @@ function LabsTab({ labs, status }: { labs: ReturnType<typeof getModuleLabs>; sta
 }
 
 /* -------- Challenges -------- */
-function ChallengesTab({ labs, status }: { labs: ReturnType<typeof getModuleLabs>; status: "available" | "preview" | "locked" }) {
+function ChallengesTab({ moduleId, labs, status }: { moduleId: string; labs: ReturnType<typeof getModuleLabs>; status: "available" | "preview" | "locked" }) {
   if (status !== "available") return <PreviewNotice />;
-  if (!labs.length) return <p className="text-sm text-muted-foreground">No challenges yet for this module.</p>;
   return (
-    <div className="space-y-3">
-      {labs.map((l) => (
-        <Link key={l.id} to="/labs/$slug" params={{ slug: l.slug }}
-              className="panel panel-accent p-5 flex items-center justify-between gap-4 group">
-          <div>
-            <div className="flex items-center gap-2 mb-1">
-              <span className="chip chip-red"><Trophy className="h-3 w-3" /> Challenge</span>
-              <span className="chip">{l.difficulty}</span>
-            </div>
-            <div className="font-semibold">{l.title}</div>
-            <p className="text-sm text-muted-foreground mt-1 max-w-2xl">{l.scenario}</p>
-          </div>
-          <ArrowRight className="h-5 w-5 text-primary shrink-0 group-hover:translate-x-1 transition" />
-        </Link>
-      ))}
+    <div className="space-y-6">
+      {labs.length > 0 && (
+        <div className="space-y-3">
+          <h3 className="text-xs font-mono uppercase tracking-wider text-muted-foreground">Terminal-based challenge labs</h3>
+          {labs.map((l) => (
+            <Link key={l.id} to="/labs/$slug" params={{ slug: l.slug }}
+                  className="panel panel-accent p-5 flex items-center justify-between gap-4 group">
+              <div>
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="chip chip-red"><Trophy className="h-3 w-3" /> Lab challenge</span>
+                  <span className="chip">{l.difficulty}</span>
+                </div>
+                <div className="font-semibold">{l.title}</div>
+                <p className="text-sm text-muted-foreground mt-1 max-w-2xl">{l.scenario}</p>
+              </div>
+              <ArrowRight className="h-5 w-5 text-primary shrink-0 group-hover:translate-x-1 transition" />
+            </Link>
+          ))}
+        </div>
+      )}
+      <div className="space-y-3">
+        <h3 className="text-xs font-mono uppercase tracking-wider text-muted-foreground">Scenario challenges</h3>
+        <ChallengesPanel moduleId={moduleId} />
+      </div>
     </div>
   );
 }
 
 /* -------- Assessment -------- */
-function AssessmentTab({ status }: { moduleId: string; status: "available" | "preview" | "locked" }) {
+function AssessmentTab({ moduleId, status }: { moduleId: string; status: "available" | "preview" | "locked" }) {
   if (status !== "available") return <PreviewNotice />;
-  return (
-    <div className="panel p-8 text-center">
-      <ClipboardCheck className="h-8 w-8 mx-auto mb-3 text-[var(--cyan)]" />
-      <h3 className="font-semibold">Assessment Engine</h3>
-      <p className="text-sm text-muted-foreground mt-1 max-w-md mx-auto">
-        Scenario-based MCQs, tool-output analysis and viva-style questions. Unlock by completing the module's labs first — assessment results feed your readiness score.
-      </p>
-      <span className="mt-4 inline-block chip">Unlocks after labs</span>
-    </div>
-  );
-}
-
-/* -------- Mastery -------- */
-function MasteryTab({ moduleId: _moduleId }: { moduleId: string }) {
-  return (
-    <div className="panel p-8 text-center">
-      <GraduationCap className="h-8 w-8 mx-auto mb-3 text-[var(--cyan)]" />
-      <h3 className="font-semibold">Mastery Report</h3>
-      <p className="text-sm text-muted-foreground mt-1 max-w-md mx-auto">
-        Generated automatically from your lab telemetry, command accuracy, challenge results and assessment scores. Will populate as you complete this module.
-      </p>
-    </div>
-  );
+  return <AssessmentQuiz moduleId={moduleId} />;
 }
 
 function PreviewNotice() {
