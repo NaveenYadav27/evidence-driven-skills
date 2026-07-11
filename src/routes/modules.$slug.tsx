@@ -7,6 +7,9 @@ import { BookOpen, Terminal, Trophy, ClipboardCheck, GraduationCap, ArrowRight, 
 import { M02ModuleEnhancements } from "@/components/modules/m02/M02Enhancements";
 import { M03ModuleEnhancements } from "@/components/modules/m03/M03Enhancements";
 import { GenericModuleEnhancements, MODULE_ENHANCEMENTS } from "@/components/modules/GenericModuleEnhancements";
+import { ChallengesPanel } from "@/components/modules/ChallengesPanel";
+import { AssessmentQuiz } from "@/components/modules/AssessmentQuiz";
+import { MasteryPanel } from "@/components/modules/MasteryPanel";
 
 export const Route = createFileRoute("/modules/$slug")({
   loader: ({ params }) => {
