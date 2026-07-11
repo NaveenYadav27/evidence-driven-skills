@@ -1560,95 +1560,9 @@ export const LABS: Lab[] = [
       { key: "subdomain", label: "Archived host", placeholder: "e.g. gist.github.com" },
     ],
   },
-
-  /* Module 14 — auth cookie & CSP hardening on a real target */
-  {
-    id: "lab-m14-cookies",
-    moduleId: "m14",
-    slug: "web-app-cookie-flags",
-    title: "Web App — Session Cookie Flags",
-    kind: "terminal",
-    difficulty: "beginner",
-    estMinutes: 15,
-    target: "github.com",
-    scenario:
-      "Session cookies without HttpOnly and Secure are trivially stolen via XSS or MITM. Run `headers github.com` and submit HttpOnly and Secure flag status.",
-    tools: ["headers"],
-    objectives: [
-      { id: "o-m14-h", label: "Run headers", type: "command", tool: "headers", argMatch: "github.com" },
-      { id: "o-m14-ho", label: "Submit HttpOnly status", type: "finding", key: "cookieHttpOnly", hint: "present|missing" },
-      { id: "o-m14-se", label: "Submit Secure status", type: "finding", key: "cookieSecure", hint: "present|missing" },
-    ],
-    findingFields: [
-      { key: "cookieHttpOnly", label: "HttpOnly", placeholder: "present|missing" },
-      { key: "cookieSecure", label: "Secure", placeholder: "present|missing" },
-    ],
-  },
-  {
-    id: "lab-m14-hsts",
-    moduleId: "m14",
-    slug: "hsts-max-age",
-    title: "HSTS max-age — Downgrade Defense",
-    kind: "terminal",
-    difficulty: "intermediate",
-    estMinutes: 15,
-    target: "github.com",
-    scenario:
-      "A short HSTS max-age narrows the window of downgrade protection. Run `headers github.com` and submit the numeric max-age advertised.",
-    tools: ["headers"],
-    objectives: [
-      { id: "o-m14-hs-run", label: "Run headers", type: "command", tool: "headers", argMatch: "github.com" },
-      { id: "o-m14-hs-age", label: "Submit HSTS max-age (seconds)", type: "finding", key: "hstsMaxAge", hint: "integer seconds, e.g. 31536000" },
-    ],
-    findingFields: [
-      { key: "hstsMaxAge", label: "HSTS max-age", placeholder: "e.g. 31536000" },
-    ],
-  },
-
-  /* Module 15 — UNION-based extraction payload */
-  {
-    id: "lab-m15-union-payload",
-    moduleId: "m15",
-    slug: "union-payload",
-    title: "UNION-Based Extraction — Payload",
-    kind: "terminal",
-    difficulty: "intermediate",
-    estMinutes: 20,
-    scenario:
-      "Submit a UNION-based SQLi payload that would extract a second result set alongside the original query (must contain `UNION SELECT`).",
-    target: "products.php?id= (MySQL)",
-    tools: ["reference"],
-    objectives: [
-      { id: "o-m15-u-p", label: "Submit UNION SQLi payload", type: "finding", key: "sqliPayload", hint: "must contain UNION SELECT" },
-      { id: "o-m15-u-k", label: "Submit the keyword", type: "finding", key: "sqlKeyword", hint: "UNION" },
-    ],
-    findingFields: [
-      { key: "sqliPayload", label: "SQLi payload", placeholder: "' UNION SELECT null,version()-- " },
-      { key: "sqlKeyword", label: "Keyword", placeholder: "UNION" },
-    ],
-  },
-
-  /* Module 16 — wireless passphrase recovery */
-  {
-    id: "lab-m16-wpa-crack",
-    moduleId: "m16",
-    slug: "wpa-passphrase-crack",
-    title: "WPA2 Passphrase — Dictionary Recovery",
-    kind: "terminal",
-    difficulty: "intermediate",
-    estMinutes: 20,
-    scenario:
-      "Weak passphrases fall to a wordlist in seconds. Run `crack 5f4dcc3b5aa765d61d8327deb882cf99` to demonstrate the dictionary attack primitive used against captured WPA2 handshakes. Submit the recovered cleartext.",
-    target: "Captured WPA2 handshake hash",
-    tools: ["crack"],
-    objectives: [
-      { id: "o-m16-c-run", label: "Run dictionary crack", type: "command", tool: "crack", argMatch: "5f4dcc3b5aa765d61d8327deb882cf99" },
-      { id: "o-m16-c-pw", label: "Submit recovered passphrase", type: "finding", key: "crackedPassword" },
-    ],
-    findingFields: [
-      { key: "crackedPassword", label: "Recovered passphrase", placeholder: "the cleartext word" },
-    ],
-  },
+  /* Modules 13–16 are covered by the LAB-13-01 → LAB-16-05 Assessment
+   * Workflow suite defined earlier in this file. Legacy supplementary
+   * labs were consolidated to avoid duplication. */
 ];
 
 export const getLab = (slug: string) => LABS.find(l => l.slug === slug);
