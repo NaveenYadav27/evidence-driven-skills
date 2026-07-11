@@ -14,6 +14,7 @@ export interface CEHModule {
 }
 
 import { LABS } from "./labs";
+import { CHALLENGES } from "./challenges";
 
 const count = (id: string, kind: "terminal" | "challenge") =>
   LABS.filter(l => l.moduleId === id && l.kind === kind).length;
@@ -22,7 +23,7 @@ const m = (id: string, number: number, slug: string, title: string, short: strin
   id, number, slug, title, short, domain,
   status: "available",
   labCount: count(id, "terminal"),
-  challengeCount: count(id, "challenge"),
+  challengeCount: count(id, "challenge") + CHALLENGES.filter(c => c.moduleId === id).length,
   tools,
 });
 
