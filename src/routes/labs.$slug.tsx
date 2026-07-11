@@ -10,7 +10,7 @@ import { ArrowLeft, ArrowRight, Target, Wrench, Clock } from "lucide-react";
 import { AccessGuard } from "@/components/AccessGuard";
 import { M02LabCoach } from "@/components/modules/m02/LabCoach";
 import { LabAIPanel } from "@/components/labs/LabAIPanel";
-import { LabGuide } from "@/components/labs/LabGuide";
+import { LabGuide, TOOL_GUIDE, commandFor } from "@/components/labs/LabGuide";
 
 export const Route = createFileRoute("/labs/$slug")({
   loader: ({ params }) => {
@@ -113,14 +113,26 @@ function LabPage() {
             </div>
             <h1 className="text-2xl font-bold tracking-tight">{lab.title}</h1>
             <p className="mt-2 text-sm text-muted-foreground">{lab.scenario}</p>
-            <div className="mt-4 grid grid-cols-2 gap-3">
-              <div className="text-xs">
+            <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="rounded border border-border bg-black/25 p-3 text-xs">
                 <div className="flex items-center gap-1.5 text-muted-foreground"><Target className="h-3 w-3" /> Target</div>
-                <div className="font-mono mt-0.5">{lab.target ?? "—"}</div>
+                <div className="font-mono mt-1 text-[var(--cyan)] break-words">{lab.target ?? "Reference-only lab"}</div>
               </div>
-              <div className="text-xs">
+              <div className="rounded border border-border bg-black/25 p-3 text-xs">
                 <div className="flex items-center gap-1.5 text-muted-foreground"><Wrench className="h-3 w-3" /> Tools</div>
-                <div className="font-mono mt-0.5">{lab.tools.join(", ")}</div>
+                <div className="mt-1 space-y-1">
+                  {lab.tools.map((tool) => {
+                    const guide = TOOL_GUIDE[tool] ?? { label: tool, purpose: "lab tool", usage: `${tool} <target>` };
+                    return (
+                      <div key={tool} className="min-w-0">
+                        <div className="font-mono text-[var(--cyan)]">{tool} <span className="font-sans text-muted-foreground">— {guide.purpose}</span></div>
+                        <code className="mt-0.5 block rounded bg-black/40 border border-border px-1.5 py-0.5 font-mono text-[11px] text-foreground/90 break-words">
+                          {commandFor(tool, lab)}
+                        </code>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
             </div>
           </div>
