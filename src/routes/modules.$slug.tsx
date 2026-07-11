@@ -130,9 +130,9 @@ function ModuleDetail() {
         )}
         {tab === "learn" && <LearnTab moduleTitle={m.title} moduleId={m.id} />}
         {tab === "labs" && <LabsTab labs={labs} status={m.status} />}
-        {tab === "challenges" && <ChallengesTab labs={labs.filter(l => l.kind === "challenge")} status={m.status} />}
+        {tab === "challenges" && <ChallengesTab moduleId={m.id} labs={labs.filter(l => l.kind === "challenge")} status={m.status} />}
         {tab === "assessment" && <AssessmentTab moduleId={m.id} status={m.status} />}
-        {tab === "mastery" && <MasteryTab moduleId={m.id} />}
+        {tab === "mastery" && <MasteryPanel moduleId={m.id} />}
       </div>
 
       {/* Nav */}
