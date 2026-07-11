@@ -34,8 +34,26 @@ const HELP = `Available tools (sandbox-safe, real public APIs + client crypto)
   xor key=<k> hex=<h>           — XOR decrypt hex ciphertext with key
   cvss <CVSS:3.1/AV:.../A:H>    — Parse CVSS:3.1 vector and score
   crack <hash>                  — Dictionary crack against built-in list
+  reference <topic>             — concise guide for concept-only labs
   clear                         — clear screen
   help                          — this help`;
+
+function referenceGuide(lab: Lab, topic: string) {
+  const fields = lab.findingFields ?? [];
+  const submissions = fields.length
+    ? fields.map((f, i) => `${i + 1}. ${f.label}: ${f.help ?? f.placeholder ?? "use the lab objective hint"}`).join("\n")
+    : lab.objectives
+        .filter((o) => o.type === "finding")
+        .map((o, i) => `${i + 1}. ${o.label}${o.hint ? `: ${o.hint}` : ""}`)
+        .join("\n");
+
+  return `Reference guide: ${topic || lab.title}
+Target: ${lab.target ?? "concept-only lab"}
+Use this when no external host/tool is required.
+
+Submit:
+${submissions || "No manual submissions for this lab."}`;
+}
 
 // ─── tiny built-in wordlist for the demo `crack` command ────────────────
 const CRACK_WORDS = [
@@ -329,6 +347,9 @@ export function Terminal({ lab, onCommand }: {
           if (hit) { append({ kind: "out", text: `Match found: ${target}  →  "${hit}"` }); success = true; }
           else append({ kind: "out", text: `No match in built-in wordlist (${CRACK_WORDS.length} entries).` });
         }
+      } else if (lower === "reference") {
+        append({ kind: "out", text: referenceGuide(lab, args) });
+        success = true;
       } else {
         append({ kind: "err", text: `command not found: ${tool}. Type 'help' for available tools.` });
       }

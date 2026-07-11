@@ -1,6 +1,34 @@
 import { Fragment } from "react";
-import { ListChecks, Terminal as TerminalIcon, Flag } from "lucide-react";
+import { ListChecks, Terminal as TerminalIcon, Flag, Crosshair, Wrench } from "lucide-react";
 import type { Lab } from "@/data/labs";
+
+export const TOOL_GUIDE: Record<string, { label: string; purpose: string; usage: string }> = {
+  whois: { label: "WHOIS/RDAP", purpose: "registrar, ownership, dates", usage: "whois <domain>" },
+  dig: { label: "DNS lookup", purpose: "DNS records", usage: "dig <domain> [type]" },
+  nslookup: { label: "DNS lookup", purpose: "DNS records", usage: "nslookup <domain> [type]" },
+  headers: { label: "HTTP headers", purpose: "server and security headers", usage: "headers <host>" },
+  robots: { label: "robots.txt", purpose: "User-agent and Disallow paths", usage: "robots <host>" },
+  tls: { label: "TLS certificate", purpose: "issuer and SAN names", usage: "tls <host>" },
+  methods: { label: "HTTP methods", purpose: "allowed/risky verbs", usage: "methods <host>" },
+  subs: { label: "Subdomains", purpose: "certificate transparency names", usage: "subs <domain>" },
+  wayback: { label: "Wayback", purpose: "historical URLs", usage: "wayback <host>" },
+  cve: { label: "CVE search", purpose: "vulnerability IDs", usage: "cve <keyword|CVE-ID>" },
+  ip: { label: "IP intelligence", purpose: "IP, ASN, country", usage: "ip <host|ipv4>" },
+  cvss: { label: "CVSS", purpose: "risk score/vector", usage: "cvss <CVSS:3.1/...>" },
+  crack: { label: "Password crack", purpose: "recover demo hashes", usage: "crack <hash>" },
+  hash: { label: "Hash", purpose: "calculate digest", usage: "hash md5|sha1|sha256 <text>" },
+  b64: { label: "Base64", purpose: "encode/decode text", usage: "b64 encode|decode <text>" },
+  jwt: { label: "JWT decoder", purpose: "inspect token claims", usage: "jwt <token>" },
+  xor: { label: "XOR decoder", purpose: "decrypt hex with key", usage: "xor key=<k> hex=<h>" },
+  reference: { label: "Reference", purpose: "built-in answer guide for concept labs", usage: "reference <topic>" },
+};
+
+export function commandFor(tool: string, lab: Lab) {
+  const objective = lab.objectives.find((o) => o.type === "command" && o.tool === tool);
+  if (objective?.argMatch) return `${tool} ${objective.argMatch}`;
+  if (tool === "reference") return `reference ${lab.target ?? lab.title}`;
+  return lab.target ? `${tool} ${lab.target}` : TOOL_GUIDE[tool]?.usage ?? tool;
+}
 
 /**
  * LabGuide — minimal 5W1H + step-by-step completion guide.
@@ -10,22 +38,28 @@ import type { Lab } from "@/data/labs";
 export function LabGuide({ lab }: { lab: Lab }) {
   const why = lab.scenario.split(/(?<=[.!?])\s/)[0] ?? lab.scenario;
   const primaryTool = lab.tools[0] ?? "reference";
+  const primaryCommand = lab.objectives.find((o) => o.type === "command")
+    ? undefined
+    : commandFor(primaryTool, lab);
 
-  const steps = lab.objectives.map((o) => {
+  const objectiveSteps = lab.objectives.map((o) => {
     if (o.type === "command") {
       const cmd = `${o.tool ?? primaryTool}${o.argMatch ? ` ${o.argMatch}` : lab.target ? ` ${lab.target}` : ""}`;
       return { kind: "cmd" as const, label: o.label, cmd, hint: o.hint };
     }
     return { kind: "find" as const, label: o.label, hint: o.hint };
   });
+  const steps = primaryCommand
+    ? [{ kind: "cmd" as const, label: "Open the lab reference for this target", cmd: primaryCommand, hint: "Use this when the lab has no external host to scan." }, ...objectiveSteps]
+    : objectiveSteps;
 
   const w = [
     { k: "What", v: lab.title },
     { k: "Why", v: why },
-    { k: "Where", v: lab.target ?? "—" },
+    { k: "Target", v: lab.target ?? "—" },
     { k: "When", v: `${lab.kind === "challenge" ? "Challenge" : "Guided lab"} · ~${lab.estMinutes}m` },
     { k: "Who", v: "You, as the assessor" },
-    { k: "How", v: `Use ${lab.tools.join(", ")} in the terminal, then submit findings.` },
+    { k: "How", v: primaryCommand ? `Run ${primaryCommand}, then submit findings.` : "Run the listed commands, then submit findings." },
   ];
 
   return (
@@ -41,6 +75,37 @@ export function LabGuide({ lab }: { lab: Lab }) {
             <div className="text-foreground/90 leading-snug">{v}</div>
           </Fragment>
         ))}
+      </div>
+
+      <div className="rounded border border-border bg-black/25 p-2.5 space-y-2">
+        <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-wider text-muted-foreground font-mono">
+          <Crosshair className="h-3 w-3" /> Exact Target
+        </div>
+        <code className="block rounded bg-black/40 border border-border px-2 py-1 font-mono text-[11px] text-[var(--cyan)] break-words">
+          {lab.target ?? "No external target — use the reference command."}
+        </code>
+      </div>
+
+      <div className="rounded border border-border bg-black/25 p-2.5 space-y-2">
+        <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-wider text-muted-foreground font-mono">
+          <Wrench className="h-3 w-3" /> Tool Plan
+        </div>
+        <div className="space-y-1.5">
+          {lab.tools.map((tool) => {
+            const guide = TOOL_GUIDE[tool] ?? { label: tool, purpose: "lab tool", usage: `${tool} <target>` };
+            return (
+              <div key={tool} className="grid grid-cols-[72px_1fr] gap-2 text-[11px] leading-snug">
+                <div className="font-mono text-[var(--cyan)]">{tool}</div>
+                <div className="min-w-0">
+                  <div className="text-foreground/90">{guide.label} — {guide.purpose}</div>
+                  <code className="mt-0.5 inline-block max-w-full rounded bg-black/40 border border-border px-1.5 py-0.5 font-mono text-[10px] text-[var(--cyan)] break-words">
+                    {commandFor(tool, lab)}
+                  </code>
+                </div>
+              </div>
+            );
+          })}
+        </div>
       </div>
 
       <div className="pt-1">
