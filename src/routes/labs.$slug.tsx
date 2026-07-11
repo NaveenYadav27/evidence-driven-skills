@@ -121,7 +121,7 @@ function LabPage() {
               <div className="rounded border border-border bg-black/25 p-3 text-xs">
                 <div className="flex items-center gap-1.5 text-muted-foreground"><Wrench className="h-3 w-3" /> Tools</div>
                 <div className="mt-1 space-y-1">
-                  {lab.tools.map((tool) => {
+                  {lab.tools.map((tool: string) => {
                     const guide = TOOL_GUIDE[tool] ?? { label: tool, purpose: "lab tool", usage: `${tool} <target>` };
                     return (
                       <div key={tool} className="min-w-0">
