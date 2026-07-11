@@ -174,6 +174,7 @@ function LabPage() {
 
         <aside className="space-y-4">
           <LabObjectives lab={lab} />
+          <AssessmentWorkflow labId={lab.id} />
           <LabAIPanel lab={lab} />
           {lab.moduleId === "m02" && <M02LabCoach labId={lab.id} />}
         </aside>
