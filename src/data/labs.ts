@@ -1121,6 +1121,274 @@ export const LABS: Lab[] = [
       { key: "xorPlaintext", label: "Plaintext", placeholder: "lowercase" },
     ],
   },
+
+  /* ══════════════ Supplementary labs (M03–M16 depth) ══════════════ */
+
+  /* Module 03 — historical exposure */
+  {
+    id: "lab-m03-wayback",
+    moduleId: "m03",
+    slug: "historical-exposure",
+    title: "Historical Exposure — Wayback Snapshots",
+    kind: "terminal",
+    difficulty: "beginner",
+    estMinutes: 15,
+    target: "scanme.nmap.org",
+    scenario:
+      "Old snapshots often expose staging pages and forgotten admin endpoints. Run `wayback scanme.nmap.org` and submit a subdomain or path seen in the archive.",
+    tools: ["wayback", "subs"],
+    objectives: [
+      { id: "o-m03-wb", label: "Query the Wayback archive", type: "command", tool: "wayback", argMatch: "scanme.nmap.org" },
+      { id: "o-m03-wbs", label: "Submit one archived subdomain", type: "finding", key: "subdomain" },
+    ],
+    findingFields: [
+      { key: "subdomain", label: "Archived subdomain", placeholder: "e.g. scanme.nmap.org" },
+    ],
+  },
+
+  /* Module 04 — MX / NS enumeration */
+  {
+    id: "lab-m04-mx",
+    moduleId: "m04",
+    slug: "mx-ns-enumeration",
+    title: "Mail & Nameserver Enumeration",
+    kind: "terminal",
+    difficulty: "beginner",
+    estMinutes: 15,
+    target: "google.com",
+    scenario:
+      "Mail and NS records reveal the operational providers behind a domain. Query MX for google.com and submit one MX host.",
+    tools: ["dig"],
+    objectives: [
+      { id: "o-m04-mx-run", label: "Query MX records", type: "command", tool: "dig", argMatch: "mx" },
+      { id: "o-m04-mx-h", label: "Submit an MX host", type: "finding", key: "mx" },
+      { id: "o-m04-ns-run", label: "Query NS records", type: "command", tool: "dig", argMatch: "ns" },
+      { id: "o-m04-ns-h", label: "Submit an NS host", type: "finding", key: "ns" },
+    ],
+    findingFields: [
+      { key: "mx", label: "MX host", placeholder: "e.g. smtp.google.com" },
+      { key: "ns", label: "NS host", placeholder: "e.g. ns1.google.com" },
+    ],
+  },
+
+  /* Module 05 — kill-chain mapping */
+  {
+    id: "lab-m05-killchain",
+    moduleId: "m05",
+    slug: "vuln-to-killchain",
+    title: "Map a CVE to a Kill-Chain Phase",
+    kind: "terminal",
+    difficulty: "intermediate",
+    estMinutes: 20,
+    target: "log4j",
+    scenario:
+      "Vulnerability triage isn't just CVSS — you must know *where* an attacker will use it. Look up `cve log4j` and submit the CVE-ID plus the kill-chain phase it enables.",
+    tools: ["cve"],
+    objectives: [
+      { id: "o-m05-kc-run", label: "Search NVD for log4j", type: "command", tool: "cve", argMatch: "log4j" },
+      { id: "o-m05-kc-id", label: "Submit CVE-ID", type: "finding", key: "cveId" },
+      { id: "o-m05-kc-ph", label: "Submit kill-chain phase", type: "finding", key: "killChainPhase", hint: "recon|weaponization|delivery|exploitation|installation|c2|actions" },
+    ],
+    findingFields: [
+      { key: "cveId", label: "CVE-ID", placeholder: "CVE-YYYY-NNNN" },
+      { key: "killChainPhase", label: "Kill-chain phase", placeholder: "e.g. exploitation" },
+    ],
+  },
+
+  /* Module 07 — MITRE ATT&CK technique for malware */
+  {
+    id: "lab-m07-attack",
+    moduleId: "m07",
+    slug: "malware-attack-technique",
+    title: "Malware → MITRE ATT&CK Technique",
+    kind: "terminal",
+    difficulty: "intermediate",
+    estMinutes: 20,
+    scenario:
+      "Detection engineering pivots on MITRE ATT&CK IDs, not malware names. Submit the ATT&CK technique ID for `Command and Scripting Interpreter` and the parent tactic.",
+    tools: [],
+    objectives: [
+      { id: "o-m07-tid", label: "Submit ATT&CK technique ID", type: "finding", key: "attackTechniqueId", hint: "format T####[.###]" },
+      { id: "o-m07-tac", label: "Submit ATT&CK tactic", type: "finding", key: "attackTactic", hint: "e.g. execution" },
+    ],
+    findingFields: [
+      { key: "attackTechniqueId", label: "Technique ID", placeholder: "e.g. T1059" },
+      { key: "attackTactic", label: "Tactic", placeholder: "e.g. execution" },
+    ],
+  },
+
+  /* Module 09 — SPF qualifier hardening */
+  {
+    id: "lab-m09-spf-qual",
+    moduleId: "m09",
+    slug: "spf-qualifier",
+    title: "SPF Qualifier — Hard vs Soft Fail",
+    kind: "terminal",
+    difficulty: "beginner",
+    estMinutes: 15,
+    target: "google.com",
+    scenario:
+      "SPF ends in an `all` qualifier that decides how forged mail is treated. Query TXT for google.com and submit the qualifier used at the end of the SPF record.",
+    tools: ["dig"],
+    objectives: [
+      { id: "o-m09-sq-run", label: "Query TXT records", type: "command", tool: "dig", argMatch: "txt" },
+      { id: "o-m09-sq-q", label: "Submit SPF all-qualifier", type: "finding", key: "spfQualifier", hint: "~all | -all | ?all | +all" },
+    ],
+    findingFields: [
+      { key: "spfQualifier", label: "SPF qualifier", placeholder: "e.g. ~all" },
+    ],
+  },
+
+  /* Module 10 — amplification: NTP / memcached */
+  {
+    id: "lab-m10-ntp",
+    moduleId: "m10",
+    slug: "ntp-amplification",
+    title: "NTP monlist — Classic Amplifier",
+    kind: "terminal",
+    difficulty: "intermediate",
+    estMinutes: 15,
+    scenario:
+      "The NTP `monlist` query is a textbook amplifier used in the 400 Gbps CloudFlare-era attacks. Submit the protocol name and a typical amplification factor for it.",
+    tools: [],
+    objectives: [
+      { id: "o-m10-ntp-pr", label: "Submit amplifier protocol", type: "finding", key: "ampProtocol", hint: "ntp" },
+      { id: "o-m10-ntp-af", label: "Submit NTP amplification factor (~)", type: "finding", key: "ampFactor", hint: "integer 20–80" },
+    ],
+    findingFields: [
+      { key: "ampProtocol", label: "Protocol", placeholder: "ntp" },
+      { key: "ampFactor", label: "Amplification factor", placeholder: "e.g. 55" },
+    ],
+  },
+  {
+    id: "lab-m10-methods",
+    moduleId: "m10",
+    slug: "verb-abuse-dos",
+    title: "Verb Abuse — Slow / Costly Methods",
+    kind: "terminal",
+    difficulty: "beginner",
+    estMinutes: 15,
+    target: "httpbin.org",
+    scenario:
+      "Attackers pick verbs that force expensive server-side work. Run `methods httpbin.org` and submit one risky method advertised (PUT/DELETE/TRACE/CONNECT/PATCH).",
+    tools: ["methods"],
+    objectives: [
+      { id: "o-m10-m-run", label: "Probe HTTP methods", type: "command", tool: "methods", argMatch: "httpbin.org" },
+      { id: "o-m10-m-risk", label: "Submit a risky method", type: "finding", key: "riskyMethod" },
+    ],
+    findingFields: [
+      { key: "riskyMethod", label: "Risky method", placeholder: "e.g. TRACE" },
+    ],
+  },
+
+  /* Module 12 — evasion via historical intel */
+  {
+    id: "lab-m12-wayback",
+    moduleId: "m12",
+    slug: "waf-bypass-recon",
+    title: "Recon Around the WAF — Archived Endpoints",
+    kind: "terminal",
+    difficulty: "intermediate",
+    estMinutes: 20,
+    target: "github.com",
+    scenario:
+      "When the WAF blocks direct enumeration, historical archives still remember. Run `wayback github.com` and submit one archived subdomain or path that would be interesting to re-probe.",
+    tools: ["wayback"],
+    objectives: [
+      { id: "o-m12-wb", label: "Query the Wayback archive", type: "command", tool: "wayback", argMatch: "github.com" },
+      { id: "o-m12-wbs", label: "Submit one archived subdomain", type: "finding", key: "subdomain" },
+    ],
+    findingFields: [
+      { key: "subdomain", label: "Archived host", placeholder: "e.g. gist.github.com" },
+    ],
+  },
+
+  /* Module 14 — auth cookie & CSP hardening on a real target */
+  {
+    id: "lab-m14-cookies",
+    moduleId: "m14",
+    slug: "web-app-cookie-flags",
+    title: "Web App — Session Cookie Flags",
+    kind: "terminal",
+    difficulty: "beginner",
+    estMinutes: 15,
+    target: "github.com",
+    scenario:
+      "Session cookies without HttpOnly and Secure are trivially stolen via XSS or MITM. Run `headers github.com` and submit HttpOnly and Secure flag status.",
+    tools: ["headers"],
+    objectives: [
+      { id: "o-m14-h", label: "Run headers", type: "command", tool: "headers", argMatch: "github.com" },
+      { id: "o-m14-ho", label: "Submit HttpOnly status", type: "finding", key: "cookieHttpOnly", hint: "present|missing" },
+      { id: "o-m14-se", label: "Submit Secure status", type: "finding", key: "cookieSecure", hint: "present|missing" },
+    ],
+    findingFields: [
+      { key: "cookieHttpOnly", label: "HttpOnly", placeholder: "present|missing" },
+      { key: "cookieSecure", label: "Secure", placeholder: "present|missing" },
+    ],
+  },
+  {
+    id: "lab-m14-hsts",
+    moduleId: "m14",
+    slug: "hsts-max-age",
+    title: "HSTS max-age — Downgrade Defense",
+    kind: "terminal",
+    difficulty: "intermediate",
+    estMinutes: 15,
+    target: "github.com",
+    scenario:
+      "A short HSTS max-age narrows the window of downgrade protection. Run `headers github.com` and submit the numeric max-age advertised.",
+    tools: ["headers"],
+    objectives: [
+      { id: "o-m14-hs-run", label: "Run headers", type: "command", tool: "headers", argMatch: "github.com" },
+      { id: "o-m14-hs-age", label: "Submit HSTS max-age (seconds)", type: "finding", key: "hstsMaxAge", hint: "integer seconds, e.g. 31536000" },
+    ],
+    findingFields: [
+      { key: "hstsMaxAge", label: "HSTS max-age", placeholder: "e.g. 31536000" },
+    ],
+  },
+
+  /* Module 15 — UNION-based extraction payload */
+  {
+    id: "lab-m15-union-payload",
+    moduleId: "m15",
+    slug: "union-payload",
+    title: "UNION-Based Extraction — Payload",
+    kind: "terminal",
+    difficulty: "intermediate",
+    estMinutes: 20,
+    scenario:
+      "Submit a UNION-based SQLi payload that would extract a second result set alongside the original query (must contain `UNION SELECT`).",
+    tools: [],
+    objectives: [
+      { id: "o-m15-u-p", label: "Submit UNION SQLi payload", type: "finding", key: "sqliPayload", hint: "must contain UNION SELECT" },
+      { id: "o-m15-u-k", label: "Submit the keyword", type: "finding", key: "sqlKeyword", hint: "UNION" },
+    ],
+    findingFields: [
+      { key: "sqliPayload", label: "SQLi payload", placeholder: "' UNION SELECT null,version()-- " },
+      { key: "sqlKeyword", label: "Keyword", placeholder: "UNION" },
+    ],
+  },
+
+  /* Module 16 — wireless passphrase recovery */
+  {
+    id: "lab-m16-wpa-crack",
+    moduleId: "m16",
+    slug: "wpa-passphrase-crack",
+    title: "WPA2 Passphrase — Dictionary Recovery",
+    kind: "terminal",
+    difficulty: "intermediate",
+    estMinutes: 20,
+    scenario:
+      "Weak passphrases fall to a wordlist in seconds. Run `crack 5f4dcc3b5aa765d61d8327deb882cf99` to demonstrate the dictionary attack primitive used against captured WPA2 handshakes. Submit the recovered cleartext.",
+    tools: ["crack"],
+    objectives: [
+      { id: "o-m16-c-run", label: "Run dictionary crack", type: "command", tool: "crack", argMatch: "5f4dcc3b5aa765d61d8327deb882cf99" },
+      { id: "o-m16-c-pw", label: "Submit recovered passphrase", type: "finding", key: "crackedPassword" },
+    ],
+    findingFields: [
+      { key: "crackedPassword", label: "Recovered passphrase", placeholder: "the cleartext word" },
+    ],
+  },
 ];
 
 export const getLab = (slug: string) => LABS.find(l => l.slug === slug);
