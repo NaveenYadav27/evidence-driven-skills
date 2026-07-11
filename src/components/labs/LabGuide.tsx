@@ -1,3 +1,4 @@
+import { Fragment } from "react";
 import { ListChecks, Terminal as TerminalIcon, Flag } from "lucide-react";
 import type { Lab } from "@/data/labs";
 
@@ -35,10 +36,10 @@ export function LabGuide({ lab }: { lab: Lab }) {
 
       <div className="grid grid-cols-[64px_1fr] gap-x-3 gap-y-1 text-[11px]">
         {w.map(({ k, v }) => (
-          <>
-            <div key={`${k}-k`} className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground pt-0.5">{k}</div>
-            <div key={`${k}-v`} className="text-foreground/90 leading-snug">{v}</div>
-          </>
+          <Fragment key={k}>
+            <div className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground pt-0.5">{k}</div>
+            <div className="text-foreground/90 leading-snug">{v}</div>
+          </Fragment>
         ))}
       </div>
 
