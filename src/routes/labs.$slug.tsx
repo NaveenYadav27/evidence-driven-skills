@@ -10,6 +10,7 @@ import { ArrowLeft, ArrowRight, Target, Wrench, Clock } from "lucide-react";
 import { AccessGuard } from "@/components/AccessGuard";
 import { M02LabCoach } from "@/components/modules/m02/LabCoach";
 import { LabAIPanel } from "@/components/labs/LabAIPanel";
+import { AssessmentWorkflow } from "@/components/labs/AssessmentWorkflow";
 
 export const Route = createFileRoute("/labs/$slug")({
   loader: ({ params }) => {
