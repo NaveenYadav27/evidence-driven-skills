@@ -122,6 +122,9 @@ function ModuleDetail() {
         {tab === "learn" && m.slug === "scanning-networks" && (
           <div className="mb-8"><M03ModuleEnhancements /></div>
         )}
+        {tab === "learn" && MODULE_ENHANCEMENTS[m.slug] && (
+          <div className="mb-8"><GenericModuleEnhancements data={MODULE_ENHANCEMENTS[m.slug]} /></div>
+        )}
         {tab === "learn" && <LearnTab moduleTitle={m.title} moduleId={m.id} />}
         {tab === "labs" && <LabsTab labs={labs} status={m.status} />}
         {tab === "challenges" && <ChallengesTab labs={labs.filter(l => l.kind === "challenge")} status={m.status} />}
