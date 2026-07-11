@@ -63,7 +63,8 @@ export const LABS: Lab[] = [
     estMinutes: 15,
     scenario:
       "Translate a real-world TTP into a MITRE ATT&CK Technique ID. Submit a valid technique ID and the tactic it belongs to.",
-    tools: [],
+    target: "MITRE ATT&CK Framework (knowledge check)",
+    tools: ["reference"],
     objectives: [
       { id: "o-m01-tid", label: "Submit a valid ATT&CK Technique ID", type: "finding", key: "attackTechniqueId", hint: "T#### or T####.###" },
       { id: "o-m01-tac", label: "Submit the parent tactic", type: "finding", key: "attackTactic", hint: "e.g. initial-access, execution, persistence" },
@@ -106,7 +107,8 @@ export const LABS: Lab[] = [
     estMinutes: 15,
     scenario:
       "Blue team detected a new value under HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Run pointing to a binary in %APPDATA%. Identify the MITRE ATT&CK Technique ID for this persistence behaviour and the parent tactic.",
-    tools: [],
+    target: "Windows Registry Run Keys persistence",
+    tools: ["reference"],
     objectives: [
       { id: "o-m01-per-tid", label: "Submit the ATT&CK Technique ID for Registry Run Keys persistence", type: "finding", key: "attackTechniqueId", hint: "Hint: T1547.001" },
       { id: "o-m01-per-tac", label: "Submit the parent tactic", type: "finding", key: "attackTactic", hint: "persistence" },
@@ -535,7 +537,8 @@ export const LABS: Lab[] = [
     estMinutes: 25,
     scenario:
       "Use `cvss CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H` to score a vector. Submit a valid CVSS:3.1 vector string and the computed base score.",
-    tools: ["cvss"],
+    target: "CVE-2021-44228 (Log4Shell)",
+    tools: ["cvss", "cve"],
     objectives: [
       { id: "o-m05-cvss-run", label: "Run cvss with a 3.1 vector", type: "command", tool: "cvss", argMatch: "CVSS:3.1" },
       { id: "o-m05-vec", label: "Submit a valid CVSS:3.1 vector", type: "finding", key: "cvssVector" },
@@ -558,6 +561,7 @@ export const LABS: Lab[] = [
     estMinutes: 25,
     scenario:
       "Run `hash sha256 password` to derive a hash, then run `crack 5f4dcc3b5aa765d61d8327deb882cf99` to recover a password from a tiny built-in wordlist. Submit the recovered cleartext.",
+    target: "MD5: 5f4dcc3b5aa765d61d8327deb882cf99",
     tools: ["hash", "crack"],
     objectives: [
       { id: "o-m06-hash", label: "Compute a hash", type: "command", tool: "hash", argMatch: "" },
@@ -578,7 +582,8 @@ export const LABS: Lab[] = [
     estMinutes: 15,
     scenario:
       "Memorise the most-abused Linux SUID binaries. Submit one GTFOBins SUID binary commonly used for local privilege escalation.",
-    tools: [],
+    target: "Post-exploitation privilege paths",
+    tools: ["reference"],
     objectives: [
       { id: "o-m06-bin", label: "Submit a known SUID-abusable binary", type: "finding", key: "suidBinary", hint: "from GTFOBins set" },
     ],
@@ -598,6 +603,7 @@ export const LABS: Lab[] = [
     estMinutes: 15,
     scenario:
       "Hashes are the most basic malware IoC. Use `hash sha256 EICAR-STANDARD-ANTIVIRUS-TEST-FILE` and submit the resulting SHA-256 digest.",
+    target: "EICAR test string",
     tools: ["hash"],
     objectives: [
       { id: "o-m07-h", label: "Hash the EICAR string with SHA-256", type: "command", tool: "hash", argMatch: "sha256" },
@@ -639,7 +645,8 @@ export const LABS: Lab[] = [
     estMinutes: 15,
     scenario:
       "Submit the EtherType of an ARP frame (hex), and the ARP opcode value used in an ARP *reply*.",
-    tools: [],
+    target: "Layer-2 LAN segment",
+    tools: ["reference"],
     objectives: [
       { id: "o-m08-et", label: "Submit ARP EtherType", type: "finding", key: "ethertype", hint: "0x0806" },
       { id: "o-m08-op", label: "Submit ARP-reply opcode", type: "finding", key: "arpOpcode", hint: "integer 1 or 2" },
@@ -659,6 +666,7 @@ export const LABS: Lab[] = [
     estMinutes: 15,
     scenario:
       "Wireshark captured `Authorization: Basic YWRtaW46aHVudGVyMg==`. Use `b64 decode YWRtaW46aHVudGVyMg==` to recover the credentials. Submit the username and password.",
+    target: "HTTP Basic auth header",
     tools: ["b64"],
     objectives: [
       { id: "o-m08-d", label: "Base64-decode the credential", type: "command", tool: "b64", argMatch: "YWRtaW46aHVudGVyMg" },
@@ -724,7 +732,8 @@ export const LABS: Lab[] = [
     estMinutes: 15,
     scenario:
       "Reflection/amplification attacks weaponise protocols. Submit the typical amplification factor *range* of an open DNS resolver (integer) and one classic amplification protocol.",
-    tools: [],
+    target: "UDP reflectors (DNS/NTP/Memcached)",
+    tools: ["reference"],
     objectives: [
       { id: "o-m10-af", label: "Submit DNS amplification factor (~)", type: "finding", key: "ampFactor", hint: "integer 30–80" },
       { id: "o-m10-pr", label: "Submit an amplification protocol", type: "finding", key: "ampProtocol", hint: "dns|ntp|memcached|ssdp|chargen|snmp" },
@@ -746,7 +755,8 @@ export const LABS: Lab[] = [
     estMinutes: 20,
     scenario:
       "Run `jwt eyJhbGciOiJub25lIiwidHlwIjoiSldUIn0.eyJ1c2VyIjoiYWRtaW4ifQ.` to decode a token. Submit the algorithm and the username claim.",
-    tools: ["jwt"],
+    target: "Sample JWT bearer token",
+    tools: ["jwt", "b64"],
     objectives: [
       { id: "o-m11-j", label: "Decode a JWT", type: "command", tool: "jwt", argMatch: "eyJ" },
       { id: "o-m11-alg", label: "Submit alg header", type: "finding", key: "jwtAlg", hint: "lowercase, e.g. none|hs256|rs256" },
@@ -791,7 +801,8 @@ export const LABS: Lab[] = [
     estMinutes: 20,
     scenario:
       "Submit the nmap flag for IP fragmentation and the nmap flag for spoofed source IPs (decoys).",
-    tools: [],
+    target: "IDS/AV evasion concepts",
+    tools: ["reference"],
     objectives: [
       { id: "o-m12-f", label: "Submit fragmentation flag", type: "finding", key: "nmapFrag", hint: "-f" },
       { id: "o-m12-d", label: "Submit decoy flag", type: "finding", key: "nmapDecoy", hint: "-D" },
@@ -908,7 +919,8 @@ export const LABS: Lab[] = [
     estMinutes: 15,
     scenario:
       "Submit a classic reflected XSS payload (must include a script-execution vector).",
-    tools: [],
+    target: "Reflected XSS query parameter",
+    tools: ["reference"],
     objectives: [
       { id: "o-m14-x", label: "Submit a valid XSS payload", type: "finding", key: "xssPayload", hint: "must trigger JS exec" },
     ],
@@ -950,7 +962,8 @@ export const LABS: Lab[] = [
     estMinutes: 15,
     scenario:
       "Submit a classic tautology payload that bypasses a naïve `WHERE user='X' AND pass='Y'` clause.",
-    tools: [],
+    target: "Vulnerable login form parameter",
+    tools: ["reference"],
     objectives: [
       { id: "o-m15-p", label: "Submit a valid SQLi payload", type: "finding", key: "sqliPayload", hint: "must include OR + 1=1 or '--" },
     ],
@@ -968,7 +981,8 @@ export const LABS: Lab[] = [
     estMinutes: 20,
     scenario:
       "When using UNION-based SQLi, the column count must match. Submit the SQL keyword used to discover the correct column count via incremental NULLs.",
-    tools: [],
+    target: "products.php?id= (MySQL backend)",
+    tools: ["reference"],
     objectives: [
       { id: "o-m15-k", label: "Submit the keyword", type: "finding", key: "sqlKeyword", hint: "UNION" },
     ],
@@ -988,7 +1002,8 @@ export const LABS: Lab[] = [
     estMinutes: 15,
     scenario:
       "Submit the number of messages in a WPA2 4-way handshake (integer) and the algorithm used to derive the PMK from the passphrase.",
-    tools: [],
+    target: "WPA2 4-way handshake",
+    tools: ["reference"],
     objectives: [
       { id: "o-m16-m", label: "Submit message count", type: "finding", key: "handshakeMessages", hint: "integer" },
       { id: "o-m16-a", label: "Submit PMK derivation algorithm", type: "finding", key: "pmkAlgo", hint: "pbkdf2 family" },
@@ -1010,7 +1025,8 @@ export const LABS: Lab[] = [
     estMinutes: 15,
     scenario:
       "Submit one Android permission classified as dangerous, in canonical form (android.permission.X).",
-    tools: [],
+    target: "AndroidManifest.xml",
+    tools: ["reference"],
     objectives: [
       { id: "o-m17-p", label: "Submit a dangerous permission", type: "finding", key: "androidPermission", hint: "android.permission.XXX" },
     ],
@@ -1030,7 +1046,8 @@ export const LABS: Lab[] = [
     estMinutes: 10,
     scenario:
       "Submit the default MQTT TCP port and the default MQTT-over-TLS port.",
-    tools: [],
+    target: "MQTT broker (default port)",
+    tools: ["reference"],
     objectives: [
       { id: "o-m18-p1", label: "Submit MQTT plaintext port", type: "finding", key: "mqttPort", hint: "integer" },
       { id: "o-m18-p2", label: "Submit MQTT TLS port", type: "finding", key: "mqttTlsPort", hint: "integer" },
@@ -1053,7 +1070,7 @@ export const LABS: Lab[] = [
     target: "s3.amazonaws.com",
     scenario:
       "S3 buckets resolve via *.s3.amazonaws.com. Submit the AWS S3 website-endpoint suffix pattern.",
-    tools: [],
+    tools: ["reference"],
     objectives: [
       { id: "o-m19-s", label: "Submit S3 endpoint suffix", type: "finding", key: "s3Suffix", hint: "starts with s3" },
     ],
@@ -1071,7 +1088,8 @@ export const LABS: Lab[] = [
     estMinutes: 10,
     scenario:
       "SSRF into a cloud workload pivots through the metadata service. Submit the AWS IMDS link-local IP address.",
-    tools: [],
+    target: "AWS EC2 IMDSv1 (169.254.169.254)",
+    tools: ["reference"],
     objectives: [
       { id: "o-m19-i", label: "Submit IMDS IP", type: "finding", key: "imdsIp", hint: "169.254.x.x" },
     ],
@@ -1091,6 +1109,7 @@ export const LABS: Lab[] = [
     estMinutes: 15,
     scenario:
       "Run `hash md5 hello`, `hash sha1 hello`, `hash sha256 hello`. Submit the SHA-256 digest of `hello`.",
+    target: "Password string: \"password\"",
     tools: ["hash"],
     objectives: [
       { id: "o-m20-md5", label: "Compute md5", type: "command", tool: "hash", argMatch: "md5" },
@@ -1112,6 +1131,7 @@ export const LABS: Lab[] = [
     estMinutes: 15,
     scenario:
       "Run `xor key=shadow ciphertext_hex=...` to recover plaintext from an XOR-encrypted message. Submit the recovered plaintext (lowercase).",
+    target: "XOR-encrypted hex ciphertext",
     tools: ["xor"],
     objectives: [
       { id: "o-m20-x", label: "Run xor decrypt", type: "command", tool: "xor", argMatch: "shadow" },
@@ -1206,7 +1226,8 @@ export const LABS: Lab[] = [
     estMinutes: 20,
     scenario:
       "Detection engineering pivots on MITRE ATT&CK IDs, not malware names. Submit the ATT&CK technique ID for `Command and Scripting Interpreter` and the parent tactic.",
-    tools: [],
+    target: "Emotet/TrickBot behaviour",
+    tools: ["reference"],
     objectives: [
       { id: "o-m07-tid", label: "Submit ATT&CK technique ID", type: "finding", key: "attackTechniqueId", hint: "format T####[.###]" },
       { id: "o-m07-tac", label: "Submit ATT&CK tactic", type: "finding", key: "attackTactic", hint: "e.g. execution" },
@@ -1250,7 +1271,8 @@ export const LABS: Lab[] = [
     estMinutes: 15,
     scenario:
       "The NTP `monlist` query is a textbook amplifier used in the 400 Gbps CloudFlare-era attacks. Submit the protocol name and a typical amplification factor for it.",
-    tools: [],
+    target: "Open NTP server (UDP/123)",
+    tools: ["reference"],
     objectives: [
       { id: "o-m10-ntp-pr", label: "Submit amplifier protocol", type: "finding", key: "ampProtocol", hint: "ntp" },
       { id: "o-m10-ntp-af", label: "Submit NTP amplification factor (~)", type: "finding", key: "ampFactor", hint: "integer 20–80" },
@@ -1358,7 +1380,8 @@ export const LABS: Lab[] = [
     estMinutes: 20,
     scenario:
       "Submit a UNION-based SQLi payload that would extract a second result set alongside the original query (must contain `UNION SELECT`).",
-    tools: [],
+    target: "products.php?id= (MySQL)",
+    tools: ["reference"],
     objectives: [
       { id: "o-m15-u-p", label: "Submit UNION SQLi payload", type: "finding", key: "sqliPayload", hint: "must contain UNION SELECT" },
       { id: "o-m15-u-k", label: "Submit the keyword", type: "finding", key: "sqlKeyword", hint: "UNION" },
@@ -1380,6 +1403,7 @@ export const LABS: Lab[] = [
     estMinutes: 20,
     scenario:
       "Weak passphrases fall to a wordlist in seconds. Run `crack 5f4dcc3b5aa765d61d8327deb882cf99` to demonstrate the dictionary attack primitive used against captured WPA2 handshakes. Submit the recovered cleartext.",
+    target: "Captured WPA2 handshake hash",
     tools: ["crack"],
     objectives: [
       { id: "o-m16-c-run", label: "Run dictionary crack", type: "command", tool: "crack", argMatch: "5f4dcc3b5aa765d61d8327deb882cf99" },
