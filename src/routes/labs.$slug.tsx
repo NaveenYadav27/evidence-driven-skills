@@ -138,8 +138,11 @@ function LabPage() {
           </div>
           <Terminal lab={lab} onCommand={onCommand} />
           <div className="panel p-4 text-xs text-muted-foreground leading-relaxed">
-            <span className="text-foreground font-semibold">Tip:</span> Commands are executed against real public infrastructure (RDAP & DNS-over-HTTPS).
-            No mock outputs — your results are live. Use <code className="text-[var(--cyan)] font-mono">help</code> in the terminal to see the toolset.
+            <span className="text-foreground font-semibold">Tip:</span>{" "}
+            {lab.tools.includes("reference")
+              ? "This is a concept lab. Run the reference command shown above, then submit the requested finding values."
+              : "Commands are executed against real public infrastructure (RDAP & DNS-over-HTTPS). No mock outputs — your results are live."}{" "}
+            Use <code className="text-[var(--cyan)] font-mono">help</code> in the terminal to see the toolset.
           </div>
 
           <div className="flex items-center justify-between gap-3 pt-2">
