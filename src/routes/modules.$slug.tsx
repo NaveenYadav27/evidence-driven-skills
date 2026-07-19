@@ -48,6 +48,12 @@ function ModuleDetail() {
   const [tab, setTab] = useState<TabId>("learn");
   const labs = getModuleLabs(m.id);
 
+  if (isGfsTemplateSlug(m.slug)) {
+    return <GfsSocView module={m} />;
+  }
+
+
+
   return (
     <div className="mx-auto max-w-7xl px-4 sm:px-6 py-10">
       {/* Header */}
