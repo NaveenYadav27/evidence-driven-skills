@@ -10,6 +10,7 @@ import { GenericModuleEnhancements, MODULE_ENHANCEMENTS } from "@/components/mod
 import { ChallengesPanel } from "@/components/modules/ChallengesPanel";
 import { AssessmentQuiz } from "@/components/modules/AssessmentQuiz";
 import { MasteryPanel } from "@/components/modules/MasteryPanel";
+import { GfsSocView, isGfsTemplateSlug } from "@/components/modules/gfs/GfsSocView";
 
 export const Route = createFileRoute("/modules/$slug")({
   loader: ({ params }) => {
@@ -46,6 +47,12 @@ function ModuleDetail() {
   const { module: m } = Route.useLoaderData();
   const [tab, setTab] = useState<TabId>("learn");
   const labs = getModuleLabs(m.id);
+
+  if (isGfsTemplateSlug(m.slug)) {
+    return <GfsSocView module={m} />;
+  }
+
+
 
   return (
     <div className="mx-auto max-w-7xl px-4 sm:px-6 py-10">
