@@ -351,6 +351,14 @@ export function Terminal({ lab, onCommand }: {
       } else if (lower === "reference") {
         append({ kind: "out", text: referenceGuide(lab, args) });
         success = true;
+      } else if (SIMULATED_TOOLS.has(lower) || findSimulated(cmd)) {
+        const { output, matched } = simulateOutput(cmd);
+        if (matched) {
+          append({ kind: "out", text: output });
+          success = true;
+        } else {
+          append({ kind: "err", text: `command not found: ${tool}. Type 'help' for available tools.` });
+        }
       } else {
         append({ kind: "err", text: `command not found: ${tool}. Type 'help' for available tools.` });
       }
