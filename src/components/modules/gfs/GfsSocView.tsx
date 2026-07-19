@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from "react";
+import React, { useMemo, useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import {
   BookOpen, GitBranch, Building2, Terminal as TerminalIcon, ShieldAlert,
@@ -22,6 +22,48 @@ const TABS = [
   { id: "summary", label: "Summary", icon: FileText },
 ] as const;
 type TabId = typeof TABS[number]["id"];
+
+/** Lightweight renderer for lesson bodies: supports **bold**, `code`,
+ *  paragraph breaks (\n\n), and "- " bullet lines. No deps. */
+function renderInline(text: string): React.ReactNode[] {
+  const parts: React.ReactNode[] = [];
+  const re = /(\*\*[^*]+\*\*|`[^`]+`|\*[^*]+\*)/g;
+  let last = 0; let m: RegExpExecArray | null; let k = 0;
+  while ((m = re.exec(text)) !== null) {
+    if (m.index > last) parts.push(text.slice(last, m.index));
+    const tok = m[0];
+    if (tok.startsWith("**")) parts.push(<strong key={k++} className="text-foreground font-semibold">{tok.slice(2, -2)}</strong>);
+    else if (tok.startsWith("`")) parts.push(<code key={k++} className="px-1 py-0.5 rounded bg-muted text-[var(--cyan)] font-mono text-[0.85em]">{tok.slice(1, -1)}</code>);
+    else parts.push(<em key={k++}>{tok.slice(1, -1)}</em>);
+    last = m.index + tok.length;
+  }
+  if (last < text.length) parts.push(text.slice(last));
+  return parts;
+}
+function LessonBody({ text }: { text: string }) {
+  const blocks = text.split(/\n\n+/);
+  return (
+    <div className="space-y-3 text-sm text-muted-foreground leading-relaxed">
+      {blocks.map((block, i) => {
+        const lines = block.split("\n");
+        const isList = lines.every((l) => l.trim().startsWith("- ") || l.trim().startsWith("* "));
+        if (isList) {
+          return (
+            <ul key={i} className="space-y-1.5 pl-1">
+              {lines.map((l, j) => (
+                <li key={j} className="flex gap-2">
+                  <span className="text-[var(--cyan)] mt-0.5">•</span>
+                  <span>{renderInline(l.replace(/^\s*[-*]\s+/, ""))}</span>
+                </li>
+              ))}
+            </ul>
+          );
+        }
+        return <p key={i}>{renderInline(block)}</p>;
+      })}
+    </div>
+  );
+}
 
 export function isGfsTemplateSlug(slug: string): boolean {
   return slug in GFS_TEMPLATE_MODULES;
@@ -121,7 +163,7 @@ function LearnTab({ lesson, data, setLesson }: { lesson: GfsTemplate["subLessons
           Lesson {String(idx + 1).padStart(2, "0")} / {String(data.subLessons.length).padStart(2, "0")}
         </div>
         <h2 className="text-2xl font-bold mb-3">{lesson.title}</h2>
-        <p className="text-sm text-muted-foreground leading-relaxed">{lesson.body}</p>
+        <LessonBody text={lesson.body} />
         {lesson.bullets && (
           <ul className="mt-4 space-y-2">
             {lesson.bullets.map((b) => (
