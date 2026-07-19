@@ -1,14 +1,15 @@
-import { useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import {
   BookOpen, GitBranch, Building2, Terminal as TerminalIcon, ShieldAlert,
   FlaskConical, ClipboardCheck, FileText, Copy, Check, ArrowRight, Trophy,
-  Wrench, Sparkles, ChevronRight, Cpu, Apple,
+  Wrench, Sparkles, ChevronRight, Cpu, Apple, Play, CheckCircle2, RotateCcw,
 } from "lucide-react";
 import { GFS_TEMPLATE_MODULES, type GfsTemplate } from "@/data/modules/gfs-template-data";
 import type { CEHModule } from "@/data/modules";
 import { getModuleLabs } from "@/data/labs";
 import { AssessmentQuiz } from "@/components/modules/AssessmentQuiz";
+import { SimTerminal, type SimTerminalHandle } from "@/components/modules/gfs/SimTerminal";
 
 const TABS = [
   { id: "learn", label: "Learn", icon: BookOpen },
@@ -260,6 +261,28 @@ const MODMAP: Record<string, any> = {
 
 /* ---------------- Tab: Commands ---------------- */
 function CommandsTab({ data }: { data: GfsTemplate }) {
+  const termRef = useRef<SimTerminalHandle>(null);
+  const allCmds = useMemo(
+    () => [...data.commandsWindows, ...data.commandsKali].map((c) => c.cmd),
+    [data],
+  );
+  const [done, setDone] = useState<Set<string>>(() => new Set());
+  const total = allCmds.length;
+  const completed = allCmds.filter((c) => done.has(c)).length;
+  const allDone = completed === total && total > 0;
+
+  const runCmd = (cmd: string) => {
+    termRef.current?.run(cmd);
+    setDone((prev) => { const n = new Set(prev); n.add(cmd); return n; });
+  };
+  const runAll = () => {
+    for (const c of allCmds) {
+      termRef.current?.run(c);
+    }
+    setDone(new Set(allCmds));
+  };
+  const reset = () => setDone(new Set());
+
   return (
     <div className="space-y-5">
       {/* KEY TOOLS */}
@@ -273,7 +296,15 @@ function CommandsTab({ data }: { data: GfsTemplate }) {
             <div key={t.name} className="panel p-4">
               <div className="flex items-center justify-between flex-wrap gap-2">
                 <div className="font-semibold">{t.name}</div>
-                <code className="font-mono text-xs text-[var(--cyan)]">$ {t.cmd}</code>
+                <div className="flex items-center gap-2">
+                  <code className="font-mono text-xs text-[var(--cyan)]">$ {t.cmd}</code>
+                  <button
+                    onClick={() => runCmd(t.cmd)}
+                    className="inline-flex items-center gap-1 text-[11px] rounded border border-[var(--cyan)]/40 bg-[var(--cyan)]/5 px-2 py-1 hover:bg-[var(--cyan)]/10"
+                  >
+                    <Play className="h-3 w-3" /> Run
+                  </button>
+                </div>
               </div>
               <div className="grid md:grid-cols-2 gap-3 mt-3 text-sm">
                 <div>
@@ -294,17 +325,38 @@ function CommandsTab({ data }: { data: GfsTemplate }) {
 
       {/* TERMINAL COMMANDS */}
       <div>
-        <div className="flex items-center gap-2 mb-2 text-[var(--cyan)]">
-          <TerminalIcon className="h-4 w-4" />
-          <h3 className="text-xs font-mono uppercase tracking-[0.2em]">Enterprise Terminal Commands</h3>
+        <div className="flex items-center gap-2 mb-2 text-[var(--cyan)] justify-between flex-wrap">
+          <div className="flex items-center gap-2">
+            <TerminalIcon className="h-4 w-4" />
+            <h3 className="text-xs font-mono uppercase tracking-[0.2em]">Enterprise Terminal Commands</h3>
+          </div>
+          <div className="flex items-center gap-2 text-[11px] font-mono">
+            <span className={`px-2 py-0.5 rounded border ${allDone ? "border-[var(--success)]/60 text-[var(--success)]" : "border-border text-muted-foreground"}`}>
+              {completed} / {total} executed
+            </span>
+            <button onClick={runAll} className="inline-flex items-center gap-1 rounded border border-[var(--cyan)]/40 bg-[var(--cyan)]/5 px-2 py-1 text-[11px] hover:bg-[var(--cyan)]/10">
+              <Play className="h-3 w-3" /> Run all
+            </button>
+            <button onClick={reset} className="inline-flex items-center gap-1 rounded border border-border px-2 py-1 text-[11px] hover:border-[var(--cyan)]/40">
+              <RotateCcw className="h-3 w-3" /> Reset
+            </button>
+          </div>
         </div>
+
+        {/* Progress bar */}
+        <div className="h-1.5 w-full bg-secondary/40 rounded overflow-hidden mb-3">
+          <div className="h-full bg-[var(--cyan)] transition-all" style={{ width: total ? `${(completed / total) * 100}%` : "0%" }} />
+        </div>
+
         <div className="grid md:grid-cols-2 gap-3">
           <div>
             <div className="text-center text-xs font-mono uppercase tracking-wider text-muted-foreground border border-border bg-secondary/40 rounded-t py-2 flex items-center justify-center gap-2">
               <Apple className="h-3 w-3" /> Windows Equivalent
             </div>
             <div className="space-y-2 mt-2">
-              {data.commandsWindows.map((c, i) => <CommandCard key={i} c={c} tint="windows" />)}
+              {data.commandsWindows.map((c, i) => (
+                <CommandCard key={i} c={c} tint="windows" onRun={runCmd} executed={done.has(c.cmd)} />
+              ))}
             </div>
           </div>
           <div>
@@ -312,30 +364,69 @@ function CommandsTab({ data }: { data: GfsTemplate }) {
               <Cpu className="h-3 w-3" /> Kali Linux
             </div>
             <div className="space-y-2 mt-2">
-              {data.commandsKali.map((c, i) => <CommandCard key={i} c={c} tint="kali" />)}
+              {data.commandsKali.map((c, i) => (
+                <CommandCard key={i} c={c} tint="kali" onRun={runCmd} executed={done.has(c.cmd)} />
+              ))}
             </div>
           </div>
         </div>
       </div>
+
+      {/* Sim Terminal */}
+      <div>
+        <div className="flex items-center gap-2 mb-2 text-[var(--cyan)]">
+          <TerminalIcon className="h-4 w-4" />
+          <h3 className="text-xs font-mono uppercase tracking-[0.2em]">Range Terminal</h3>
+        </div>
+        <SimTerminal ref={termRef} />
+      </div>
+
+      {/* Completion banner */}
+      {allDone && (
+        <div className="panel panel-accent p-4 border-l-4 border-[var(--success)] flex items-center gap-3">
+          <CheckCircle2 className="h-6 w-6 text-[var(--success)] shrink-0" />
+          <div className="flex-1">
+            <div className="font-semibold">Lab command matrix complete</div>
+            <div className="text-xs text-muted-foreground">
+              All {total} commands executed successfully in the simulated range. You can now proceed to the Hands-On Lab and Assessment tabs.
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
 
-function CommandCard({ c, tint }: { c: GfsTemplate["commandsWindows"][number]; tint: "windows" | "kali" }) {
+function CommandCard({ c, tint, onRun, executed }: {
+  c: GfsTemplate["commandsWindows"][number];
+  tint: "windows" | "kali";
+  onRun: (cmd: string) => void;
+  executed: boolean;
+}) {
   const [copied, setCopied] = useState(false);
   const [showExplain, setShowExplain] = useState(false);
-  const border = tint === "kali" ? "border-[var(--cyan)]/30" : "border-border";
+  const border = executed
+    ? "border-[var(--success)]/50"
+    : tint === "kali" ? "border-[var(--cyan)]/30" : "border-border";
   return (
     <div className={`panel p-3 ${border}`}>
       <div className="flex items-start justify-between gap-2">
-        <code className={`font-mono text-xs px-2 py-1 rounded bg-black/40 ${tint === "kali" ? "text-[var(--cyan)]" : "text-foreground"}`}>
+        <code className={`font-mono text-xs px-2 py-1 rounded bg-black/40 ${tint === "kali" ? "text-[var(--cyan)]" : "text-foreground"} break-all`}>
           {c.cmd}
         </code>
-        {c.mitre && <span className="chip text-[10px] shrink-0">MITRE: {c.mitre}</span>}
+        <div className="flex items-center gap-1 shrink-0">
+          {executed && <CheckCircle2 className="h-3.5 w-3.5 text-[var(--success)]" />}
+          {c.mitre && <span className="chip text-[10px]">MITRE: {c.mitre}</span>}
+        </div>
       </div>
       <p className="text-xs mt-2"><b>Purpose:</b> {c.purpose}</p>
       <p className="text-xs text-muted-foreground"><b className="text-foreground">Expected Output:</b> {c.expected}</p>
-      <div className="flex gap-2 mt-3">
+      <div className="flex gap-2 mt-3 flex-wrap">
+        <button
+          onClick={() => onRun(c.cmd)}
+          className="inline-flex items-center gap-1 text-xs rounded border border-[var(--cyan)]/40 bg-[var(--cyan)]/5 px-2 py-1 hover:bg-[var(--cyan)]/10">
+          <Play className="h-3 w-3" /> {executed ? "Run again" : "Run"}
+        </button>
         <button
           onClick={() => { navigator.clipboard.writeText(c.cmd); setCopied(true); setTimeout(() => setCopied(false), 1500); }}
           className="inline-flex items-center gap-1 text-xs rounded border border-border px-2 py-1 hover:border-[var(--cyan)]/50">
