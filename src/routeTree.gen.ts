@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as SentinelRouteImport } from './routes/sentinel'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as OpsRouteImport } from './routes/ops'
 import { Route as ModulesRouteImport } from './routes/modules'
@@ -27,6 +28,11 @@ import { Route as LabsSlugRouteImport } from './routes/labs.$slug'
 import { Route as Day1HourRouteImport } from './routes/day1.$hour'
 import { Route as AdminReviewRouteImport } from './routes/admin.review'
 
+const SentinelRoute = SentinelRouteImport.update({
+  id: '/sentinel',
+  path: '/sentinel',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
   id: '/reset-password',
   path: '/reset-password',
@@ -123,6 +129,7 @@ export interface FileRoutesByFullPath {
   '/modules': typeof ModulesRouteWithChildren
   '/ops': typeof OpsRouteWithChildren
   '/reset-password': typeof ResetPasswordRoute
+  '/sentinel': typeof SentinelRoute
   '/admin/review': typeof AdminReviewRoute
   '/day1/$hour': typeof Day1HourRoute
   '/labs/$slug': typeof LabsSlugRoute
@@ -139,6 +146,7 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/dashboard': typeof DashboardRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/sentinel': typeof SentinelRoute
   '/admin/review': typeof AdminReviewRoute
   '/day1/$hour': typeof Day1HourRoute
   '/labs/$slug': typeof LabsSlugRoute
@@ -159,6 +167,7 @@ export interface FileRoutesById {
   '/modules': typeof ModulesRouteWithChildren
   '/ops': typeof OpsRouteWithChildren
   '/reset-password': typeof ResetPasswordRoute
+  '/sentinel': typeof SentinelRoute
   '/admin/review': typeof AdminReviewRoute
   '/day1/$hour': typeof Day1HourRoute
   '/labs/$slug': typeof LabsSlugRoute
@@ -180,6 +189,7 @@ export interface FileRouteTypes {
     | '/modules'
     | '/ops'
     | '/reset-password'
+    | '/sentinel'
     | '/admin/review'
     | '/day1/$hour'
     | '/labs/$slug'
@@ -196,6 +206,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/dashboard'
     | '/reset-password'
+    | '/sentinel'
     | '/admin/review'
     | '/day1/$hour'
     | '/labs/$slug'
@@ -215,6 +226,7 @@ export interface FileRouteTypes {
     | '/modules'
     | '/ops'
     | '/reset-password'
+    | '/sentinel'
     | '/admin/review'
     | '/day1/$hour'
     | '/labs/$slug'
@@ -235,11 +247,19 @@ export interface RootRouteChildren {
   ModulesRoute: typeof ModulesRouteWithChildren
   OpsRoute: typeof OpsRouteWithChildren
   ResetPasswordRoute: typeof ResetPasswordRoute
+  SentinelRoute: typeof SentinelRoute
   LabsSlugRoute: typeof LabsSlugRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/sentinel': {
+      id: '/sentinel'
+      path: '/sentinel'
+      fullPath: '/sentinel'
+      preLoaderRoute: typeof SentinelRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/reset-password': {
       id: '/reset-password'
       path: '/reset-password'
@@ -419,6 +439,7 @@ const rootRouteChildren: RootRouteChildren = {
   ModulesRoute: ModulesRouteWithChildren,
   OpsRoute: OpsRouteWithChildren,
   ResetPasswordRoute: ResetPasswordRoute,
+  SentinelRoute: SentinelRoute,
   LabsSlugRoute: LabsSlugRoute,
 }
 export const routeTree = rootRouteImport
