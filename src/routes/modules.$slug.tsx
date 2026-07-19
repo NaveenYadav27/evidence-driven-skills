@@ -10,6 +10,7 @@ import { GenericModuleEnhancements, MODULE_ENHANCEMENTS } from "@/components/mod
 import { ChallengesPanel } from "@/components/modules/ChallengesPanel";
 import { AssessmentQuiz } from "@/components/modules/AssessmentQuiz";
 import { MasteryPanel } from "@/components/modules/MasteryPanel";
+import { GfsSocView, isGfsTemplateSlug } from "@/components/modules/gfs/GfsSocView";
 
 export const Route = createFileRoute("/modules/$slug")({
   loader: ({ params }) => {
