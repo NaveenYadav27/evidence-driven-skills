@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from "react";
+import React, { useMemo, useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import {
   BookOpen, GitBranch, Building2, Terminal as TerminalIcon, ShieldAlert,
