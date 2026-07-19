@@ -8,6 +8,7 @@ import {
 import { useTelemetry } from "@/lib/telemetry";
 import { useLabTranscript } from "@/lib/lab-transcript";
 import type { Lab } from "@/data/labs";
+import { findSimulated, simulateOutput, SIMULATED_TOOLS } from "@/lib/gfs-command-registry";
 
 interface Line { kind: "in" | "out" | "sys" | "err"; text: string; }
 
