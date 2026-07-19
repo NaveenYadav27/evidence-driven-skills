@@ -121,7 +121,7 @@ function LearnTab({ lesson, data, setLesson }: { lesson: GfsTemplate["subLessons
           Lesson {String(idx + 1).padStart(2, "0")} / {String(data.subLessons.length).padStart(2, "0")}
         </div>
         <h2 className="text-2xl font-bold mb-3">{lesson.title}</h2>
-        <p className="text-sm text-muted-foreground leading-relaxed">{lesson.body}</p>
+        <LessonBody text={lesson.body} />
         {lesson.bullets && (
           <ul className="mt-4 space-y-2">
             {lesson.bullets.map((b) => (
