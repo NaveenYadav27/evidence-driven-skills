@@ -1,14 +1,15 @@
-import { useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import {
   BookOpen, GitBranch, Building2, Terminal as TerminalIcon, ShieldAlert,
   FlaskConical, ClipboardCheck, FileText, Copy, Check, ArrowRight, Trophy,
-  Wrench, Sparkles, ChevronRight, Cpu, Apple,
+  Wrench, Sparkles, ChevronRight, Cpu, Apple, Play, CheckCircle2, RotateCcw,
 } from "lucide-react";
 import { GFS_TEMPLATE_MODULES, type GfsTemplate } from "@/data/modules/gfs-template-data";
 import type { CEHModule } from "@/data/modules";
 import { getModuleLabs } from "@/data/labs";
 import { AssessmentQuiz } from "@/components/modules/AssessmentQuiz";
+import { SimTerminal, type SimTerminalHandle } from "@/components/modules/gfs/SimTerminal";
 
 const TABS = [
   { id: "learn", label: "Learn", icon: BookOpen },
