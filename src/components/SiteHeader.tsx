@@ -1,6 +1,6 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import { PlatformBadge } from "./Brand";
-import { Shield, LogOut, LogIn, Loader2, ShieldCheck, Cloud, CloudOff, CheckCircle2, Ticket, Calendar } from "lucide-react";
+import { Shield, LogOut, LogIn, Loader2, ShieldCheck, Cloud, CloudOff, CheckCircle2, Ticket, Calendar, Radar } from "lucide-react";
 import { useCloudSync } from "./CloudSyncProvider";
 import { SaveStatusPill } from "./progress/SaveStatusPill";
 import { useIsAdmin } from "@/hooks/useIsAdmin";
@@ -61,6 +61,9 @@ export function SiteHeader() {
           </Link>
           <Link to="/ops" className="group flex items-center gap-2 px-3 py-1.5 rounded-md text-sm text-muted-foreground hover:text-foreground hover:bg-secondary/60 transition" activeProps={{ className: "text-foreground bg-secondary/80" }}>
             <Ticket className="h-3.5 w-3.5" /> Ops Center
+          </Link>
+          <Link to="/sentinel" className="group flex items-center gap-2 px-3 py-1.5 rounded-md text-sm text-muted-foreground hover:text-foreground hover:bg-secondary/60 transition" activeProps={{ className: "text-foreground bg-secondary/80" }}>
+            <Radar className="h-3.5 w-3.5" /> Sentinel
           </Link>
           {isAdmin && (
             <>
